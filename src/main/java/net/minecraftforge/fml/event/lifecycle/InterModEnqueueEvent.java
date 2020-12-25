@@ -32,11 +32,9 @@ import net.minecraftforge.fml.ModContainer;
  *
  * This is a parallel dispatch event.
  */
-public class InterModEnqueueEvent extends ParallelDispatchEvent
-{
+public class InterModEnqueueEvent extends ParallelDispatchEvent {
 
-    public InterModEnqueueEvent(final ModContainer container)
-    {
-        super(container);
-    }
+	public InterModEnqueueEvent(final ModContainer container) {
+		super(container);
+	}
 }

@@ -19,107 +19,116 @@
 
 package net.minecraftforge.fml;
 
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+
 import net.minecraftforge.fml.loading.FMLConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.concurrent.*;
-import java.util.concurrent.locks.LockSupport;
-
 import static net.minecraftforge.fml.Logging.LOADING;
 
 public class ModWorkManager {
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final long PARK_TIME = TimeUnit.MILLISECONDS.toNanos(1);
-    public interface DrivenExecutor extends Executor {
-        boolean selfDriven();
-        boolean driveOne();
+	private static final Logger LOGGER = LogManager.getLogger();
+	private static final long PARK_TIME = TimeUnit.MILLISECONDS.toNanos(1);
 
-        default void drive(Runnable ticker) {
-            if (!selfDriven()) {
-                while (driveOne()) {
-                    ticker.run();
-                }
-            } else {
-                // park for a bit so other threads can schedule
-                LockSupport.parkNanos(PARK_TIME);
-            }
-        }
-    }
-    private static class SyncExecutor implements DrivenExecutor {
-        private ConcurrentLinkedDeque<Runnable> tasks = new ConcurrentLinkedDeque<>();
+	public interface DrivenExecutor extends Executor {
+		boolean selfDriven();
 
-        @Override
-        public boolean driveOne() {
-            final Runnable task = tasks.pollFirst();
-            if (task != null) {
-                task.run();
-            }
-            return task != null;
-        }
+		boolean driveOne();
 
-        @Override
-        public boolean selfDriven() {
-            return false;
-        }
+		default void drive(Runnable ticker) {
+			if (!selfDriven()) {
+				while (driveOne()) {
+					ticker.run();
+				}
+			} else {
+				// park for a bit so other threads can schedule
+				LockSupport.parkNanos(PARK_TIME);
+			}
+		}
+	}
 
-        @Override
-        public void execute(final Runnable command) {
-            tasks.addLast(command);
-        }
-    }
+	private static class SyncExecutor implements DrivenExecutor {
+		private final ConcurrentLinkedDeque<Runnable> tasks = new ConcurrentLinkedDeque<>();
 
-    private static class WrappingExecutor implements DrivenExecutor {
-        private final Executor wrapped;
+		@Override
+		public boolean driveOne() {
+			final Runnable task = tasks.pollFirst();
+			if (task != null) {
+				task.run();
+			}
+			return task != null;
+		}
 
-        public WrappingExecutor(final Executor executor) {
-            this.wrapped = executor;
-        }
+		@Override
+		public boolean selfDriven() {
+			return false;
+		}
 
-        @Override
-        public boolean selfDriven() {
-            return true;
-        }
+		@Override
+		public void execute(final Runnable command) {
+			tasks.addLast(command);
+		}
+	}
 
-        @Override
-        public boolean driveOne() {
-            return false;
-        }
+	private static class WrappingExecutor implements DrivenExecutor {
+		private final Executor wrapped;
 
-        @Override
-        public void execute(final Runnable command) {
-            wrapped.execute(command);
-        }
-    }
+		public WrappingExecutor(final Executor executor) {
+			this.wrapped = executor;
+		}
 
-    private static SyncExecutor syncExecutor;
+		@Override
+		public boolean selfDriven() {
+			return true;
+		}
 
-    public static DrivenExecutor syncExecutor() {
-        if (syncExecutor == null)
-            syncExecutor = new SyncExecutor();
-        return syncExecutor;
-    }
+		@Override
+		public boolean driveOne() {
+			return false;
+		}
 
-    public static DrivenExecutor wrappedExecutor(Executor executor) {
-        return new WrappingExecutor(executor);
-    }
+		@Override
+		public void execute(final Runnable command) {
+			wrapped.execute(command);
+		}
+	}
 
-    private static ForkJoinPool parallelThreadPool;
-    public static Executor parallelExecutor() {
-        if (parallelThreadPool == null) {
-            final int loadingThreadCount = FMLConfig.loadingThreadCount();
-            LOGGER.debug(LOADING, "Using {} threads for parallel mod-loading", loadingThreadCount);
-            parallelThreadPool = new ForkJoinPool(loadingThreadCount, ModWorkManager::newForkJoinWorkerThread, null, false);
-        }
-        return parallelThreadPool;
-    }
+	private static SyncExecutor syncExecutor;
 
-    private static ForkJoinWorkerThread newForkJoinWorkerThread(ForkJoinPool pool) {
-        ForkJoinWorkerThread thread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
-        thread.setName("modloading-worker-" + thread.getPoolIndex());
-        // The default sets it to the SystemClassloader, so copy the current one.
-        thread.setContextClassLoader(Thread.currentThread().getContextClassLoader());
-        return thread;
-    }
+	public static DrivenExecutor syncExecutor() {
+		if (syncExecutor == null) {
+			syncExecutor = new SyncExecutor();
+		}
+		return syncExecutor;
+	}
+
+	public static DrivenExecutor wrappedExecutor(Executor executor) {
+		return new WrappingExecutor(executor);
+	}
+
+	private static ForkJoinPool parallelThreadPool;
+
+	public static Executor parallelExecutor() {
+		if (parallelThreadPool == null) {
+			final int loadingThreadCount = FMLConfig.loadingThreadCount();
+			LOGGER.debug(LOADING, "Using {} threads for parallel mod-loading", loadingThreadCount);
+			parallelThreadPool = new ForkJoinPool(loadingThreadCount, ModWorkManager::newForkJoinWorkerThread, null, false);
+		}
+		return parallelThreadPool;
+	}
+
+	private static ForkJoinWorkerThread newForkJoinWorkerThread(ForkJoinPool pool) {
+		ForkJoinWorkerThread thread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+		thread.setName("modloading-worker-" + thread.getPoolIndex());
+		// The default sets it to the SystemClassloader, so copy the current one.
+		thread.setContextClassLoader(Thread.currentThread().getContextClassLoader());
+		return thread;
+	}
 
 }

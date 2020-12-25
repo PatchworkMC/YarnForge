@@ -26,10 +26,8 @@ import net.minecraft.server.MinecraftServer;
  *
  * @author cpw
  */
-public class FMLServerStoppingEvent extends ServerLifecycleEvent
-{
-    public FMLServerStoppingEvent(MinecraftServer server)
-    {
-        super(server);
-    }
+public class FMLServerStoppingEvent extends ServerLifecycleEvent {
+	public FMLServerStoppingEvent(MinecraftServer server) {
+		super(server);
+	}
 }

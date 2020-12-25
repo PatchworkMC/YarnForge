@@ -22,6 +22,7 @@ package net.minecraftforge.event.entity.living;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.eventbus.api.Cancelable;
+
 import net.minecraft.entity.LivingEntity;
 
 /**
@@ -40,22 +41,19 @@ import net.minecraft.entity.LivingEntity;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  **/
 @Cancelable
-public class LivingHealEvent extends LivingEvent
-{
-    private float amount;
-    public LivingHealEvent(LivingEntity entity, float amount)
-    {
-        super(entity);
-        this.setAmount(amount);
-    }
+public class LivingHealEvent extends LivingEvent {
+	private float amount;
 
-    public float getAmount()
-    {
-        return amount;
-    }
+	public LivingHealEvent(LivingEntity entity, float amount) {
+		super(entity);
+		this.setAmount(amount);
+	}
 
-    public void setAmount(float amount)
-    {
-        this.amount = amount;
-    }
+	public float getAmount() {
+		return amount;
+	}
+
+	public void setAmount(float amount) {
+		this.amount = amount;
+	}
 }

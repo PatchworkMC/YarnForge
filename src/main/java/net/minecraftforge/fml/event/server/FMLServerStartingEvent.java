@@ -29,11 +29,9 @@ import net.minecraft.server.MinecraftServer;
  *
  * @author cpw
  */
-public class FMLServerStartingEvent extends ServerLifecycleEvent
-{
-    public FMLServerStartingEvent(final MinecraftServer server)
-    {
-        super(server);
-    }
+public class FMLServerStartingEvent extends ServerLifecycleEvent {
+	public FMLServerStartingEvent(final MinecraftServer server) {
+		super(server);
+	}
 
 }

@@ -25,142 +25,129 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
+public class Repository {
+	private static final Logger LOGGER = LogManager.getLogger();
 
-public class Repository
-{
-    private static final Logger LOGGER = LogManager.getLogger();
+	static final Map<String, Repository> cache = new LinkedHashMap<>();
 
-    static final Map<String, Repository> cache = new LinkedHashMap<>();
+	public static Repository create(File root) throws IOException {
+		return create(root, root.getCanonicalPath());
+	}
 
-    public static Repository create(File root) throws IOException
-    {
-        return create(root, root.getCanonicalPath());
-    }
-    public static Repository create(File root, String name)
-    {
-        return cache.computeIfAbsent(name, f -> new Repository(root, name));
-    }
-    public static Repository replace(File root, String name)
-    {
-        return cache.put(name, new Repository(root, name));
-    }
-    public static Repository get(String name)
-    {
-        return cache.get(name);
-    }
-    public static Artifact resolveAll(Artifact artifact)
-    {
-        Artifact ret = null;
-        for (Repository repo : cache.values())
-        {
-            Artifact tmp = repo.resolve(artifact);
-            if (tmp == null)
-                continue;
-            if (!artifact.isSnapshot())
-                return tmp; //If its a concrete version *assume* any resolved one in any repo will work. As they shouldn't release overriding versions.
-            ret = ret == null || ret.compareTo(tmp) < 0 ? tmp : ret;
-        }
-        return ret;
-    }
+	public static Repository create(File root, String name) {
+		return cache.computeIfAbsent(name, f -> new Repository(root, name));
+	}
 
+	public static Repository replace(File root, String name) {
+		return cache.put(name, new Repository(root, name));
+	}
 
-    private final String name;
-    private final File root;
+	public static Repository get(String name) {
+		return cache.get(name);
+	}
 
-    protected Repository(File root) throws IOException
-    {
-        this(root, root.getCanonicalPath());
-    }
-    protected Repository(File root, String name)
-    {
-        this.root = root;
-        this.name = name;
-        if (name == null)
-            throw new IllegalArgumentException("Invalid Repository Name, for " + root);
-    }
+	public static Artifact resolveAll(Artifact artifact) {
+		Artifact ret = null;
+		for (Repository repo : cache.values()) {
+			Artifact tmp = repo.resolve(artifact);
+			if (tmp == null) {
+				continue;
+			}
+			if (!artifact.isSnapshot()) {
+				return tmp; //If its a concrete version *assume* any resolved one in any repo will work. As they shouldn't release overriding versions.
+			}
+			ret = ret == null || ret.compareTo(tmp) < 0 ? tmp : ret;
+		}
+		return ret;
+	}
 
-    @Override
-    public int hashCode()
-    {
-        return this.name.hashCode();
-    }
+	private final String name;
+	private final File root;
 
-    @Override
-    public boolean equals(Object o)
-    {
-        return o instanceof Repository && ((Repository)o).name.equals(name);
-    }
+	protected Repository(File root) throws IOException {
+		this(root, root.getCanonicalPath());
+	}
 
-    public Artifact resolve(Artifact artifact)
-    {
-        if (!artifact.isSnapshot())
-            return getFile(artifact.getPath()).exists() ? artifact : null;
+	protected Repository(File root, String name) {
+		this.root = root;
+		this.name = name;
+		if (name == null) {
+			throw new IllegalArgumentException("Invalid Repository Name, for " + root);
+		}
+	}
 
-        File meta = getFile(artifact.getFolder() + File.separatorChar + SnapshotJson.META_JSON_FILE);
-        if (!meta.exists())
-            return null;
+	@Override
+	public int hashCode() {
+		return this.name.hashCode();
+	}
 
-        SnapshotJson json = SnapshotJson.create(getFile(artifact.getFolder() + File.separatorChar + SnapshotJson.META_JSON_FILE));
-        if (json.getLatest() == null)
-            return null;
+	@Override
+	public boolean equals(Object o) {
+		return o instanceof Repository && ((Repository) o).name.equals(name);
+	}
 
-        Artifact ret = new Artifact(artifact, this, json.getLatest());
-        while (json.getLatest() != null && !getFile(ret.getPath()).exists())
-        {
-            if (!json.remove(json.getLatest()))
-                throw new IllegalStateException("Something went wrong, Latest (" + json.getLatest() + ") did not point to an entry in the json list: " + meta.getAbsolutePath());
-            ret = new Artifact(artifact, this, json.getLatest());
-        }
+	public Artifact resolve(Artifact artifact) {
+		if (!artifact.isSnapshot()) {
+			return getFile(artifact.getPath()).exists() ? artifact : null;
+		}
 
-        return getFile(ret.getPath()).exists() ? ret : null;
-    }
+		File meta = getFile(artifact.getFolder() + File.separatorChar + SnapshotJson.META_JSON_FILE);
+		if (!meta.exists()) {
+			return null;
+		}
 
-    public File getFile(String path)
-    {
-        return new File(root, path);
-    }
+		SnapshotJson json = SnapshotJson.create(getFile(artifact.getFolder() + File.separatorChar + SnapshotJson.META_JSON_FILE));
+		if (json.getLatest() == null) {
+			return null;
+		}
 
-    public File archive(Artifact artifact, File file, byte[] manifest)
-    {
-        File target = artifact.getFile();
-        try
-        {
-            if (target.exists())
-            {
-                LOGGER.debug("Maven file already exists for {}({}) at {}, deleting duplicate.", file.getName(), artifact.toString(), target.getAbsolutePath());
-                file.delete();
-            }
-            else
-            {
-                LOGGER.debug("Moving file {}({}) to maven repo at {}.", file.getName(), artifact.toString(), target.getAbsolutePath());
-                Files.move(file, target);
+		Artifact ret = new Artifact(artifact, this, json.getLatest());
+		while (json.getLatest() != null && !getFile(ret.getPath()).exists()) {
+			if (!json.remove(json.getLatest())) {
+				throw new IllegalStateException("Something went wrong, Latest (" + json.getLatest() + ") did not point to an entry in the json list: " + meta.getAbsolutePath());
+			}
+			ret = new Artifact(artifact, this, json.getLatest());
+		}
 
-                if (artifact.isSnapshot())
-                {
-                    SnapshotJson json = SnapshotJson.create(artifact.getSnapshotMeta());
-                    json.add(new SnapshotJson.Entry(artifact.getTimestamp(), Files.hash(target, Hashing.md5()).toString()));
-                    json.write(artifact.getSnapshotMeta());
-                }
+		return getFile(ret.getPath()).exists() ? ret : null;
+	}
 
-                if (!LibraryManager.DISABLE_EXTERNAL_MANIFEST)
-                {
-                    File meta_target = new File(target.getAbsolutePath() + ".meta");
-                    Files.write(manifest, meta_target);
-                }
-            }
-            return target;
-        }
-        catch (IOException e)
-        {
-            LOGGER.error(LOGGER.getMessageFactory().newMessage("Error moving file {} to {}", file, target.getAbsolutePath()), e);
-        }
-        return file;
-    }
+	public File getFile(String path) {
+		return new File(root, path);
+	}
 
-    public void filterLegacy(List<File> list){}
+	public File archive(Artifact artifact, File file, byte[] manifest) {
+		File target = artifact.getFile();
+		try {
+			if (target.exists()) {
+				LOGGER.debug("Maven file already exists for {}({}) at {}, deleting duplicate.", file.getName(), artifact.toString(), target.getAbsolutePath());
+				file.delete();
+			} else {
+				LOGGER.debug("Moving file {}({}) to maven repo at {}.", file.getName(), artifact.toString(), target.getAbsolutePath());
+				Files.move(file, target);
+
+				if (artifact.isSnapshot()) {
+					SnapshotJson json = SnapshotJson.create(artifact.getSnapshotMeta());
+					json.add(new SnapshotJson.Entry(artifact.getTimestamp(), Files.hash(target, Hashing.md5()).toString()));
+					json.write(artifact.getSnapshotMeta());
+				}
+
+				if (!LibraryManager.DISABLE_EXTERNAL_MANIFEST) {
+					File meta_target = new File(target.getAbsolutePath() + ".meta");
+					Files.write(manifest, meta_target);
+				}
+			}
+			return target;
+		} catch (IOException e) {
+			LOGGER.error(LOGGER.getMessageFactory().newMessage("Error moving file {} to {}", file, target.getAbsolutePath()), e);
+		}
+		return file;
+	}
+
+	public void filterLegacy(List<File> list) {}
 }

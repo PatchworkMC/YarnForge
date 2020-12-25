@@ -20,7 +20,7 @@
 package net.minecraftforge.fml;
 
 public class StartupMessageManager {
-    public static void addModMessage(final String message) {
-        net.minecraftforge.fml.loading.progress.StartupMessageManager.addModMessage(message);
-    }
+	public static void addModMessage(final String message) {
+		net.minecraftforge.fml.loading.progress.StartupMessageManager.addModMessage(message);
+	}
 }

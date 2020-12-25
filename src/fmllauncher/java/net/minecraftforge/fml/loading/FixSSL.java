@@ -19,11 +19,6 @@
 
 package net.minecraftforge.fml.loading;
 
-import org.apache.logging.log4j.LogManager;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -39,10 +34,15 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.apache.logging.log4j.LogManager;
+
 import static cpw.mods.modlauncher.api.LamdbaExceptionUtils.rethrowBiConsumer;
 import static cpw.mods.modlauncher.api.LamdbaExceptionUtils.rethrowFunction;
 import static net.minecraftforge.fml.loading.LogMarkers.CORE;
-
 
 /**
  * This class fixes older Java SSL setups which don't contain the correct root certificates to trust Let's Encrypt
@@ -60,32 +60,32 @@ import static net.minecraftforge.fml.loading.LogMarkers.CORE;
  * The PEM files were obtained from the above URL.
  */
 class FixSSL {
-    static void fixup() {
-        try {
-            final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            Path ksPath = Paths.get(System.getProperty("java.home"),"lib", "security", "cacerts");
-            keyStore.load(Files.newInputStream(ksPath), "changeit".toCharArray());
-            final Map<String, Certificate> jdkTrustStore = Collections.list(keyStore.aliases()).stream().collect(Collectors.toMap(a -> a, rethrowFunction(keyStore::getCertificate)));
+	static void fixup() {
+		try {
+			final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
+			keyStore.load(Files.newInputStream(ksPath), "changeit".toCharArray());
+			final Map<String, Certificate> jdkTrustStore = Collections.list(keyStore.aliases()).stream().collect(Collectors.toMap(a -> a, rethrowFunction(keyStore::getCertificate)));
 
-            final KeyStore leKS = KeyStore.getInstance(KeyStore.getDefaultType());
-            final InputStream leKSFile = FixSSL.class.getResourceAsStream("/lekeystore.jks");
-            leKS.load(leKSFile, "supersecretpassword".toCharArray());
-            final Map<String, Certificate> leTrustStore = Collections.list(leKS.aliases()).stream().collect(Collectors.toMap(a -> a, rethrowFunction(leKS::getCertificate)));
+			final KeyStore leKS = KeyStore.getInstance(KeyStore.getDefaultType());
+			final InputStream leKSFile = FixSSL.class.getResourceAsStream("/lekeystore.jks");
+			leKS.load(leKSFile, "supersecretpassword".toCharArray());
+			final Map<String, Certificate> leTrustStore = Collections.list(leKS.aliases()).stream().collect(Collectors.toMap(a -> a, rethrowFunction(leKS::getCertificate)));
 
-            final KeyStore mergedTrustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            mergedTrustStore.load(null, new char[0]);
-            jdkTrustStore.forEach(rethrowBiConsumer(mergedTrustStore::setCertificateEntry));
-            leTrustStore.forEach(rethrowBiConsumer(mergedTrustStore::setCertificateEntry));
+			final KeyStore mergedTrustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			mergedTrustStore.load(null, new char[0]);
+			jdkTrustStore.forEach(rethrowBiConsumer(mergedTrustStore::setCertificateEntry));
+			leTrustStore.forEach(rethrowBiConsumer(mergedTrustStore::setCertificateEntry));
 
-            final TrustManagerFactory instance = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            instance.init(mergedTrustStore);
-            final SSLContext tls = SSLContext.getInstance("TLS");
-            tls.init(null, instance.getTrustManagers(), null);
-            HttpsURLConnection.setDefaultSSLSocketFactory(tls.getSocketFactory());
-            LogManager.getLogger().info(CORE, "Added Lets Encrypt root certificates as additional trust");
-        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException | KeyManagementException e) {
-            LogManager.getLogger().fatal(CORE,"Failed to load lets encrypt certificate. Expect problems", e);
-        }
+			final TrustManagerFactory instance = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			instance.init(mergedTrustStore);
+			final SSLContext tls = SSLContext.getInstance("TLS");
+			tls.init(null, instance.getTrustManagers(), null);
+			HttpsURLConnection.setDefaultSSLSocketFactory(tls.getSocketFactory());
+			LogManager.getLogger().info(CORE, "Added Lets Encrypt root certificates as additional trust");
+		} catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException | KeyManagementException e) {
+			LogManager.getLogger().fatal(CORE, "Failed to load lets encrypt certificate. Expect problems", e);
+		}
 
-    }
+	}
 }

@@ -20,6 +20,7 @@
 package net.minecraftforge.event.entity.item;
 
 import net.minecraftforge.eventbus.api.Cancelable;
+
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
@@ -30,28 +31,25 @@ import net.minecraft.entity.player.PlayerEntity;
  * removed from the inventory - and thus removed from the system.
  */
 @Cancelable
-public class ItemTossEvent extends ItemEvent
-{
+public class ItemTossEvent extends ItemEvent {
 
-    private final PlayerEntity player;
+	private final PlayerEntity player;
 
-    /**
-     * Creates a new event for EntityItems tossed by a player.
-     * 
-     * @param entityItem The EntityItem being tossed.
-     * @param player The player tossing the item.
-     */
-    public ItemTossEvent(ItemEntity entityItem, PlayerEntity player)
-    {
-        super(entityItem);
-        this.player = player;
-    }
+	/**
+	 * Creates a new event for EntityItems tossed by a player.
+	 *
+	 * @param entityItem The EntityItem being tossed.
+	 * @param player The player tossing the item.
+	 */
+	public ItemTossEvent(ItemEntity entityItem, PlayerEntity player) {
+		super(entityItem);
+		this.player = player;
+	}
 
-    /**
-     * The player tossing the item.
-     */
-    public PlayerEntity getPlayer()
-    {
-        return player;
-    }
+	/**
+	 * The player tossing the item.
+	 */
+	public PlayerEntity getPlayer() {
+		return player;
+	}
 }

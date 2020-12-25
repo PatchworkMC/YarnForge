@@ -19,10 +19,11 @@
 
 package net.minecraftforge.event.world;
 
+import net.minecraftforge.eventbus.api.Event;
+
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.eventbus.api.Event;
 
 /**
  * ChunkWatchEvent is fired when an event involving a chunk being watched occurs.<br>
@@ -38,63 +39,56 @@ import net.minecraftforge.eventbus.api.Event;
  * <br>
  * All children of this event are fired on the {@link MinecraftForge#EVENT_BUS}.<br>
  **/
-public class ChunkWatchEvent extends Event
-{
-    private final ServerWorld world;
-    private final ServerPlayerEntity player;
-    private final ChunkPos pos;
+public class ChunkWatchEvent extends Event {
+	private final ServerWorld world;
+	private final ServerPlayerEntity player;
+	private final ChunkPos pos;
 
-    public ChunkWatchEvent(ServerPlayerEntity player, ChunkPos pos, ServerWorld world)
-    {
-        this.player = player;
-        this.pos = pos;
-        this.world = world;
-    }
+	public ChunkWatchEvent(ServerPlayerEntity player, ChunkPos pos, ServerWorld world) {
+		this.player = player;
+		this.pos = pos;
+		this.world = world;
+	}
 
-    public ServerPlayerEntity getPlayer()
-    {
-        return this.player;
-    }
+	public ServerPlayerEntity getPlayer() {
+		return this.player;
+	}
 
-    public ChunkPos getPos()
-    {
-        return this.pos;
-    }
+	public ChunkPos getPos() {
+		return this.pos;
+	}
 
-    public ServerWorld getWorld()
-    {
-        return this.world;
-    }
+	public ServerWorld getWorld() {
+		return this.world;
+	}
 
-    /**
-     * ChunkWatchEvent.Watch is fired when an EntityPlayer begins watching a chunk.<br>
-     * This event is fired when a chunk is added to the watched chunks of an EntityPlayer in
-     * {@link net.minecraft.world.server.ChunkManager#setChunkLoadedAtClient}. <br>
-     * <br>
-     * This event is not {@link net.minecraftforge.eventbus.api.Cancelable}.<br>
-     * <br>
-     * This event does not have a result. {@link HasResult} <br>
-     * <br>
-     * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
-     **/
-    public static class Watch extends ChunkWatchEvent
-    {
-        public Watch(ServerPlayerEntity player, ChunkPos pos, ServerWorld world) {super(player, pos, world);}
-    }
+	/**
+	 * ChunkWatchEvent.Watch is fired when an EntityPlayer begins watching a chunk.<br>
+	 * This event is fired when a chunk is added to the watched chunks of an EntityPlayer in
+	 * {@link net.minecraft.world.server.ChunkManager#setChunkLoadedAtClient}. <br>
+	 * <br>
+	 * This event is not {@link net.minecraftforge.eventbus.api.Cancelable}.<br>
+	 * <br>
+	 * This event does not have a result. {@link HasResult} <br>
+	 * <br>
+	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
+	 **/
+	public static class Watch extends ChunkWatchEvent {
+		public Watch(ServerPlayerEntity player, ChunkPos pos, ServerWorld world) {super(player, pos, world);}
+	}
 
-    /**
-     * ChunkWatchEvent.UnWatch is fired when an EntityPlayer stops watching a chunk.<br>
-     * This event is fired when a chunk is removed from the watched chunks of an EntityPlayer in
-     * {@link net.minecraft.world.server.ChunkManager#setChunkLoadedAtClient}. <br>
-     * <br>
-     * This event is not {@link net.minecraftforge.eventbus.api.Cancelable}.<br>
-     * <br>
-     * This event does not have a result. {@link HasResult} <br>
-     * <br>
-     * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
-     **/
-    public static class UnWatch extends ChunkWatchEvent
-    {
-        public UnWatch(ServerPlayerEntity player, ChunkPos pos, ServerWorld world) {super(player, pos, world);}
-    }
+	/**
+	 * ChunkWatchEvent.UnWatch is fired when an EntityPlayer stops watching a chunk.<br>
+	 * This event is fired when a chunk is removed from the watched chunks of an EntityPlayer in
+	 * {@link net.minecraft.world.server.ChunkManager#setChunkLoadedAtClient}. <br>
+	 * <br>
+	 * This event is not {@link net.minecraftforge.eventbus.api.Cancelable}.<br>
+	 * <br>
+	 * This event does not have a result. {@link HasResult} <br>
+	 * <br>
+	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
+	 **/
+	public static class UnWatch extends ChunkWatchEvent {
+		public UnWatch(ServerPlayerEntity player, ChunkPos pos, ServerWorld world) {super(player, pos, world);}
+	}
 }

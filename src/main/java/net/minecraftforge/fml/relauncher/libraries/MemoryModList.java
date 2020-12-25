@@ -21,19 +21,16 @@ package net.minecraftforge.fml.relauncher.libraries;
 
 import java.io.IOException;
 
-public class MemoryModList extends ModList
-{
-    MemoryModList(Repository repo)
-    {
-        super(repo);
-    }
+public class MemoryModList extends ModList {
+	MemoryModList(Repository repo) {
+		super(repo);
+	}
 
-    @Override
-    public void save() throws IOException {}
+	@Override
+	public void save() throws IOException {}
 
-    @Override
-    public String getName()
-    {
-        return "MEMORY";
-    }
+	@Override
+	public String getName() {
+		return "MEMORY";
+	}
 }

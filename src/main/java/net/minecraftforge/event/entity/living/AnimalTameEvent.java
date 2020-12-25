@@ -19,11 +19,12 @@
 
 package net.minecraftforge.event.entity.living;
 
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.eventbus.api.Cancelable;
+
+import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.player.PlayerEntity;
 
 /**
  * This event is fired when an {@link EntityAnimal} is tamed. <br>
@@ -33,25 +34,21 @@ import net.minecraftforge.eventbus.api.Cancelable;
  * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
  */
 @Cancelable
-public class AnimalTameEvent extends LivingEvent
-{
-    private final AnimalEntity animal;
-    private final PlayerEntity tamer;
+public class AnimalTameEvent extends LivingEvent {
+	private final AnimalEntity animal;
+	private final PlayerEntity tamer;
 
-    public AnimalTameEvent(AnimalEntity animal, PlayerEntity tamer)
-    {
-        super(animal);
-        this.animal = animal;
-        this.tamer = tamer;
-    }
+	public AnimalTameEvent(AnimalEntity animal, PlayerEntity tamer) {
+		super(animal);
+		this.animal = animal;
+		this.tamer = tamer;
+	}
 
-    public AnimalEntity getAnimal()
-    {
-        return animal;
-    }
+	public AnimalEntity getAnimal() {
+		return animal;
+	}
 
-    public PlayerEntity getTamer()
-    {
-        return tamer;
-    }
+	public PlayerEntity getTamer() {
+		return tamer;
+	}
 }

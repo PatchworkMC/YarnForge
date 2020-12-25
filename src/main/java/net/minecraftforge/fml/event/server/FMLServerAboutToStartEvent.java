@@ -19,8 +19,9 @@
 
 package net.minecraftforge.fml.event.server;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Called before the server begins loading anything. Called after {@link InterModProcessEvent} on the dedicated
@@ -31,8 +32,7 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
  */
 public class FMLServerAboutToStartEvent extends ServerLifecycleEvent {
 
-    public FMLServerAboutToStartEvent(MinecraftServer server)
-    {
-        super(server);
-    }
+	public FMLServerAboutToStartEvent(MinecraftServer server) {
+		super(server);
+	}
 }

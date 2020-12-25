@@ -1,3 +1,6 @@
+buildscript {
+	includeBuild './yarnforge-plugin/'
+}
 rootProject.name = 'Forge'
 
 include ':mcp'

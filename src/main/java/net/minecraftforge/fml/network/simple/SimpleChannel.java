@@ -19,15 +19,6 @@
 
 package net.minecraftforge.fml.network.simple;
 
-import io.netty.buffer.Unpooled;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.fml.network.*;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,218 +29,224 @@ import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
+import io.netty.buffer.Unpooled;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.NetworkInstance;
+import net.minecraftforge.fml.network.PacketDistributor;
+import org.apache.commons.lang3.tuple.Pair;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.IPacket;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.PacketBuffer;
+
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class SimpleChannel
-{
-    private final NetworkInstance instance;
-    private final IndexedMessageCodec indexedCodec;
-    private final Optional<Consumer<NetworkEvent.ChannelRegistrationChangeEvent>> registryChangeConsumer;
-    private List<Function<Boolean, ? extends List<? extends Pair<String,?>>>> loginPackets;
+public class SimpleChannel {
+	private final NetworkInstance instance;
+	private final IndexedMessageCodec indexedCodec;
+	private final Optional<Consumer<NetworkEvent.ChannelRegistrationChangeEvent>> registryChangeConsumer;
+	private final List<Function<Boolean, ? extends List<? extends Pair<String, ?>>>> loginPackets;
 
-    public SimpleChannel(NetworkInstance instance) {
-        this(instance, Optional.empty());
-    }
+	public SimpleChannel(NetworkInstance instance) {
+		this(instance, Optional.empty());
+	}
 
-    private SimpleChannel(NetworkInstance instance, Optional<Consumer<NetworkEvent.ChannelRegistrationChangeEvent>> registryChangeNotify) {
-        this.instance = instance;
-        this.indexedCodec = new IndexedMessageCodec(instance);
-        this.loginPackets = new ArrayList<>();
-        instance.addListener(this::networkEventListener);
-        instance.addGatherListener(this::networkLoginGather);
-        this.registryChangeConsumer = registryChangeNotify;
-    }
+	private SimpleChannel(NetworkInstance instance, Optional<Consumer<NetworkEvent.ChannelRegistrationChangeEvent>> registryChangeNotify) {
+		this.instance = instance;
+		this.indexedCodec = new IndexedMessageCodec(instance);
+		this.loginPackets = new ArrayList<>();
+		instance.addListener(this::networkEventListener);
+		instance.addGatherListener(this::networkLoginGather);
+		this.registryChangeConsumer = registryChangeNotify;
+	}
 
-    public SimpleChannel(NetworkInstance instance, Consumer<NetworkEvent.ChannelRegistrationChangeEvent> registryChangeNotify) {
-        this(instance, Optional.of(registryChangeNotify));
-    }
+	public SimpleChannel(NetworkInstance instance, Consumer<NetworkEvent.ChannelRegistrationChangeEvent> registryChangeNotify) {
+		this(instance, Optional.of(registryChangeNotify));
+	}
 
-    private void networkLoginGather(final NetworkEvent.GatherLoginPayloadsEvent gatherEvent) {
-        loginPackets.forEach(packetGenerator->{
-            packetGenerator.apply(gatherEvent.isLocal()).forEach(p->{
-                PacketBuffer pb = new PacketBuffer(Unpooled.buffer());
-                this.indexedCodec.build(p.getRight(), pb);
-                gatherEvent.add(pb, this.instance.getChannelName(), p.getLeft());
-            });
-        });
-    }
-    private void networkEventListener(final NetworkEvent networkEvent)
-    {
-        if (networkEvent instanceof NetworkEvent.ChannelRegistrationChangeEvent) {
-            this.registryChangeConsumer.ifPresent(l->l.accept(((NetworkEvent.ChannelRegistrationChangeEvent) networkEvent)));
-        } else {
-            this.indexedCodec.consume(networkEvent.getPayload(), networkEvent.getLoginIndex(), networkEvent.getSource());
-        }
-    }
+	private void networkLoginGather(final NetworkEvent.GatherLoginPayloadsEvent gatherEvent) {
+		loginPackets.forEach(packetGenerator -> {
+			packetGenerator.apply(gatherEvent.isLocal()).forEach(p -> {
+				PacketBuffer pb = new PacketBuffer(Unpooled.buffer());
+				this.indexedCodec.build(p.getRight(), pb);
+				gatherEvent.add(pb, this.instance.getChannelName(), p.getLeft());
+			});
+		});
+	}
 
-    public <MSG> int encodeMessage(MSG message, final PacketBuffer target) {
-        return this.indexedCodec.build(message, target);
-    }
+	private void networkEventListener(final NetworkEvent networkEvent) {
+		if (networkEvent instanceof NetworkEvent.ChannelRegistrationChangeEvent) {
+			this.registryChangeConsumer.ifPresent(l -> l.accept(((NetworkEvent.ChannelRegistrationChangeEvent) networkEvent)));
+		} else {
+			this.indexedCodec.consume(networkEvent.getPayload(), networkEvent.getLoginIndex(), networkEvent.getSource());
+		}
+	}
 
-    public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
-        return registerMessage(index, messageType, encoder, decoder, messageConsumer, Optional.empty());
-    }
+	public <MSG> int encodeMessage(MSG message, final PacketBuffer target) {
+		return this.indexedCodec.build(message, target);
+	}
 
-    public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer, final Optional<NetworkDirection> networkDirection) {
-        return this.indexedCodec.addCodecIndex(index, messageType, encoder, decoder, messageConsumer, networkDirection);
-    }
+	public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
+		return registerMessage(index, messageType, encoder, decoder, messageConsumer, Optional.empty());
+	}
 
-    private <MSG> Pair<PacketBuffer,Integer> toBuffer(MSG msg) {
-        final PacketBuffer bufIn = new PacketBuffer(Unpooled.buffer());
-        int index = encodeMessage(msg, bufIn);
-        return Pair.of(bufIn, index);
-    }
+	public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer, final Optional<NetworkDirection> networkDirection) {
+		return this.indexedCodec.addCodecIndex(index, messageType, encoder, decoder, messageConsumer, networkDirection);
+	}
 
-    public <MSG> void sendToServer(MSG message)
-    {
-        sendTo(message, Minecraft.getInstance().getConnection().getNetworkManager(), NetworkDirection.PLAY_TO_SERVER);
-    }
+	private <MSG> Pair<PacketBuffer, Integer> toBuffer(MSG msg) {
+		final PacketBuffer bufIn = new PacketBuffer(Unpooled.buffer());
+		int index = encodeMessage(msg, bufIn);
+		return Pair.of(bufIn, index);
+	}
 
-    public <MSG> void sendTo(MSG message, NetworkManager manager, NetworkDirection direction)
-    {
-        manager.sendPacket(toVanillaPacket(message, direction));
-    }
+	public <MSG> void sendToServer(MSG message) {
+		sendTo(message, Minecraft.getInstance().getConnection().getNetworkManager(), NetworkDirection.PLAY_TO_SERVER);
+	}
 
-    /**
-     * Send a message to the {@link PacketDistributor.PacketTarget} from a {@link PacketDistributor} instance.
-     *
-     * <pre>
-     *     channel.send(PacketDistributor.PLAYER.with(()->player), message)
-     * </pre>
-     *
-     * @param target The curried target from a PacketDistributor
-     * @param message The message to send
-     * @param <MSG> The type of the message
-     */
-    public <MSG> void send(PacketDistributor.PacketTarget target, MSG message) {
-        target.send(toVanillaPacket(message, target.getDirection()));
-    }
+	public <MSG> void sendTo(MSG message, NetworkManager manager, NetworkDirection direction) {
+		manager.sendPacket(toVanillaPacket(message, direction));
+	}
 
-    public <MSG> IPacket<?> toVanillaPacket(MSG message, NetworkDirection direction)
-    {
-        return direction.buildPacket(toBuffer(message), instance.getChannelName()).getThis();
-    }
+	/**
+	 * Send a message to the {@link PacketDistributor.PacketTarget} from a {@link PacketDistributor} instance.
+	 *
+	 * <pre>
+	 *     channel.send(PacketDistributor.PLAYER.with(()->player), message)
+	 * </pre>
+	 *
+	 * @param target The curried target from a PacketDistributor
+	 * @param message The message to send
+	 * @param <MSG> The type of the message
+	 */
+	public <MSG> void send(PacketDistributor.PacketTarget target, MSG message) {
+		target.send(toVanillaPacket(message, target.getDirection()));
+	}
 
-    public <MSG> void reply(MSG msgToReply, NetworkEvent.Context context)
-    {
-        context.getPacketDispatcher().sendPacket(instance.getChannelName(), toBuffer(msgToReply).getLeft());
-    }
+	public <MSG> IPacket<?> toVanillaPacket(MSG message, NetworkDirection direction) {
+		return direction.buildPacket(toBuffer(message), instance.getChannelName()).getThis();
+	}
 
-    /**
-     * Build a new MessageBuilder. The type should implement {@link java.util.function.IntSupplier} if it is a login
-     * packet.
-     * @param type Type of message
-     * @param id id in the indexed codec
-     * @param <M> Type of type
-     * @return a MessageBuilder
-     */
-    public <M> MessageBuilder<M> messageBuilder(final Class<M> type, int id) {
-        return MessageBuilder.forType(this, type, id, null);
-    }
+	public <MSG> void reply(MSG msgToReply, NetworkEvent.Context context) {
+		context.getPacketDispatcher().sendPacket(instance.getChannelName(), toBuffer(msgToReply).getLeft());
+	}
 
-    /**
-     * Build a new MessageBuilder. The type should implement {@link java.util.function.IntSupplier} if it is a login
-     * packet.
-     * @param type Type of message
-     * @param id id in the indexed codec
-     * @param direction a network direction which will be asserted before any processing of this message occurs. Use to
-     *                  enforce strict sided handling to prevent spoofing.
-     * @param <M> Type of type
-     * @return a MessageBuilder
-     */
-    public <M> MessageBuilder<M> messageBuilder(final Class<M> type, int id, NetworkDirection direction) {
-        return MessageBuilder.forType(this, type, id, direction);
-    }
+	/**
+	 * Build a new MessageBuilder. The type should implement {@link java.util.function.IntSupplier} if it is a login
+	 * packet.
+	 * @param type Type of message
+	 * @param id id in the indexed codec
+	 * @param <M> Type of type
+	 * @return a MessageBuilder
+	 */
+	public <M> MessageBuilder<M> messageBuilder(final Class<M> type, int id) {
+		return MessageBuilder.forType(this, type, id, null);
+	}
 
-    public static class MessageBuilder<MSG>  {
-        private SimpleChannel channel;
-        private Class<MSG> type;
-        private int id;
-        private BiConsumer<MSG, PacketBuffer> encoder;
-        private Function<PacketBuffer, MSG> decoder;
-        private BiConsumer<MSG, Supplier<NetworkEvent.Context>> consumer;
-        private Function<MSG, Integer> loginIndexGetter;
-        private BiConsumer<MSG, Integer> loginIndexSetter;
-        private Function<Boolean, List<Pair<String, MSG>>> loginPacketGenerators;
-        private Optional<NetworkDirection> networkDirection;
+	/**
+	 * Build a new MessageBuilder. The type should implement {@link java.util.function.IntSupplier} if it is a login
+	 * packet.
+	 * @param type Type of message
+	 * @param id id in the indexed codec
+	 * @param direction a network direction which will be asserted before any processing of this message occurs. Use to
+	 *                  enforce strict sided handling to prevent spoofing.
+	 * @param <M> Type of type
+	 * @return a MessageBuilder
+	 */
+	public <M> MessageBuilder<M> messageBuilder(final Class<M> type, int id, NetworkDirection direction) {
+		return MessageBuilder.forType(this, type, id, direction);
+	}
 
-        private static <MSG> MessageBuilder<MSG> forType(final SimpleChannel channel, final Class<MSG> type, int id, NetworkDirection networkDirection) {
-            MessageBuilder<MSG> builder = new MessageBuilder<>();
-            builder.channel = channel;
-            builder.id = id;
-            builder.type = type;
-            builder.networkDirection = Optional.ofNullable(networkDirection);
-            return builder;
-        }
+	public static class MessageBuilder<MSG> {
+		private SimpleChannel channel;
+		private Class<MSG> type;
+		private int id;
+		private BiConsumer<MSG, PacketBuffer> encoder;
+		private Function<PacketBuffer, MSG> decoder;
+		private BiConsumer<MSG, Supplier<NetworkEvent.Context>> consumer;
+		private Function<MSG, Integer> loginIndexGetter;
+		private BiConsumer<MSG, Integer> loginIndexSetter;
+		private Function<Boolean, List<Pair<String, MSG>>> loginPacketGenerators;
+		private Optional<NetworkDirection> networkDirection;
 
-        public MessageBuilder<MSG> encoder(BiConsumer<MSG, PacketBuffer> encoder) {
-            this.encoder = encoder;
-            return this;
-        }
+		private static <MSG> MessageBuilder<MSG> forType(final SimpleChannel channel, final Class<MSG> type, int id, NetworkDirection networkDirection) {
+			MessageBuilder<MSG> builder = new MessageBuilder<>();
+			builder.channel = channel;
+			builder.id = id;
+			builder.type = type;
+			builder.networkDirection = Optional.ofNullable(networkDirection);
+			return builder;
+		}
 
-        public MessageBuilder<MSG> decoder(Function<PacketBuffer, MSG> decoder) {
-            this.decoder = decoder;
-            return this;
-        }
+		public MessageBuilder<MSG> encoder(BiConsumer<MSG, PacketBuffer> encoder) {
+			this.encoder = encoder;
+			return this;
+		}
 
-        public MessageBuilder<MSG> loginIndex(Function<MSG, Integer> loginIndexGetter, BiConsumer<MSG, Integer> loginIndexSetter) {
-            this.loginIndexGetter = loginIndexGetter;
-            this.loginIndexSetter = loginIndexSetter;
-            return this;
-        }
+		public MessageBuilder<MSG> decoder(Function<PacketBuffer, MSG> decoder) {
+			this.decoder = decoder;
+			return this;
+		}
 
-        public MessageBuilder<MSG> buildLoginPacketList(Function<Boolean, List<Pair<String,MSG>>> loginPacketGenerators) {
-            this.loginPacketGenerators = loginPacketGenerators;
-            return this;
-        }
+		public MessageBuilder<MSG> loginIndex(Function<MSG, Integer> loginIndexGetter, BiConsumer<MSG, Integer> loginIndexSetter) {
+			this.loginIndexGetter = loginIndexGetter;
+			this.loginIndexSetter = loginIndexSetter;
+			return this;
+		}
 
-        public MessageBuilder<MSG> markAsLoginPacket()
-        {
-            this.loginPacketGenerators = (isLocal) -> {
-                try {
-                    return Collections.singletonList(Pair.of(type.getName(), type.newInstance()));
-                } catch (InstantiationException | IllegalAccessException e) {
-                    throw new RuntimeException("Inaccessible no-arg constructor for message "+type.getName(), e);
-                }
-            };
-            return this;
-        }
+		public MessageBuilder<MSG> buildLoginPacketList(Function<Boolean, List<Pair<String, MSG>>> loginPacketGenerators) {
+			this.loginPacketGenerators = loginPacketGenerators;
+			return this;
+		}
 
-        public MessageBuilder<MSG> consumer(BiConsumer<MSG, Supplier<NetworkEvent.Context>> consumer) {
-            this.consumer = consumer;
-            return this;
-        }
+		public MessageBuilder<MSG> markAsLoginPacket() {
+			this.loginPacketGenerators = (isLocal) -> {
+				try {
+					return Collections.singletonList(Pair.of(type.getName(), type.newInstance()));
+				} catch (InstantiationException | IllegalAccessException e) {
+					throw new RuntimeException("Inaccessible no-arg constructor for message " + type.getName(), e);
+				}
+			};
+			return this;
+		}
 
-        public interface ToBooleanBiFunction<T, U> {
-            boolean applyAsBool(T first, U second);
-        }
+		public MessageBuilder<MSG> consumer(BiConsumer<MSG, Supplier<NetworkEvent.Context>> consumer) {
+			this.consumer = consumer;
+			return this;
+		}
 
-        /**
-         * Function returning a boolean "packet handled" indication, for simpler channel building.
-         * @param handler a handler
-         * @return this
-         */
-        public MessageBuilder<MSG> consumer(ToBooleanBiFunction<MSG, Supplier<NetworkEvent.Context>> handler) {
-            this.consumer = (msg, ctx) -> {
-                boolean handled = handler.applyAsBool(msg, ctx);
-                ctx.get().setPacketHandled(handled);
-            };
-            return this;
-        }
+		public interface ToBooleanBiFunction<T, U> {
+			boolean applyAsBool(T first, U second);
+		}
 
-        public void add() {
-            final IndexedMessageCodec.MessageHandler<MSG> message = this.channel.registerMessage(this.id, this.type, this.encoder, this.decoder, this.consumer, this.networkDirection);
-            if (this.loginIndexSetter != null) {
-                message.setLoginIndexSetter(this.loginIndexSetter);
-            }
-            if (this.loginIndexGetter != null) {
-                if (!IntSupplier.class.isAssignableFrom(this.type)) {
-                    throw new IllegalArgumentException("Login packet type that does not supply an index as an IntSupplier");
-                }
-                message.setLoginIndexGetter(this.loginIndexGetter);
-            }
-            if (this.loginPacketGenerators != null) {
-                this.channel.loginPackets.add(this.loginPacketGenerators);
-            }
-        }
-    }
+		/**
+		 * Function returning a boolean "packet handled" indication, for simpler channel building.
+		 * @param handler a handler
+		 * @return this
+		 */
+		public MessageBuilder<MSG> consumer(ToBooleanBiFunction<MSG, Supplier<NetworkEvent.Context>> handler) {
+			this.consumer = (msg, ctx) -> {
+				boolean handled = handler.applyAsBool(msg, ctx);
+				ctx.get().setPacketHandled(handled);
+			};
+			return this;
+		}
+
+		public void add() {
+			final IndexedMessageCodec.MessageHandler<MSG> message = this.channel.registerMessage(this.id, this.type, this.encoder, this.decoder, this.consumer, this.networkDirection);
+			if (this.loginIndexSetter != null) {
+				message.setLoginIndexSetter(this.loginIndexSetter);
+			}
+			if (this.loginIndexGetter != null) {
+				if (!IntSupplier.class.isAssignableFrom(this.type)) {
+					throw new IllegalArgumentException("Login packet type that does not supply an index as an IntSupplier");
+				}
+				message.setLoginIndexGetter(this.loginIndexGetter);
+			}
+			if (this.loginPacketGenerators != null) {
+				this.channel.loginPackets.add(this.loginPacketGenerators);
+			}
+		}
+	}
 }

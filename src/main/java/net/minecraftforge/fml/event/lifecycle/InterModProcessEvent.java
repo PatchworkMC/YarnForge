@@ -19,9 +19,9 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import net.minecraftforge.fml.ModContainer;
-
 import java.util.function.Predicate;
+
+import net.minecraftforge.fml.ModContainer;
 
 /**
  * This is the fourth of four commonly called events during mod lifecycle startup.
@@ -36,10 +36,8 @@ import java.util.function.Predicate;
  * @see #getIMCStream()
  * @see #getIMCStream(Predicate)
  */
-public class InterModProcessEvent extends ParallelDispatchEvent
-{
-    public InterModProcessEvent(final ModContainer container)
-    {
-        super(container);
-    }
+public class InterModProcessEvent extends ParallelDispatchEvent {
+	public InterModProcessEvent(final ModContainer container) {
+		super(container);
+	}
 }

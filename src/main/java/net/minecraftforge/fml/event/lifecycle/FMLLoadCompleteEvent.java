@@ -27,10 +27,8 @@ import net.minecraftforge.fml.ModContainer;
  *
  * @author cpw
  */
-public class FMLLoadCompleteEvent extends ParallelDispatchEvent
-{
-    public FMLLoadCompleteEvent(final ModContainer container)
-    {
-        super(container);
-    }
+public class FMLLoadCompleteEvent extends ParallelDispatchEvent {
+	public FMLLoadCompleteEvent(final ModContainer container) {
+		super(container);
+	}
 }

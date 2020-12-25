@@ -19,38 +19,36 @@
 
 package net.minecraftforge.fml.common.thread;
 
-import net.minecraftforge.fml.LogicalSide;
-
 import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.Nonnull;
 
+import net.minecraftforge.fml.LogicalSide;
+
 /**
  * A thread group and factory combination which belongs to a {@link LogicalSide}.
  */
-public final class SidedThreadGroup extends ThreadGroup implements ThreadFactory
-{
-    private final LogicalSide side;
+public final class SidedThreadGroup extends ThreadGroup implements ThreadFactory {
+	private final LogicalSide side;
 
-    SidedThreadGroup(final LogicalSide side)
-    {
-        super(side.name());
-        this.side = side;
-    }
+	SidedThreadGroup(final LogicalSide side) {
+		super(side.name());
+		this.side = side;
+	}
 
-    /**
-     * Gets the side this sided thread group belongs to.
-     *
-     * @return the side
-     */
-    public LogicalSide getSide()
-    {
-        return this.side;
-    }
+	/**
+	 * Gets the side this sided thread group belongs to.
+	 *
+	 * @return the side
+	 */
+	public LogicalSide getSide() {
+		return this.side;
+	}
 
-    @Override
-    public Thread newThread(@Nonnull final Runnable runnable)
-    {
-        return new Thread(this, runnable);
-    }
+	@Override
+	public Thread newThread(
+		@Nonnull
+		final Runnable runnable) {
+		return new Thread(this, runnable);
+	}
 }

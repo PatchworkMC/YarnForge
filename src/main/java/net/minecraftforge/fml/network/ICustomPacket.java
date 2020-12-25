@@ -19,16 +19,6 @@
 
 package net.minecraftforge.fml.network;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.login.client.CCustomPayloadLoginPacket;
-import net.minecraft.network.login.server.SCustomPayloadLoginPacket;
-import net.minecraft.network.play.client.CCustomPayloadPacket;
-import net.minecraft.network.play.server.SCustomPayloadPlayPacket;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.unsafe.UnsafeHacks;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -37,72 +27,82 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
+import net.minecraftforge.fml.unsafe.UnsafeHacks;
+
+import net.minecraft.network.IPacket;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.login.client.CCustomPayloadLoginPacket;
+import net.minecraft.network.login.server.SCustomPayloadLoginPacket;
+import net.minecraft.network.play.client.CCustomPayloadPacket;
+import net.minecraft.network.play.server.SCustomPayloadPlayPacket;
+import net.minecraft.util.ResourceLocation;
+
 public interface ICustomPacket<T extends IPacket<?>> {
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    enum Fields {
-        CPACKETCUSTOMPAYLOAD(CCustomPayloadPacket.class),
-        SPACKETCUSTOMPAYLOAD(SCustomPayloadPlayPacket.class),
-        CPACKETCUSTOMLOGIN(CCustomPayloadLoginPacket.class),
-        SPACKETCUSTOMLOGIN(SCustomPayloadLoginPacket.class),
-        ;
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+	enum Fields {
+		CPACKETCUSTOMPAYLOAD(CCustomPayloadPacket.class),
+		SPACKETCUSTOMPAYLOAD(SCustomPayloadPlayPacket.class),
+		CPACKETCUSTOMLOGIN(CCustomPayloadLoginPacket.class),
+		SPACKETCUSTOMLOGIN(SCustomPayloadLoginPacket.class),
+		;
 
-        static final Reference2ReferenceArrayMap<Class<?>, Fields> lookup;
-        static {
-            lookup = Stream.of(values()).
-                    collect(Collectors.toMap(Fields::getClazz, Function.identity(), (m1, m2)->m1, Reference2ReferenceArrayMap::new));
-        }
+		static final Reference2ReferenceArrayMap<Class<?>, Fields> lookup;
 
-        private final Class<?> clazz;
+		static {
+			lookup = Stream.of(values()).
+				collect(Collectors.toMap(Fields::getClazz, Function.identity(), (m1, m2) -> m1, Reference2ReferenceArrayMap::new));
+		}
 
-        final Optional<Field> data;
-        final Optional<Field> channel;
-        final Optional<Field> index;
+		private final Class<?> clazz;
 
-        Fields(Class<?> customPacketClass)
-        {
-            this.clazz = customPacketClass;
-            Field[] fields = customPacketClass.getDeclaredFields();
-            data = Arrays.stream(fields).filter(f-> !Modifier.isStatic(f.getModifiers()) && f.getType() == PacketBuffer.class).findFirst();
-            channel = Arrays.stream(fields).filter(f->!Modifier.isStatic(f.getModifiers()) && f.getType() == ResourceLocation.class).findFirst();
-            index = Arrays.stream(fields).filter(f->!Modifier.isStatic(f.getModifiers()) && f.getType() == int.class).findFirst();
-        }
+		final Optional<Field> data;
+		final Optional<Field> channel;
+		final Optional<Field> index;
 
-        private Class<?> getClazz()
-        {
-            return clazz;
-        }
-    }
+		Fields(Class<?> customPacketClass) {
+			this.clazz = customPacketClass;
+			Field[] fields = customPacketClass.getDeclaredFields();
+			data = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == PacketBuffer.class).findFirst();
+			channel = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == ResourceLocation.class).findFirst();
+			index = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == int.class).findFirst();
+		}
 
-    default PacketBuffer getInternalData() {
-        return Fields.lookup.get(this.getClass()).data.map(f->UnsafeHacks.<PacketBuffer>getField(f, this)).orElse(null);
-    }
+		private Class<?> getClazz() {
+			return clazz;
+		}
+	}
 
-    default ResourceLocation getName() {
-        return Fields.lookup.get(this.getClass()).channel.map(f->UnsafeHacks.<ResourceLocation>getField(f, this)).orElse(FMLLoginWrapper.WRAPPER);
-    }
+	default PacketBuffer getInternalData() {
+		return Fields.lookup.get(this.getClass()).data.map(f -> UnsafeHacks.<PacketBuffer>getField(f, this)).orElse(null);
+	}
 
-    default int getIndex() {
-        return Fields.lookup.get(this.getClass()).index.map(f->UnsafeHacks.getIntField(f, this)).orElse(Integer.MIN_VALUE);
-    }
+	default ResourceLocation getName() {
+		return Fields.lookup.get(this.getClass()).channel.map(f -> UnsafeHacks.<ResourceLocation>getField(f, this)).orElse(FMLLoginWrapper.WRAPPER);
+	}
 
-    default void setData(PacketBuffer buffer) {
-        Fields.lookup.get(this.getClass()).data.ifPresent(f->UnsafeHacks.setField(f, this, buffer));
-    }
+	default int getIndex() {
+		return Fields.lookup.get(this.getClass()).index.map(f -> UnsafeHacks.getIntField(f, this)).orElse(Integer.MIN_VALUE);
+	}
 
-    default void setName(ResourceLocation channelName) {
-        Fields.lookup.get(this.getClass()).channel.ifPresent(f->UnsafeHacks.setField(f, this, channelName));
-    }
+	default void setData(PacketBuffer buffer) {
+		Fields.lookup.get(this.getClass()).data.ifPresent(f -> UnsafeHacks.setField(f, this, buffer));
+	}
 
-    default void setIndex(int index) {
-        Fields.lookup.get(this.getClass()).index.ifPresent(f->UnsafeHacks.setIntField(f, this, index));
-    }
+	default void setName(ResourceLocation channelName) {
+		Fields.lookup.get(this.getClass()).channel.ifPresent(f -> UnsafeHacks.setField(f, this, channelName));
+	}
 
-    default NetworkDirection getDirection() {
-        return NetworkDirection.directionFor(this.getClass());
-    }
+	default void setIndex(int index) {
+		Fields.lookup.get(this.getClass()).index.ifPresent(f -> UnsafeHacks.setIntField(f, this, index));
+	}
 
-    @SuppressWarnings("unchecked")
-    default T getThis() {
-        return (T)this;
-    }
+	default NetworkDirection getDirection() {
+		return NetworkDirection.directionFor(this.getClass());
+	}
+
+	@SuppressWarnings("unchecked")
+	default T getThis() {
+		return (T) this;
+	}
 }

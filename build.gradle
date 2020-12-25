@@ -2,6 +2,8 @@ buildscript {
     repositories {
         mavenLocal()
         maven { url = 'https://files.minecraftforge.net/maven' }
+		maven { url = 'https://oss.sonatype.org/content/groups/public/' }
+		maven { url = 'https://maven.fabricmc.net/'}
         jcenter()
         //mavenCentral() //TODO: Update Gradle to use HTTPS by default
         maven {
@@ -13,6 +15,7 @@ buildscript {
         classpath 'net.minecraftforge.gradle:ForgeGradle:3.0.187'
         classpath 'org.ow2.asm:asm:7.2'
         classpath 'org.ow2.asm:asm-tree:7.2'
+		classpath 'me.ramidzkh:yarnforge-plugin:1.3.0-SNAPSHOT'
     }
 }
 
@@ -1066,3 +1069,5 @@ task setup() {
     dependsOn ':clean:extractMapped'
     dependsOn ':forge:extractMapped' //These must be strings so that we can do lazy resolution. Else we need evaluationDependsOnChildren above
 }
+
+apply plugin: 'yarnforge-plugin'

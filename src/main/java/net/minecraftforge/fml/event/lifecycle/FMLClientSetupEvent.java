@@ -19,10 +19,11 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import net.minecraft.client.Minecraft;
+import java.util.function.Supplier;
+
 import net.minecraftforge.fml.ModContainer;
 
-import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
 
 /**
  * This is the second of four commonly called events during mod lifecycle startup.
@@ -38,18 +39,15 @@ import java.util.function.Supplier;
  *
  * This is a parallel dispatch event.
  */
-public class FMLClientSetupEvent extends ParallelDispatchEvent
-{
-    private final Supplier<Minecraft> minecraftSupplier;
+public class FMLClientSetupEvent extends ParallelDispatchEvent {
+	private final Supplier<Minecraft> minecraftSupplier;
 
-    public FMLClientSetupEvent(ModContainer container)
-    {
-        super(container);
-        minecraftSupplier = Minecraft::getInstance;
-    }
+	public FMLClientSetupEvent(ModContainer container) {
+		super(container);
+		minecraftSupplier = Minecraft::getInstance;
+	}
 
-    public Supplier<Minecraft> getMinecraftSupplier()
-    {
-        return minecraftSupplier;
-    }
+	public Supplier<Minecraft> getMinecraftSupplier() {
+		return minecraftSupplier;
+	}
 }

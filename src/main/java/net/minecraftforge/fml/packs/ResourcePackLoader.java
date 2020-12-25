@@ -34,86 +34,89 @@ import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.resources.IPackFinder;
-import net.minecraft.resources.ResourcePackInfo;
-import net.minecraft.resources.ResourcePackInfo.IFactory;
-import net.minecraft.resources.ResourcePackList;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.moddiscovery.ModFile;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 
-public class ResourcePackLoader
-{
-    private static Map<ModFile, ModFileResourcePack> modResourcePacks;
-    private static ResourcePackList resourcePackList;
+import net.minecraft.resources.IPackFinder;
+import net.minecraft.resources.ResourcePackInfo;
+import net.minecraft.resources.ResourcePackInfo.IFactory;
+import net.minecraft.resources.ResourcePackList;
 
-    public static Optional<ModFileResourcePack> getResourcePackFor(String modId)
-    {
-        return Optional.ofNullable(ModList.get().getModFileById(modId)).
-                map(ModFileInfo::getFile).map(mf->modResourcePacks.get(mf));
-    }
+public class ResourcePackLoader {
+	private static Map<ModFile, ModFileResourcePack> modResourcePacks;
+	private static ResourcePackList resourcePackList;
 
-    public static void loadResourcePacks(ResourcePackList resourcePacks, BiFunction<Map<ModFile, ? extends ModFileResourcePack>, BiConsumer<? super ModFileResourcePack, ResourcePackInfo>, IPackInfoFinder> packFinder) {
-        resourcePackList = resourcePacks;
-        modResourcePacks = ModList.get().getModFiles().stream()
-                .filter(mf->!Objects.equals(mf.getModLoader(),"minecraft"))
-                .map(mf -> new ModFileResourcePack(mf.getFile()))
-                .collect(Collectors.toMap(ModFileResourcePack::getModFile, Function.identity(), (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); },  LinkedHashMap::new));
-        resourcePacks.addPackFinder(new LambdaFriendlyPackFinder(packFinder.apply(modResourcePacks, ModFileResourcePack::setPackInfo)));
-    }
+	public static Optional<ModFileResourcePack> getResourcePackFor(String modId) {
+		return Optional.ofNullable(ModList.get().getModFileById(modId)).
+			map(ModFileInfo::getFile).map(mf -> modResourcePacks.get(mf));
+	}
 
-    public static List<String> getPackNames()
-    {
-        return ModList.get().applyForEachModFile(mf->"mod:"+mf.getModInfos().get(0).getModId()).filter(n->!n.equals("mod:minecraft")).collect(Collectors.toList());
-    }
+	public static void loadResourcePacks(ResourcePackList resourcePacks, BiFunction<Map<ModFile, ? extends ModFileResourcePack>, BiConsumer<? super ModFileResourcePack, ResourcePackInfo>, IPackInfoFinder> packFinder) {
+		resourcePackList = resourcePacks;
+		modResourcePacks = ModList.get().getModFiles().stream()
+			.filter(mf -> !Objects.equals(mf.getModLoader(), "minecraft"))
+			.map(mf -> new ModFileResourcePack(mf.getFile()))
+			.collect(Collectors.toMap(ModFileResourcePack::getModFile, Function.identity(), (u, v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); }, LinkedHashMap::new));
+		resourcePacks.addPackFinder(new LambdaFriendlyPackFinder(packFinder.apply(modResourcePacks, ModFileResourcePack::setPackInfo)));
+	}
 
-    public static <V> Comparator<Map.Entry<String,V>> getSorter() {
-        List<String> order = new ArrayList<>();
-        order.add("vanilla");
-        order.add("mod_resources");
+	public static List<String> getPackNames() {
+		return ModList.get().applyForEachModFile(mf -> "mod:" + mf.getModInfos().get(0).getModId()).filter(n -> !n.equals("mod:minecraft")).collect(Collectors.toList());
+	}
 
-        ModList.get().getModFiles().stream().
-        filter(mf -> !Objects.equals(mf.getModLoader(), "minecraft")).
-        map(e -> e.getMods().get(0).getModId()).
-        filter(e -> !"minecraft".equals(e)).
-        map(e -> "mod:" + e).
-        forEach(order::add);
+	public static <V> Comparator<Map.Entry<String, V>> getSorter() {
+		List<String> order = new ArrayList<>();
+		order.add("vanilla");
+		order.add("mod_resources");
 
-        final Object2IntMap<String> order_f = new Object2IntOpenHashMap<>(order.size());
-        for (int x = 0; x < order.size(); x++)
-            order_f.put(order.get(x), x);
+		ModList.get().getModFiles().stream().
+			filter(mf -> !Objects.equals(mf.getModLoader(), "minecraft")).
+			map(e -> e.getMods().get(0).getModId()).
+			filter(e -> !"minecraft".equals(e)).
+			map(e -> "mod:" + e).
+			forEach(order::add);
 
-        return (e1, e2) -> {
-            final String s1 = e1.getKey();
-            final String s2 = e2.getKey();
-            final int i1 = order_f.getOrDefault(s1, -1);
-            final int i2 = order_f.getOrDefault(s2, -1);
+		final Object2IntMap<String> order_f = new Object2IntOpenHashMap<>(order.size());
+		for (int x = 0; x < order.size(); x++) {
+			order_f.put(order.get(x), x);
+		}
 
-            if (i1 == i2 && i1 == -1)
-                return s1.compareTo(s2);
-            if (i1 == -1) return 1;
-            if (i2 == -1) return -1;
-            return i2 - i1;
-        };
-    }
+		return (e1, e2) -> {
+			final String s1 = e1.getKey();
+			final String s2 = e2.getKey();
+			final int i1 = order_f.getOrDefault(s1, -1);
+			final int i2 = order_f.getOrDefault(s2, -1);
 
-    public interface IPackInfoFinder {
-        void addPackInfos(Consumer<ResourcePackInfo> consumer, IFactory factory);
-    }
+			if (i1 == i2 && i1 == -1) {
+				return s1.compareTo(s2);
+			}
+			if (i1 == -1) {
+				return 1;
+			}
+			if (i2 == -1) {
+				return -1;
+			}
+			return i2 - i1;
+		};
+	}
 
-    // SO GROSS - DON'T @ me bro
-    @SuppressWarnings("unchecked")
-    private static class LambdaFriendlyPackFinder implements IPackFinder {
-        private IPackInfoFinder wrapped;
+	public interface IPackInfoFinder {
+		void addPackInfos(Consumer<ResourcePackInfo> consumer, IFactory factory);
+	}
 
-        private LambdaFriendlyPackFinder(final IPackInfoFinder wrapped) {
-            this.wrapped = wrapped;
-        }
+	// SO GROSS - DON'T @ me bro
+	@SuppressWarnings("unchecked")
+	private static class LambdaFriendlyPackFinder implements IPackFinder {
+		private final IPackInfoFinder wrapped;
 
-        @Override
-        public void findPacks(Consumer<ResourcePackInfo> consumer, IFactory factory)
-        {
-            wrapped.addPackInfos(consumer, factory);
-        }
-    }
+		private LambdaFriendlyPackFinder(final IPackInfoFinder wrapped) {
+			this.wrapped = wrapped;
+		}
+
+		@Override
+		public void findPacks(Consumer<ResourcePackInfo> consumer, IFactory factory) {
+			wrapped.addPackInfos(consumer, factory);
+		}
+	}
 }

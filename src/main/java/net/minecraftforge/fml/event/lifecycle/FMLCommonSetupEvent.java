@@ -19,9 +19,9 @@
 
 package net.minecraftforge.fml.event.lifecycle;
 
-import net.minecraftforge.fml.ModContainer;
-
 import java.util.function.Consumer;
+
+import net.minecraftforge.fml.ModContainer;
 
 /**
  * This is the first of four commonly called events during mod initialization.
@@ -40,10 +40,8 @@ import java.util.function.Consumer;
  * @see net.minecraftforge.fml.DeferredWorkQueue to enqueue work to run on the main game thread after this event has
  * completed dispatch
  */
-public class FMLCommonSetupEvent extends ParallelDispatchEvent
-{
-    public FMLCommonSetupEvent(final ModContainer container)
-    {
-        super(container);
-    }
+public class FMLCommonSetupEvent extends ParallelDispatchEvent {
+	public FMLCommonSetupEvent(final ModContainer container) {
+		super(container);
+	}
 }
