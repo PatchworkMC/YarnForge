@@ -19,12 +19,15 @@
 
 package net.minecraftforge.client.extensions;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.util.math.Vector3f;
+import net.minecraft.client.util.math.Vector4f;
+import net.minecraft.util.math.Matrix3f;
+import net.minecraft.util.math.Matrix4f;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.vector.*;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 
@@ -36,7 +39,7 @@ import java.nio.IntBuffer;
 
 public interface IForgeVertexBuilder
 {
-    default IVertexBuilder getVertexBuilder() { return (IVertexBuilder)this; }
+    default VertexConsumer getVertexBuilder() { return (VertexConsumer)this; }
 
     // Copy of addQuad, but enables tinting and per-vertex alpha
     default void addVertexData(MatrixStack.Entry matrixStack, BakedQuad bakedQuad, float red, float green, float blue, int lightmapCoord, int overlayColor, boolean readExistingColor) {
@@ -56,15 +59,15 @@ public interface IForgeVertexBuilder
     // Copy of addQuad with alpha support
     default void addVertexData(MatrixStack.Entry matrixEntry, BakedQuad bakedQuad, float[] baseBrightness, float red, float green, float blue, float alpha, int[] lightmapCoords, int overlayCoords, boolean readExistingColor) {
         int[] aint = bakedQuad.getVertexData();
-        Vector3i faceNormal = bakedQuad.getFace().getDirectionVec();
+        Vec3i faceNormal = bakedQuad.getFace().getVector();
         Vector3f normal = new Vector3f((float)faceNormal.getX(), (float)faceNormal.getY(), (float)faceNormal.getZ());
-        Matrix4f matrix4f = matrixEntry.getMatrix();
+        Matrix4f matrix4f = matrixEntry.getModel();
         normal.transform(matrixEntry.getNormal());
-        int intSize = DefaultVertexFormats.BLOCK.getIntegerSize();
+        int intSize = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSizeInteger();
         int vertexCount = aint.length / intSize;
 
         try (MemoryStack memorystack = MemoryStack.stackPush()) {
-            ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormats.BLOCK.getSize());
+            ByteBuffer bytebuffer = memorystack.malloc(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSize());
             IntBuffer intbuffer = bytebuffer.asIntBuffer();
 
             for(int v = 0; v < vertexCount; ++v) {
@@ -99,7 +102,7 @@ public interface IForgeVertexBuilder
                 Vector4f pos = new Vector4f(f, f1, f2, 1.0F);
                 pos.transform(matrix4f);
                 applyBakedNormals(normal, bytebuffer, matrixEntry.getNormal());
-                ((IVertexBuilder)this).addVertex(pos.getX(), pos.getY(), pos.getZ(), cr, cg, cb, ca, f9, f10, overlayCoords, lightmapCoord, normal.getX(), normal.getY(), normal.getZ());
+                ((VertexConsumer)this).vertex(pos.getX(), pos.getY(), pos.getZ(), cr, cg, cb, ca, f9, f10, overlayCoords, lightmapCoord, normal.getX(), normal.getY(), normal.getZ());
             }
         }
     }

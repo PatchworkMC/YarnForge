@@ -1,0 +1,24 @@
+--- a/net/minecraft/client/render/entity/EntityRenderer.java
++++ b/net/minecraft/client/render/entity/EntityRenderer.java
+@@ -62,8 +62,10 @@
+    }
+ 
+    public void render(T entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, VertexConsumerProvider bufferIn, int packedLightIn) {
+-      if (this.hasLabel(entityIn)) {
+-         this.renderLabelIfPresent(entityIn, entityIn.getDisplayName(), matrixStackIn, bufferIn, packedLightIn);
++      net.minecraftforge.client.event.RenderNameplateEvent renderNameplateEvent = new net.minecraftforge.client.event.RenderNameplateEvent(entityIn, entityIn.getDisplayName(), this, matrixStackIn, bufferIn, packedLightIn, partialTicks);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(renderNameplateEvent);
++      if (renderNameplateEvent.getResult() != net.minecraftforge.eventbus.api.Event.Result.DENY && (renderNameplateEvent.getResult() == net.minecraftforge.eventbus.api.Event.Result.ALLOW || this.hasLabel(entityIn))) {
++         this.renderLabelIfPresent(entityIn, renderNameplateEvent.getContent(), matrixStackIn, bufferIn, packedLightIn);
+       }
+    }
+ 
+@@ -79,7 +81,7 @@
+ 
+    protected void renderLabelIfPresent(T entityIn, Text displayNameIn, MatrixStack matrixStackIn, VertexConsumerProvider bufferIn, int packedLightIn) {
+       double d0 = this.dispatcher.getSquaredDistanceToCamera(entityIn);
+-      if (!(d0 > 4096.0D)) {
++      if (net.minecraftforge.client.ForgeHooksClient.isNameplateInRenderDistance(entityIn, d0)) {
+          boolean flag = !entityIn.isSneaky();
+          float f = entityIn.getHeight() + 0.5F;
+          int i = "deadmau5".equals(displayNameIn.getString()) ? -10 : 0;

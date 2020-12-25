@@ -1,0 +1,84 @@
+--- a/net/minecraft/client/render/block/BlockRenderManager.java
++++ b/net/minecraft/client/render/block/BlockRenderManager.java
+@@ -10,7 +10,6 @@
+ import net.minecraft.client.render.RenderLayers;
+ import net.minecraft.client.render.VertexConsumer;
+ import net.minecraft.client.render.VertexConsumerProvider;
+-import net.minecraft.client.render.item.BuiltinModelItemRenderer;
+ import net.minecraft.client.render.model.BakedModel;
+ import net.minecraft.client.render.model.json.ModelTransformation;
+ import net.minecraft.client.util.math.MatrixStack;
+@@ -37,7 +36,7 @@
+    public BlockRenderManager(BlockModels shapes, BlockColors colors) {
+       this.models = shapes;
+       this.blockColors = colors;
+-      this.blockModelRenderer = new BlockModelRenderer(this.blockColors);
++      this.blockModelRenderer = new net.minecraftforge.client.model.pipeline.ForgeBlockModelRenderer(this.blockColors);
+       this.fluidRenderer = new FluidRenderer();
+    }
+ 
+@@ -45,18 +44,26 @@
+       return this.models;
+    }
+ 
++   @Deprecated //Forge: Model parameter
+    public void renderDamage(BlockState blockStateIn, BlockPos posIn, BlockRenderView lightReaderIn, MatrixStack matrixStackIn, VertexConsumer vertexBuilderIn) {
++       renderBlockDamage(blockStateIn,posIn, lightReaderIn, matrixStackIn, vertexBuilderIn, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public void renderBlockDamage(BlockState blockStateIn, BlockPos posIn, BlockRenderView lightReaderIn, MatrixStack matrixStackIn, VertexConsumer vertexBuilderIn, net.minecraftforge.client.model.data.IModelData modelData) {
+       if (blockStateIn.getRenderType() == BlockRenderType.MODEL) {
+          BakedModel ibakedmodel = this.models.getModel(blockStateIn);
+          long i = blockStateIn.getRenderingSeed(posIn);
+-         this.blockModelRenderer.render(lightReaderIn, ibakedmodel, blockStateIn, posIn, matrixStackIn, vertexBuilderIn, true, this.random, i, OverlayTexture.DEFAULT_UV);
++         this.blockModelRenderer.renderModel(lightReaderIn, ibakedmodel, blockStateIn, posIn, matrixStackIn, vertexBuilderIn, true, this.random, i, OverlayTexture.DEFAULT_UV, modelData);
+       }
+    }
+ 
++   @Deprecated //Forge: Model parameter
+    public boolean renderBlock(BlockState blockStateIn, BlockPos posIn, BlockRenderView lightReaderIn, MatrixStack matrixStackIn, VertexConsumer vertexBuilderIn, boolean checkSides, Random rand) {
++       return renderModel(blockStateIn, posIn, lightReaderIn, matrixStackIn, vertexBuilderIn, checkSides, rand, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public boolean renderModel(BlockState blockStateIn, BlockPos posIn, BlockRenderView lightReaderIn, MatrixStack matrixStackIn, VertexConsumer vertexBuilderIn, boolean checkSides, Random rand, net.minecraftforge.client.model.data.IModelData modelData) {
+       try {
+          BlockRenderType blockrendertype = blockStateIn.getRenderType();
+-         return blockrendertype != BlockRenderType.MODEL ? false : this.blockModelRenderer.render(lightReaderIn, this.getModel(blockStateIn), blockStateIn, posIn, matrixStackIn, vertexBuilderIn, checkSides, rand, blockStateIn.getRenderingSeed(posIn), OverlayTexture.DEFAULT_UV);
++         return blockrendertype != BlockRenderType.MODEL ? false : this.blockModelRenderer.renderModel(lightReaderIn, this.getModel(blockStateIn), blockStateIn, posIn, matrixStackIn, vertexBuilderIn, checkSides, rand, blockStateIn.getRenderingSeed(posIn), OverlayTexture.DEFAULT_UV, modelData);
+       } catch (Throwable throwable) {
+          CrashReport crashreport = CrashReport.create(throwable, "Tesselating block in world");
+          CrashReportSection crashreportcategory = crashreport.addElement("Block being tesselated");
+@@ -84,7 +91,11 @@
+       return this.models.getModel(state);
+    }
+ 
++   @Deprecated //Forge: Model parameter
+    public void renderBlockAsEntity(BlockState blockStateIn, MatrixStack matrixStackIn, VertexConsumerProvider bufferTypeIn, int combinedLightIn, int combinedOverlayIn) {
++      renderBlock(blockStateIn, matrixStackIn, bufferTypeIn, combinedLightIn, combinedOverlayIn, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public void renderBlock(BlockState blockStateIn, MatrixStack matrixStackIn, VertexConsumerProvider bufferTypeIn, int combinedLightIn, int combinedOverlayIn, net.minecraftforge.client.model.data.IModelData modelData) {
+       BlockRenderType blockrendertype = blockStateIn.getRenderType();
+       if (blockrendertype != BlockRenderType.INVISIBLE) {
+          switch(blockrendertype) {
+@@ -94,10 +105,11 @@
+             float f = (float)(i >> 16 & 255) / 255.0F;
+             float f1 = (float)(i >> 8 & 255) / 255.0F;
+             float f2 = (float)(i & 255) / 255.0F;
+-            this.blockModelRenderer.render(matrixStackIn.peek(), bufferTypeIn.getBuffer(RenderLayers.getEntityBlockLayer(blockStateIn, false)), blockStateIn, ibakedmodel, f, f1, f2, combinedLightIn, combinedOverlayIn);
++            this.blockModelRenderer.renderModel(matrixStackIn.peek(), bufferTypeIn.getBuffer(RenderLayers.getEntityBlockLayer(blockStateIn, false)), blockStateIn, ibakedmodel, f, f1, f2, combinedLightIn, combinedOverlayIn, modelData);
+             break;
+          case ENTITYBLOCK_ANIMATED:
+-            BuiltinModelItemRenderer.INSTANCE.render(new ItemStack(blockStateIn.getBlock()), ModelTransformation.Mode.NONE, matrixStackIn, bufferTypeIn, combinedLightIn, combinedOverlayIn);
++            ItemStack stack = new ItemStack(blockStateIn.getBlock());
++            stack.getItem().getItemStackTileEntityRenderer().render(stack, ModelTransformation.Mode.NONE, matrixStackIn, bufferTypeIn, combinedLightIn, combinedOverlayIn);
+          }
+ 
+       }
+@@ -106,4 +118,9 @@
+    public void apply(ResourceManager resourceManager) {
+       this.fluidRenderer.onResourceReload();
+    }
++
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.MODELS;
++   }
+ }

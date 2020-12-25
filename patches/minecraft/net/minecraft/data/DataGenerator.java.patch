@@ -1,38 +1,38 @@
 --- a/net/minecraft/data/DataGenerator.java
 +++ b/net/minecraft/data/DataGenerator.java
 @@ -16,10 +16,11 @@
-    private final Collection<Path> field_200394_b;
-    private final Path field_200395_c;
-    private final List<IDataProvider> field_200396_d = Lists.newArrayList();
-+   private final List<IDataProvider> providerView = java.util.Collections.unmodifiableList(field_200396_d);
+    private final Collection<Path> inputs;
+    private final Path output;
+    private final List<DataProvider> providers = Lists.newArrayList();
++   private final List<DataProvider> providerView = java.util.Collections.unmodifiableList(providers);
  
-    public DataGenerator(Path p_i48266_1_, Collection<Path> p_i48266_2_) {
-       this.field_200395_c = p_i48266_1_;
--      this.field_200394_b = p_i48266_2_;
-+      this.field_200394_b = Lists.newArrayList(p_i48266_2_);
+    public DataGenerator(Path output, Collection<Path> input) {
+       this.output = output;
+-      this.inputs = input;
++      this.inputs = Lists.newArrayList(input);
     }
  
-    public Collection<Path> func_200389_a() {
+    public Collection<Path> getInputs() {
 @@ -38,6 +39,7 @@
  
-       for(IDataProvider idataprovider : this.field_200396_d) {
-          field_200393_a.info("Starting provider: {}", (Object)idataprovider.func_200397_b());
-+         net.minecraftforge.fml.StartupMessageManager.addModMessage("Generating: " + idataprovider.func_200397_b());
+       for(DataProvider idataprovider : this.providers) {
+          LOGGER.info("Starting provider: {}", (Object)idataprovider.getName());
++         net.minecraftforge.fml.StartupMessageManager.addModMessage("Generating: " + idataprovider.getName());
           stopwatch1.start();
-          idataprovider.func_200398_a(directorycache);
+          idataprovider.run(directorycache);
           stopwatch1.stop();
 @@ -53,6 +55,14 @@
-       this.field_200396_d.add(p_200390_1_);
+       this.providers.add(provider);
     }
  
-+   public List<IDataProvider> getProviders() {
++   public List<DataProvider> getProviders() {
 +       return this.providerView;
 +   }
 +
 +   public void addInput(Path value) {
-+      this.field_200394_b.add(value);
++      this.inputs.add(value);
 +   }
 +
     static {
-       Bootstrap.func_151354_b();
+       Bootstrap.initialize();
     }

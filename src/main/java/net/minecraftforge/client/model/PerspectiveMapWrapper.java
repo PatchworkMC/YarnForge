@@ -24,15 +24,21 @@ import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.json.ModelOverride;
+import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.math.AffineTransformation;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.data.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.IModelData;
@@ -43,27 +49,27 @@ import java.util.List;
 
 public class PerspectiveMapWrapper implements IDynamicBakedModel
 {
-    private final IBakedModel parent;
-    private final ImmutableMap<ItemCameraTransforms.TransformType, TransformationMatrix> transforms;
+    private final BakedModel parent;
+    private final ImmutableMap<ModelTransformation.Mode, AffineTransformation> transforms;
     private final OverrideListWrapper overrides = new OverrideListWrapper();
 
-    public PerspectiveMapWrapper(IBakedModel parent, ImmutableMap<ItemCameraTransforms.TransformType, TransformationMatrix> transforms)
+    public PerspectiveMapWrapper(BakedModel parent, ImmutableMap<ModelTransformation.Mode, AffineTransformation> transforms)
     {
         this.parent = parent;
         this.transforms = transforms;
     }
 
-    public PerspectiveMapWrapper(IBakedModel parent, IModelTransform state)
+    public PerspectiveMapWrapper(BakedModel parent, ModelBakeSettings state)
     {
         this(parent, getTransforms(state));
     }
 
-    public static ImmutableMap<ItemCameraTransforms.TransformType, TransformationMatrix> getTransforms(IModelTransform state)
+    public static ImmutableMap<ModelTransformation.Mode, AffineTransformation> getTransforms(ModelBakeSettings state)
     {
-        EnumMap<ItemCameraTransforms.TransformType, TransformationMatrix> map = new EnumMap<>(ItemCameraTransforms.TransformType.class);
-        for(ItemCameraTransforms.TransformType type : ItemCameraTransforms.TransformType.values())
+        EnumMap<ModelTransformation.Mode, AffineTransformation> map = new EnumMap<>(ModelTransformation.Mode.class);
+        for(ModelTransformation.Mode type : ModelTransformation.Mode.values())
         {
-            TransformationMatrix tr = state.getPartTransformation(type);
+            AffineTransformation tr = state.getPartTransformation(type);
             if(!tr.isIdentity())
             {
                 map.put(type, tr);
@@ -73,41 +79,41 @@ public class PerspectiveMapWrapper implements IDynamicBakedModel
     }
 
     @SuppressWarnings("deprecation")
-    public static ImmutableMap<ItemCameraTransforms.TransformType, TransformationMatrix> getTransforms(ItemCameraTransforms transforms)
+    public static ImmutableMap<ModelTransformation.Mode, AffineTransformation> getTransforms(ModelTransformation transforms)
     {
-        EnumMap<ItemCameraTransforms.TransformType, TransformationMatrix> map = new EnumMap<>(ItemCameraTransforms.TransformType.class);
-        for(ItemCameraTransforms.TransformType type : ItemCameraTransforms.TransformType.values())
+        EnumMap<ModelTransformation.Mode, AffineTransformation> map = new EnumMap<>(ModelTransformation.Mode.class);
+        for(ModelTransformation.Mode type : ModelTransformation.Mode.values())
         {
-            if (transforms.hasCustomTransform(type))
+            if (transforms.isTransformationDefined(type))
             {
-                map.put(type, TransformationHelper.toTransformation(transforms.getTransform(type)));
+                map.put(type, TransformationHelper.toTransformation(transforms.getTransformation(type)));
             }
         }
         return ImmutableMap.copyOf(map);
     }
 
     @SuppressWarnings("deprecation")
-    public static ImmutableMap<ItemCameraTransforms.TransformType, TransformationMatrix> getTransformsWithFallback(IModelTransform state, ItemCameraTransforms transforms)
+    public static ImmutableMap<ModelTransformation.Mode, AffineTransformation> getTransformsWithFallback(ModelBakeSettings state, ModelTransformation transforms)
     {
-        EnumMap<ItemCameraTransforms.TransformType, TransformationMatrix> map = new EnumMap<>(ItemCameraTransforms.TransformType.class);
-        for(ItemCameraTransforms.TransformType type : ItemCameraTransforms.TransformType.values())
+        EnumMap<ModelTransformation.Mode, AffineTransformation> map = new EnumMap<>(ModelTransformation.Mode.class);
+        for(ModelTransformation.Mode type : ModelTransformation.Mode.values())
         {
-            TransformationMatrix tr = state.getPartTransformation(type);
+            AffineTransformation tr = state.getPartTransformation(type);
             if(!tr.isIdentity())
             {
                 map.put(type, tr);
             }
-            else if (transforms.hasCustomTransform(type))
+            else if (transforms.isTransformationDefined(type))
             {
-                map.put(type, TransformationHelper.toTransformation(transforms.getTransform(type)));
+                map.put(type, TransformationHelper.toTransformation(transforms.getTransformation(type)));
             }
         }
         return ImmutableMap.copyOf(map);
     }
 
-    public static IBakedModel handlePerspective(IBakedModel model, ImmutableMap<ItemCameraTransforms.TransformType, TransformationMatrix> transforms, ItemCameraTransforms.TransformType cameraTransformType, MatrixStack mat)
+    public static BakedModel handlePerspective(BakedModel model, ImmutableMap<ModelTransformation.Mode, AffineTransformation> transforms, ModelTransformation.Mode cameraTransformType, MatrixStack mat)
     {
-        TransformationMatrix tr = transforms.getOrDefault(cameraTransformType, TransformationMatrix.identity());
+        AffineTransformation tr = transforms.getOrDefault(cameraTransformType, AffineTransformation.identity());
         if (!tr.isIdentity())
         {
             tr.push(mat);
@@ -115,9 +121,9 @@ public class PerspectiveMapWrapper implements IDynamicBakedModel
         return model;
     }
 
-    public static IBakedModel handlePerspective(IBakedModel model, IModelTransform state, ItemCameraTransforms.TransformType cameraTransformType, MatrixStack mat)
+    public static BakedModel handlePerspective(BakedModel model, ModelBakeSettings state, ModelTransformation.Mode cameraTransformType, MatrixStack mat)
     {
-        TransformationMatrix tr = state.getPartTransformation(cameraTransformType);
+        AffineTransformation tr = state.getPartTransformation(cameraTransformType);
         if (!tr.isIdentity())
         {
             tr.push(mat);
@@ -125,21 +131,21 @@ public class PerspectiveMapWrapper implements IDynamicBakedModel
         return model;
     }
 
-    @Override public boolean isAmbientOcclusion() { return parent.isAmbientOcclusion(); }
+    @Override public boolean useAmbientOcclusion() { return parent.useAmbientOcclusion(); }
     @Override public boolean isAmbientOcclusion(BlockState state) { return parent.isAmbientOcclusion(state); }
-    @Override public boolean isGui3d() { return parent.isGui3d(); }
+    @Override public boolean hasDepth() { return parent.hasDepth(); }
     @Override public boolean isSideLit() { return parent.isSideLit(); }
-    @Override public boolean isBuiltInRenderer() { return parent.isBuiltInRenderer(); }
-    @Override public TextureAtlasSprite getParticleTexture() { return parent.getParticleTexture(); }
+    @Override public boolean isBuiltin() { return parent.isBuiltin(); }
+    @Override public Sprite getSprite() { return parent.getSprite(); }
     @SuppressWarnings("deprecation")
-    @Override public ItemCameraTransforms getItemCameraTransforms() { return parent.getItemCameraTransforms(); }
+    @Override public ModelTransformation getTransformation() { return parent.getTransformation(); }
     @Override public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData)
     {
         return parent.getQuads(state, side, rand, extraData);
     }
 
     @Override
-    public ItemOverrideList getOverrides()
+    public ModelOverrideList getOverrides()
     {
         return overrides;
     }
@@ -151,12 +157,12 @@ public class PerspectiveMapWrapper implements IDynamicBakedModel
     }
 
     @Override
-    public IBakedModel handlePerspective(ItemCameraTransforms.TransformType cameraTransformType, MatrixStack mat)
+    public BakedModel handlePerspective(ModelTransformation.Mode cameraTransformType, MatrixStack mat)
     {
         return handlePerspective(this, transforms, cameraTransformType, mat);
     }
 
-    private class OverrideListWrapper extends ItemOverrideList
+    private class OverrideListWrapper extends ModelOverrideList
     {
         public OverrideListWrapper()
         {
@@ -165,14 +171,14 @@ public class PerspectiveMapWrapper implements IDynamicBakedModel
 
         @Nullable
         @Override
-        public IBakedModel getOverrideModel(IBakedModel model, ItemStack stack, @Nullable ClientWorld worldIn, @Nullable LivingEntity entityIn)
+        public BakedModel apply(BakedModel model, ItemStack stack, @Nullable ClientWorld worldIn, @Nullable LivingEntity entityIn)
         {
-            model = parent.getOverrides().getOverrideModel(parent, stack, worldIn, entityIn);
+            model = parent.getOverrides().apply(parent, stack, worldIn, entityIn);
             return new PerspectiveMapWrapper(model, transforms);
         }
 
         @Override
-        public ImmutableList<ItemOverride> getOverrides()
+        public ImmutableList<ModelOverride> getOverrides()
         {
             return parent.getOverrides().getOverrides();
         }

@@ -19,7 +19,7 @@
 
 package net.minecraftforge.debug.entity.player;
 
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.text.LiteralText;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -34,6 +34,6 @@ public class PlayerNameEventTest
     public static void onPlayerNameEvent(PlayerEvent.NameFormat event)
     {
         if (!ENABLE) return;
-        event.setDisplayname(new StringTextComponent("Test Name"));
+        event.setDisplayname(new LiteralText("Test Name"));
     }
 }

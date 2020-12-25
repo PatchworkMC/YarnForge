@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/packet/c2s/login/LoginQueryResponseC2SPacket.java
++++ b/net/minecraft/network/packet/c2s/login/LoginQueryResponseC2SPacket.java
+@@ -10,7 +10,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class LoginQueryResponseC2SPacket implements Packet<ServerLoginPacketListener> {
++public class LoginQueryResponseC2SPacket implements Packet<ServerLoginPacketListener>, net.minecraftforge.fml.network.ICustomPacket<LoginQueryResponseC2SPacket> {
+    private int queryId;
+    private PacketByteBuf response;
+ 

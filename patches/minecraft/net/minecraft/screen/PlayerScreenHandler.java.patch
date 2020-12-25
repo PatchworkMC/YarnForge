@@ -1,0 +1,11 @@
+--- a/net/minecraft/screen/PlayerScreenHandler.java
++++ b/net/minecraft/screen/PlayerScreenHandler.java
+@@ -55,7 +55,7 @@
+             }
+ 
+             public boolean canInsert(ItemStack stack) {
+-               return equipmentslottype == MobEntity.getPreferredEquipmentSlot(stack);
++               return stack.canEquip(equipmentslottype, owner);
+             }
+ 
+             public boolean canTakeItems(PlayerEntity playerIn) {

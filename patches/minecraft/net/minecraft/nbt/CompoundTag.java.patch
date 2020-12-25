@@ -1,0 +1,32 @@
+--- a/net/minecraft/nbt/CompoundTag.java
++++ b/net/minecraft/nbt/CompoundTag.java
+@@ -49,6 +49,7 @@
+             while((b0 = CompoundTag.readByte(input, accounter)) != 0) {
+                String s = CompoundTag.readString(input, accounter);
+                accounter.add((long)(224 + 16 * s.length()));
++               accounter.add(32); //Forge: 4 extra bytes for the object allocation.
+                Tag inbt = CompoundTag.read(TagReaders.of(b0), s, input, depth + 1, accounter);
+                if (map.put(s, inbt) != null) {
+                   accounter.add(288L);
+@@ -104,6 +105,7 @@
+ 
+    @Nullable
+    public Tag put(String key, Tag value) {
++      if (value == null) throw new IllegalArgumentException("Invalid null NBT value with key " + key);
+       return this.tags.put(key, value);
+    }
+ 
+@@ -408,11 +410,12 @@
+    }
+ 
+    private static byte readByte(DataInput input, PositionTracker sizeTracker) throws IOException {
++      sizeTracker.add(8);
+       return input.readByte();
+    }
+ 
+    private static String readString(DataInput input, PositionTracker sizeTracker) throws IOException {
+-      return input.readUTF();
++      return sizeTracker.readUTF(input.readUTF());
+    }
+ 
+    private static Tag read(TagReader<?> type, String name, DataInput input, int depth, PositionTracker accounter) {

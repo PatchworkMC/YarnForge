@@ -23,8 +23,6 @@ import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
-import net.minecraft.command.CommandSource;
-import net.minecraft.server.dedicated.DedicatedServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jline.reader.Candidate;
@@ -34,15 +32,17 @@ import org.jline.reader.ParsedLine;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 final class ConsoleCommandCompleter implements Completer
 {
     private static final Logger logger = LogManager.getLogger();
-    private final DedicatedServer server;
+    private final MinecraftDedicatedServer server;
 
-    public ConsoleCommandCompleter(DedicatedServer server)
+    public ConsoleCommandCompleter(MinecraftDedicatedServer server)
     {
         this.server = checkNotNull(server, "server");
     }
@@ -70,7 +70,7 @@ final class ConsoleCommandCompleter implements Completer
 
         try
         {
-            ParseResults<CommandSource> results = this.server.getCommandManager().getDispatcher().parse(stringReader, this.server.getCommandSource());
+            ParseResults<ServerCommandSource> results = this.server.getCommandManager().getDispatcher().parse(stringReader, this.server.getCommandSource());
             Suggestions tabComplete = this.server.getCommandManager().getDispatcher().getCompletionSuggestions(results).get();
             for (Suggestion suggestion : tabComplete.getList())
             {

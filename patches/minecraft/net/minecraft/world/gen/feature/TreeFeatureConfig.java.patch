@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/gen/feature/TreeFeatureConfig.java
++++ b/net/minecraft/world/gen/feature/TreeFeatureConfig.java
+@@ -33,6 +33,7 @@
+          return p_236684_0_.heightmap;
+       })).apply(p_236683_0_, TreeFeatureConfig::new);
+    });
++   //TODO: Review this, see if we can hook in the sapling into the Codec
+    public final BlockStateProvider trunkProvider;
+    public final BlockStateProvider leavesProvider;
+    public final List<TreeDecorator> decorators;

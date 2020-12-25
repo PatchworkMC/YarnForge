@@ -19,10 +19,10 @@
 
 package net.minecraftforge.fml.client.registry;
 
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.render.entity.EntityRenderDispatcher;
+import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
 
 public interface IRenderFactory<T extends Entity> {
-	EntityRenderer<? super T> createRenderFor(EntityRendererManager manager);
+	EntityRenderer<? super T> createRenderFor(EntityRenderDispatcher manager);
 }

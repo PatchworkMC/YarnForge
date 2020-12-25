@@ -1,0 +1,63 @@
+--- a/net/minecraft/client/gui/hud/InGameHud.java
++++ b/net/minecraft/client/gui/hud/InGameHud.java
+@@ -77,7 +77,7 @@
+    protected static final Identifier VIGNETTE_TEXTURE = new Identifier("textures/misc/vignette.png");
+    protected static final Identifier WIDGETS_TEXTURE = new Identifier("textures/gui/widgets.png");
+    protected static final Identifier PUMPKIN_BLUR = new Identifier("textures/misc/pumpkinblur.png");
+-   protected static final Text DEMO_EXPIRED_MESSAGE = new TranslatableText("demo.demoExpired");
++   private static final Text DEMO_EXPIRED_MESSAGE = new TranslatableText("demo.demoExpired");
+    protected final Random random = new Random();
+    protected final MinecraftClient client;
+    protected final ItemRenderer itemRenderer;
+@@ -413,6 +413,9 @@
+ 
+          for(StatusEffectInstance effectinstance : Ordering.natural().reverse().sortedCopy(collection)) {
+             StatusEffect effect = effectinstance.getEffectType();
++            if (!effectinstance.shouldRenderHUD()) continue;
++            // Rebind in case previous renderHUDEffect changed texture
++            this.client.getTextureManager().bindTexture(HandledScreen.BACKGROUND_TEXTURE);
+             if (effectinstance.shouldShowIcon()) {
+                int k = this.scaledWidth;
+                int l = 1;
+@@ -450,6 +453,7 @@
+                   RenderSystem.color4f(1.0F, 1.0F, 1.0F, f1);
+                   drawSprite(matrixStack, j1 + 3, k1 + 3, this.getZOffset(), 18, 18, textureatlassprite);
+                });
++               effectinstance.renderHUDEffect(this, matrixStack, k, l, this.getZOffset(), f);
+             }
+          }
+ 
+@@ -574,7 +578,8 @@
+             iformattabletextcomponent.formatted(Formatting.ITALIC);
+          }
+ 
+-         int i = this.getFontRenderer().getWidth(iformattabletextcomponent);
++         Text highlightTip = this.currentStack.getHighlightTip(iformattabletextcomponent);
++         int i = this.getFontRenderer().getWidth(highlightTip);
+          int j = (this.scaledWidth - i) / 2;
+          int k = this.scaledHeight - 59;
+          if (!this.client.interactionManager.hasStatusBars()) {
+@@ -591,7 +596,13 @@
+             RenderSystem.enableBlend();
+             RenderSystem.defaultBlendFunc();
+             fill(p_238453_1_, j - 2, k - 2, j + i + 2, k + 9 + 2, this.client.options.getTextBackgroundColor(0));
+-            this.getFontRenderer().drawWithShadow(p_238453_1_, iformattabletextcomponent, (float)j, (float)k, 16777215 + (l << 24));
++            TextRenderer font = currentStack.getItem().getFontRenderer(currentStack);
++            if (font == null) {
++               this.getFontRenderer().drawWithShadow(p_238453_1_, highlightTip, (float)j, (float)k, 16777215 + (l << 24));
++            } else {
++               j = (this.scaledWidth - font.getWidth(highlightTip)) / 2;
++               font.drawWithShadow(p_238453_1_, highlightTip, (float)j, (float)k, 16777215 + (l << 24));
++            }
+             RenderSystem.disableBlend();
+             RenderSystem.popMatrix();
+          }
+@@ -1054,7 +1065,7 @@
+          ItemStack itemstack = this.client.player.inventory.getMainHandStack();
+          if (itemstack.isEmpty()) {
+             this.heldItemTooltipFade = 0;
+-         } else if (!this.currentStack.isEmpty() && itemstack.getItem() == this.currentStack.getItem() && itemstack.getName().equals(this.currentStack.getName())) {
++         } else if (!this.currentStack.isEmpty() && itemstack.getItem() == this.currentStack.getItem() && (itemstack.getName().equals(this.currentStack.getName()) && itemstack.getHighlightTip(itemstack.getName()).equals(currentStack.getHighlightTip(currentStack.getName())))) {
+             if (this.heldItemTooltipFade > 0) {
+                --this.heldItemTooltipFade;
+             }

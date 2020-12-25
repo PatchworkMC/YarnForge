@@ -1,22 +1,22 @@
 --- a/net/minecraft/server/integrated/IntegratedServer.java
 +++ b/net/minecraft/server/integrated/IntegratedServer.java
-@@ -56,9 +56,10 @@
-       this.func_71188_g(true);
-       this.func_71245_h(true);
-       this.func_244801_P();
+@@ -58,9 +58,10 @@
+       this.setPvpEnabled(true);
+       this.setFlightEnabled(true);
+       this.method_31400();
 +      if (!net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerAboutToStart(this)) return false;
-       this.func_240800_l__();
-       this.func_71205_p(this.func_71214_G() + " - " + this.func_240793_aU_().func_76065_j());
+       this.loadWorld();
+       this.setMotd(this.getUserName() + " - " + this.getSaveProperties().getLevelName());
 -      return true;
 +      return net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerStarting(this);
     }
  
-    public void func_71217_p(BooleanSupplier p_71217_1_) {
-@@ -172,6 +173,7 @@
+    public void tick(BooleanSupplier hasTimeLeft) {
+@@ -174,6 +175,7 @@
     }
  
-    public void func_71263_m(boolean p_71263_1_) {
-+      if (func_71278_l())
-       this.func_213167_f(() -> {
-          for(ServerPlayerEntity serverplayerentity : Lists.newArrayList(this.func_184103_al().func_181057_v())) {
-             if (!serverplayerentity.func_110124_au().equals(this.field_211528_n)) {
+    public void stop(boolean waitForServer) {
++      if (isRunning())
+       this.submitAndJoin(() -> {
+          for(ServerPlayerEntity serverplayerentity : Lists.newArrayList(this.getPlayerManager().getPlayerList())) {
+             if (!serverplayerentity.getUuid().equals(this.localPlayerUuid)) {

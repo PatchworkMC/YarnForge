@@ -1,0 +1,20 @@
+--- a/net/minecraft/block/AbstractRedstoneGateBlock.java
++++ b/net/minecraft/block/AbstractRedstoneGateBlock.java
+@@ -64,7 +64,7 @@
+       if (state.canPlaceAt(worldIn, pos)) {
+          this.updatePowered(worldIn, pos, state);
+       } else {
+-         BlockEntity tileentity = this.hasBlockEntity() ? worldIn.getBlockEntity(pos) : null;
++         BlockEntity tileentity = state.hasTileEntity() ? worldIn.getBlockEntity(pos) : null;
+          dropStacks(state, worldIn, pos, tileentity);
+          worldIn.removeBlock(pos, false);
+ 
+@@ -162,6 +162,8 @@
+    protected void updateTarget(World worldIn, BlockPos pos, BlockState state) {
+       Direction direction = state.get(FACING);
+       BlockPos blockpos = pos.offset(direction.getOpposite());
++      if (net.minecraftforge.event.ForgeEventFactory.onNeighborNotify(worldIn, pos, worldIn.getBlockState(pos), java.util.EnumSet.of(direction.getOpposite()), false).isCanceled())
++         return;
+       worldIn.updateNeighbor(blockpos, this, pos);
+       worldIn.updateNeighborsExcept(blockpos, this, direction);
+    }

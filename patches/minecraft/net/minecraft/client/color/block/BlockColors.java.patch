@@ -1,0 +1,50 @@
+--- a/net/minecraft/client/color/block/BlockColors.java
++++ b/net/minecraft/client/color/block/BlockColors.java
+@@ -19,7 +19,6 @@
+ import net.minecraft.client.color.world.FoliageColors;
+ import net.minecraft.client.color.world.GrassColors;
+ import net.minecraft.state.property.Property;
+-import net.minecraft.util.collection.IdList;
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.util.registry.Registry;
+ import net.minecraft.world.BlockRenderView;
+@@ -29,7 +28,8 @@
+ 
+ @Environment(EnvType.CLIENT)
+ public class BlockColors {
+-   private final IdList<BlockColorProvider> providers = new IdList<>(32);
++   // FORGE: Use RegistryDelegates as non-Vanilla block ids are not constant
++   private final java.util.Map<net.minecraftforge.registries.IRegistryDelegate<Block>, BlockColorProvider> providers = new java.util.HashMap<>();
+    private final Map<Block, Set<Property<?>>> properties = Maps.newHashMap();
+ 
+    public static BlockColors create() {
+@@ -74,11 +74,12 @@
+       blockcolors.registerColorProvider((p_228055_0_, p_228055_1_, p_228055_2_, p_228055_3_) -> {
+          return p_228055_1_ != null && p_228055_2_ != null ? 2129968 : 7455580;
+       }, Blocks.LILY_PAD);
++      net.minecraftforge.client.ForgeHooksClient.onBlockColorsInit(blockcolors);
+       return blockcolors;
+    }
+ 
+    public int getColor(BlockState state, World worldIn, BlockPos blockPosIn) {
+-      BlockColorProvider iblockcolor = this.providers.get(Registry.BLOCK.getRawId(state.getBlock()));
++      BlockColorProvider iblockcolor = this.providers.get(state.getBlock().delegate);
+       if (iblockcolor != null) {
+          return iblockcolor.getColor(state, (BlockRenderView)null, (BlockPos)null, 0);
+       } else {
+@@ -88,13 +89,13 @@
+    }
+ 
+    public int getColor(BlockState blockStateIn, @Nullable BlockRenderView lightReaderIn, @Nullable BlockPos blockPosIn, int tintIndexIn) {
+-      BlockColorProvider iblockcolor = this.providers.get(Registry.BLOCK.getRawId(blockStateIn.getBlock()));
++      BlockColorProvider iblockcolor = this.providers.get(blockStateIn.getBlock().delegate);
+       return iblockcolor == null ? -1 : iblockcolor.getColor(blockStateIn, lightReaderIn, blockPosIn, tintIndexIn);
+    }
+ 
+    public void registerColorProvider(BlockColorProvider blockColor, Block... blocksIn) {
+       for(Block block : blocksIn) {
+-         this.providers.set(blockColor, Registry.BLOCK.getRawId(block));
++         this.providers.put(block.delegate, blockColor);
+       }
+ 
+    }

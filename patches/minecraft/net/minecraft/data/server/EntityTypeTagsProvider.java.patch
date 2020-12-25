@@ -1,0 +1,16 @@
+--- a/net/minecraft/data/server/EntityTypeTagsProvider.java
++++ b/net/minecraft/data/server/EntityTypeTagsProvider.java
+@@ -8,9 +8,13 @@
+ import net.minecraft.util.registry.Registry;
+ 
+ public class EntityTypeTagsProvider extends AbstractTagProvider<EntityType<?>> {
++   @Deprecated
+    public EntityTypeTagsProvider(DataGenerator p_i50784_1_) {
+       super(p_i50784_1_, Registry.ENTITY_TYPE);
+    }
++   public EntityTypeTagsProvider(DataGenerator p_i50784_1_, String modId, @javax.annotation.Nullable net.minecraftforge.common.data.ExistingFileHelper existingFileHelper) {
++      super(p_i50784_1_, Registry.ENTITY_TYPE, modId, existingFileHelper);
++   }
+ 
+    protected void configure() {
+       this.getOrCreateTagBuilder(EntityTypeTags.SKELETONS).add(EntityType.SKELETON, EntityType.STRAY, EntityType.WITHER_SKELETON);

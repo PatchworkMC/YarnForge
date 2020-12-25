@@ -22,7 +22,7 @@ package net.minecraftforge.client.model.generators.loaders;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.client.model.generators.CustomLoaderBuilder;
 import net.minecraftforge.client.model.generators.ModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -41,7 +41,7 @@ public class CompositeModelBuilder<T extends ModelBuilder<T>> extends CustomLoad
 
     protected CompositeModelBuilder(T parent, ExistingFileHelper existingFileHelper)
     {
-        super(new ResourceLocation("forge:composite"), parent, existingFileHelper);
+        super(new Identifier("forge:composite"), parent, existingFileHelper);
     }
 
     public CompositeModelBuilder<T> submodel(String name, T modelBuilder)

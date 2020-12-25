@@ -19,9 +19,9 @@
 
 package net.minecraftforge.registries;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public interface IForgeRegistryInternal<V extends IForgeRegistryEntry<V>> extends IForgeRegistry<V>
 {
-    void setSlaveMap(ResourceLocation name, Object obj);
+    void setSlaveMap(Identifier name, Object obj);
 }

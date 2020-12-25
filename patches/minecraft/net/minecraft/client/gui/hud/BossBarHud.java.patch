@@ -1,0 +1,23 @@
+--- a/net/minecraft/client/gui/hud/BossBarHud.java
++++ b/net/minecraft/client/gui/hud/BossBarHud.java
+@@ -33,6 +33,9 @@
+ 
+          for(ClientBossBar clientbossinfo : this.bossBars.values()) {
+             int k = i / 2 - 91;
++            net.minecraftforge.client.event.RenderGameOverlayEvent.BossInfo event =
++               net.minecraftforge.client.ForgeHooksClient.bossBarRenderPre(p_238484_1_, this.client.getWindow(), clientbossinfo, k, j, 10 + this.client.textRenderer.fontHeight);
++            if (!event.isCanceled()) {
+             RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+             this.client.getTextureManager().bindTexture(BARS_TEXTURE);
+             this.renderBossBar(p_238484_1_, k, j, clientbossinfo);
+@@ -41,7 +44,9 @@
+             int i1 = i / 2 - l / 2;
+             int j1 = j - 9;
+             this.client.textRenderer.drawWithShadow(p_238484_1_, itextcomponent, (float)i1, (float)j1, 16777215);
+-            j += 10 + 9;
++            }
++            j += event.getIncrement();
++            net.minecraftforge.client.ForgeHooksClient.bossBarRenderPost(p_238484_1_, this.client.getWindow());
+             if (j >= this.client.getWindow().getScaledHeight() / 3) {
+                break;
+             }

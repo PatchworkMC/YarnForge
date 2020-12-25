@@ -19,8 +19,7 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.util.InputMappings;
+import net.minecraft.client.options.KeyBinding;
 import net.minecraft.util.Hand;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;

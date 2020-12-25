@@ -1,0 +1,17 @@
+--- a/net/minecraft/client/options/StickyKeyBinding.java
++++ b/net/minecraft/client/options/StickyKeyBinding.java
+@@ -18,7 +18,7 @@
+ 
+    public void setPressed(boolean valueIn) {
+       if (this.toggleGetter.getAsBoolean()) {
+-         if (valueIn) {
++         if (valueIn && isConflictContextAndModifierActive()) {
+             super.setPressed(!this.isPressed());
+          }
+       } else {
+@@ -26,4 +26,5 @@
+       }
+ 
+    }
++   @Override public boolean isPressed() { return this.pressed && (isConflictContextAndModifierActive() || toggleGetter.getAsBoolean()); }
+ }

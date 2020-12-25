@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/render/model/json/ItemModelGenerator.java
++++ b/net/minecraft/client/render/model/json/ItemModelGenerator.java
+@@ -39,6 +39,7 @@
+       map.put("particle", blockModelIn.textureExists("particle") ? Either.left(blockModelIn.resolveSprite("particle")) : map.get("layer0"));
+       JsonUnbakedModel blockmodel = new JsonUnbakedModel((Identifier)null, list, map, false, blockModelIn.getGuiLight(), blockModelIn.getTransformations(), blockModelIn.getOverrides());
+       blockmodel.id = blockModelIn.id;
++      blockmodel.customData.copyFrom(blockModelIn.customData);
+       return blockmodel;
+    }
+ 

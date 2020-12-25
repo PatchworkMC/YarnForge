@@ -1,0 +1,14 @@
+--- a/net/minecraft/client/render/block/entity/PistonBlockEntityRenderer.java
++++ b/net/minecraft/client/render/block/entity/PistonBlockEntityRenderer.java
+@@ -63,8 +63,11 @@
+    }
+ 
+    private void method_3575(BlockPos p_228876_1_, BlockState p_228876_2_, MatrixStack p_228876_3_, VertexConsumerProvider p_228876_4_, World p_228876_5_, boolean p_228876_6_, int p_228876_7_) {
++      net.minecraftforge.client.ForgeHooksClient.renderPistonMovedBlocks(p_228876_1_, p_228876_2_, p_228876_3_, p_228876_4_, p_228876_5_, p_228876_6_, p_228876_7_, manager == null ? manager = MinecraftClient.getInstance().getBlockRenderManager() : manager);
++      if(false) {
+       RenderLayer rendertype = RenderLayers.getMovingBlockLayer(p_228876_2_);
+       VertexConsumer ivertexbuilder = p_228876_4_.getBuffer(rendertype);
+       this.manager.getModelRenderer().render(p_228876_5_, this.manager.getModel(p_228876_2_), p_228876_2_, p_228876_1_, p_228876_3_, ivertexbuilder, p_228876_6_, new Random(), p_228876_2_.getRenderingSeed(p_228876_1_), p_228876_7_);
++      }
+    }
+ }

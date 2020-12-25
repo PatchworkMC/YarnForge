@@ -30,10 +30,9 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.Validate;
-
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
+import net.minecraft.util.registry.RegistryKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,7 +58,7 @@ class NamespacedDefaultedWrapper<T extends IForgeRegistryEntry<T>> extends Defau
         Validate.notNull(value);
 
         if (value.getRegistryName() == null)
-            value.setRegistryName(key.getLocation());
+            value.setRegistryName(key.getValue());
 
         int realId = this.delegate.add(id, value);
         if (realId != id && id != -1)
@@ -77,41 +76,41 @@ class NamespacedDefaultedWrapper<T extends IForgeRegistryEntry<T>> extends Defau
     @Override
     public <V extends T> V validateAndRegister(OptionalInt id, RegistryKey<T> key, V value, Lifecycle lifecycle) {
         int wanted = -1;
-        if (id.isPresent() && getByValue(id.getAsInt()) != null)
+        if (id.isPresent() && get(id.getAsInt()) != null)
             wanted = id.getAsInt();
         return register(wanted, key, value, lifecycle);
     }
 
     // Reading Functions
     @Override
-    public Optional<T> getOptional(@Nullable ResourceLocation name)
+    public Optional<T> getOrEmpty(@Nullable Identifier name)
     {
         return Optional.ofNullable( this.delegate.getRaw(name)); //get without default
     }
 
     @Override
     @Nullable
-    public T getOrDefault(@Nullable ResourceLocation name)
+    public T get(@Nullable Identifier name)
     {
         return this.delegate.getValue(name); //getOrDefault
     }
 
     @Override
     @Nullable
-    public T getValueForKey(@Nullable RegistryKey<T> name)
+    public T get(@Nullable RegistryKey<T> name)
     {
-        return name == null ? null : this.delegate.getRaw(name.getLocation()); //get without default
+        return name == null ? null : this.delegate.getRaw(name.getValue()); //get without default
     }
 
     @Override
     @Nullable
-    public ResourceLocation getKey(T value)
+    public Identifier getKey(T value)
     {
         return this.delegate.getKey(value);
     }
 
     @Override
-    public boolean containsKey(ResourceLocation key)
+    public boolean containsId(Identifier key)
     {
         return this.delegate.containsKey(key);
     }
@@ -124,7 +123,7 @@ class NamespacedDefaultedWrapper<T extends IForgeRegistryEntry<T>> extends Defau
 
     @Override
     @Nullable
-    public T getByValue(int id)
+    public T get(int id)
     {
         return this.delegate.getValue(id);
     }
@@ -136,7 +135,7 @@ class NamespacedDefaultedWrapper<T extends IForgeRegistryEntry<T>> extends Defau
     }
 
     @Override
-    public Set<ResourceLocation> keySet()
+    public Set<Identifier> getIds()
     {
         return this.delegate.getKeys();
     }
@@ -156,7 +155,7 @@ class NamespacedDefaultedWrapper<T extends IForgeRegistryEntry<T>> extends Defau
     }
 
     @Override
-    public ResourceLocation getDefaultKey()
+    public Identifier getDefaultId()
     {
         return this.delegate.getDefaultKey();
     }
@@ -167,7 +166,7 @@ class NamespacedDefaultedWrapper<T extends IForgeRegistryEntry<T>> extends Defau
 
     public static class Factory<V extends IForgeRegistryEntry<V>> implements IForgeRegistry.CreateCallback<V>
     {
-        public static final ResourceLocation ID = new ResourceLocation("forge", "registry_defaulted_wrapper");
+        public static final Identifier ID = new Identifier("forge", "registry_defaulted_wrapper");
         @Override
         public void onCreate(IForgeRegistryInternal<V> owner, RegistryManager stage)
         {

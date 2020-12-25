@@ -19,7 +19,7 @@
 
 package net.minecraftforge.items.wrapper;
 
-import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -28,9 +28,9 @@ import javax.annotation.Nonnull;
 
 public class InvWrapper implements IItemHandlerModifiable
 {
-    private final IInventory inv;
+    private final Inventory inv;
 
-    public InvWrapper(IInventory inv)
+    public InvWrapper(Inventory inv)
     {
         this.inv = inv;
     }
@@ -58,14 +58,14 @@ public class InvWrapper implements IItemHandlerModifiable
     @Override
     public int getSlots()
     {
-        return getInv().getSizeInventory();
+        return getInv().size();
     }
 
     @Override
     @Nonnull
     public ItemStack getStackInSlot(int slot)
     {
-        return getInv().getStackInSlot(slot);
+        return getInv().getStack(slot);
     }
 
     @Override
@@ -75,29 +75,29 @@ public class InvWrapper implements IItemHandlerModifiable
         if (stack.isEmpty())
             return ItemStack.EMPTY;
 
-        ItemStack stackInSlot = getInv().getStackInSlot(slot);
+        ItemStack stackInSlot = getInv().getStack(slot);
 
         int m;
         if (!stackInSlot.isEmpty())
         {
-            if (stackInSlot.getCount() >= Math.min(stackInSlot.getMaxStackSize(), getSlotLimit(slot)))
+            if (stackInSlot.getCount() >= Math.min(stackInSlot.getMaxCount(), getSlotLimit(slot)))
                 return stack;
 
             if (!ItemHandlerHelper.canItemStacksStack(stack, stackInSlot))
                 return stack;
 
-            if (!getInv().isItemValidForSlot(slot, stack))
+            if (!getInv().isValid(slot, stack))
                 return stack;
 
-            m = Math.min(stack.getMaxStackSize(), getSlotLimit(slot)) - stackInSlot.getCount();
+            m = Math.min(stack.getMaxCount(), getSlotLimit(slot)) - stackInSlot.getCount();
 
             if (stack.getCount() <= m)
             {
                 if (!simulate)
                 {
                     ItemStack copy = stack.copy();
-                    copy.grow(stackInSlot.getCount());
-                    getInv().setInventorySlotContents(slot, copy);
+                    copy.increment(stackInSlot.getCount());
+                    getInv().setStack(slot, copy);
                     getInv().markDirty();
                 }
 
@@ -110,37 +110,37 @@ public class InvWrapper implements IItemHandlerModifiable
                 if (!simulate)
                 {
                     ItemStack copy = stack.split(m);
-                    copy.grow(stackInSlot.getCount());
-                    getInv().setInventorySlotContents(slot, copy);
+                    copy.increment(stackInSlot.getCount());
+                    getInv().setStack(slot, copy);
                     getInv().markDirty();
                     return stack;
                 }
                 else
                 {
-                    stack.shrink(m);
+                    stack.decrement(m);
                     return stack;
                 }
             }
         }
         else
         {
-            if (!getInv().isItemValidForSlot(slot, stack))
+            if (!getInv().isValid(slot, stack))
                 return stack;
 
-            m = Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
+            m = Math.min(stack.getMaxCount(), getSlotLimit(slot));
             if (m < stack.getCount())
             {
                 // copy the stack to not modify the original one
                 stack = stack.copy();
                 if (!simulate)
                 {
-                    getInv().setInventorySlotContents(slot, stack.split(m));
+                    getInv().setStack(slot, stack.split(m));
                     getInv().markDirty();
                     return stack;
                 }
                 else
                 {
-                    stack.shrink(m);
+                    stack.decrement(m);
                     return stack;
                 }
             }
@@ -148,7 +148,7 @@ public class InvWrapper implements IItemHandlerModifiable
             {
                 if (!simulate)
                 {
-                    getInv().setInventorySlotContents(slot, stack);
+                    getInv().setStack(slot, stack);
                     getInv().markDirty();
                 }
                 return ItemStack.EMPTY;
@@ -164,7 +164,7 @@ public class InvWrapper implements IItemHandlerModifiable
         if (amount == 0)
             return ItemStack.EMPTY;
 
-        ItemStack stackInSlot = getInv().getStackInSlot(slot);
+        ItemStack stackInSlot = getInv().getStack(slot);
 
         if (stackInSlot.isEmpty())
             return ItemStack.EMPTY;
@@ -186,7 +186,7 @@ public class InvWrapper implements IItemHandlerModifiable
         {
             int m = Math.min(stackInSlot.getCount(), amount);
 
-            ItemStack decrStackSize = getInv().decrStackSize(slot, m);
+            ItemStack decrStackSize = getInv().removeStack(slot, m);
             getInv().markDirty();
             return decrStackSize;
         }
@@ -195,22 +195,22 @@ public class InvWrapper implements IItemHandlerModifiable
     @Override
     public void setStackInSlot(int slot, @Nonnull ItemStack stack)
     {
-        getInv().setInventorySlotContents(slot, stack);
+        getInv().setStack(slot, stack);
     }
 
     @Override
     public int getSlotLimit(int slot)
     {
-        return getInv().getInventoryStackLimit();
+        return getInv().getMaxCountPerStack();
     }
 
     @Override
     public boolean isItemValid(int slot, @Nonnull ItemStack stack)
     {
-        return getInv().isItemValidForSlot(slot, stack);
+        return getInv().isValid(slot, stack);
     }
 
-    public IInventory getInv()
+    public Inventory getInv()
     {
         return inv;
     }

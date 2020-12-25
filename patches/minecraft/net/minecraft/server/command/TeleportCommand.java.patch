@@ -1,0 +1,10 @@
+--- a/net/minecraft/server/command/TeleportCommand.java
++++ b/net/minecraft/server/command/TeleportCommand.java
+@@ -157,7 +157,6 @@
+                entityIn.refreshPositionAndAngles(x, y, z, f1, f);
+                entityIn.setHeadYaw(f1);
+                worldIn.onDimensionChanged(entityIn);
+-               entity.removed = true;
+             }
+          }
+ 

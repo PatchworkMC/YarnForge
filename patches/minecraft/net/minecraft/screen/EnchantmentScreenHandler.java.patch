@@ -1,0 +1,78 @@
+--- a/net/minecraft/screen/EnchantmentScreenHandler.java
++++ b/net/minecraft/screen/EnchantmentScreenHandler.java
+@@ -57,7 +57,7 @@
+       });
+       this.addSlot(new Slot(this.inventory, 1, 35, 47) {
+          public boolean canInsert(ItemStack stack) {
+-            return stack.getItem() == Items.LAPIS_LAZULI;
++            return net.minecraftforge.common.Tags.Items.GEMS_LAPIS.contains(stack.getItem());
+          }
+       });
+ 
+@@ -83,40 +83,28 @@
+       this.addProperty(Property.create(this.enchantmentLevel, 2));
+    }
+ 
++   private float getPower(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos) {
++      return world.getBlockState(pos).getEnchantPowerBonus(world, pos);
++   }
++
+    public void onContentChanged(Inventory inventoryIn) {
+       if (inventoryIn == this.inventory) {
+          ItemStack itemstack = inventoryIn.getStack(0);
+          if (!itemstack.isEmpty() && itemstack.isEnchantable()) {
+             this.context.run((p_217002_2_, p_217002_3_) -> {
+-               int j = 0;
++               int power = 0;
+ 
+                for(int k = -1; k <= 1; ++k) {
+                   for(int l = -1; l <= 1; ++l) {
+                      if ((k != 0 || l != 0) && p_217002_2_.isAir(p_217002_3_.add(l, 0, k)) && p_217002_2_.isAir(p_217002_3_.add(l, 1, k))) {
+-                        if (p_217002_2_.getBlockState(p_217002_3_.add(l * 2, 0, k * 2)).isOf(Blocks.BOOKSHELF)) {
+-                           ++j;
+-                        }
++                        power += getPower(p_217002_2_, p_217002_3_.add(l * 2, 0, k * 2));
++                        power += getPower(p_217002_2_, p_217002_3_.add(l * 2, 1, k * 2));
+ 
+-                        if (p_217002_2_.getBlockState(p_217002_3_.add(l * 2, 1, k * 2)).isOf(Blocks.BOOKSHELF)) {
+-                           ++j;
+-                        }
+-
+                         if (l != 0 && k != 0) {
+-                           if (p_217002_2_.getBlockState(p_217002_3_.add(l * 2, 0, k)).isOf(Blocks.BOOKSHELF)) {
+-                              ++j;
+-                           }
+-
+-                           if (p_217002_2_.getBlockState(p_217002_3_.add(l * 2, 1, k)).isOf(Blocks.BOOKSHELF)) {
+-                              ++j;
+-                           }
+-
+-                           if (p_217002_2_.getBlockState(p_217002_3_.add(l, 0, k * 2)).isOf(Blocks.BOOKSHELF)) {
+-                              ++j;
+-                           }
+-
+-                           if (p_217002_2_.getBlockState(p_217002_3_.add(l, 1, k * 2)).isOf(Blocks.BOOKSHELF)) {
+-                              ++j;
+-                           }
++                           power += getPower(p_217002_2_, p_217002_3_.add(l * 2, 0, k));
++                           power += getPower(p_217002_2_, p_217002_3_.add(l * 2, 1, k));
++                           power += getPower(p_217002_2_, p_217002_3_.add(l, 0, k * 2));
++                           power += getPower(p_217002_2_, p_217002_3_.add(l, 1, k * 2));
+                         }
+                      }
+                   }
+@@ -125,12 +113,13 @@
+                this.random.setSeed((long)this.seed.get());
+ 
+                for(int i1 = 0; i1 < 3; ++i1) {
+-                  this.enchantmentPower[i1] = EnchantmentHelper.calculateRequiredExperienceLevel(this.random, i1, j, itemstack);
++                  this.enchantmentPower[i1] = EnchantmentHelper.calculateRequiredExperienceLevel(this.random, i1, (int)power, itemstack);
+                   this.enchantmentId[i1] = -1;
+                   this.enchantmentLevel[i1] = -1;
+                   if (this.enchantmentPower[i1] < i1 + 1) {
+                      this.enchantmentPower[i1] = 0;
+                   }
++                  this.enchantmentPower[i1] = net.minecraftforge.event.ForgeEventFactory.onEnchantmentLevelSet(p_217002_2_, p_217002_3_, i1, (int)power, itemstack, enchantmentPower[i1]);
+                }
+ 
+                for(int j1 = 0; j1 < 3; ++j1) {

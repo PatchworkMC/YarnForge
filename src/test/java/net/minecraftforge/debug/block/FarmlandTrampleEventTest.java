@@ -30,7 +30,7 @@ public class FarmlandTrampleEventTest
     @SubscribeEvent
     public static void onFarmlandTrampled(BlockEvent.FarmlandTrampleEvent event)
     {
-        if(event.getEntity().isCrouching())
+        if(event.getEntity().isInSneakingPose())
             event.setCanceled(true);
     }
 }

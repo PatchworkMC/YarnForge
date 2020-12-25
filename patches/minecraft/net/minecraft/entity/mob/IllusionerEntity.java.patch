@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/mob/IllusionerEntity.java
++++ b/net/minecraft/entity/mob/IllusionerEntity.java
+@@ -184,6 +184,8 @@
+    public void attack(LivingEntity target, float distanceFactor) {
+       ItemStack itemstack = this.getArrowType(this.getStackInHand(ProjectileUtil.getHandPossiblyHolding(this, Items.BOW)));
+       PersistentProjectileEntity abstractarrowentity = ProjectileUtil.createArrowProjectile(this, itemstack, distanceFactor);
++      if (this.getMainHandStack().getItem() instanceof net.minecraft.item.BowItem)
++         abstractarrowentity = ((net.minecraft.item.BowItem)this.getMainHandStack().getItem()).customArrow(abstractarrowentity);
+       double d0 = target.getX() - this.getX();
+       double d1 = target.getBodyY(0.3333333333333333D) - abstractarrowentity.getY();
+       double d2 = target.getZ() - this.getZ();

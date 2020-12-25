@@ -1,0 +1,35 @@
+--- a/net/minecraft/block/EntityShapeContext.java
++++ b/net/minecraft/block/EntityShapeContext.java
+@@ -26,6 +26,11 @@
+    private final Predicate<Fluid> field_24425;
+ 
+    protected EntityShapeContext(boolean sneaking, double posY, Item item, Predicate<Fluid> fluidPredicate) {
++       this(null, sneaking, posY, item, fluidPredicate);
++   }
++
++   protected EntityShapeContext(@javax.annotation.Nullable Entity entity, boolean sneaking, double posY, Item item, Predicate<Fluid> fluidPredicate) {
++      this.entity = entity;
+       this.descending = sneaking;
+       this.minY = posY;
+       this.heldItem = item;
+@@ -34,7 +39,7 @@
+ 
+    @Deprecated
+    protected EntityShapeContext(Entity entityIn) {
+-      this(entityIn.isDescending(), entityIn.getY(), entityIn instanceof LivingEntity ? ((LivingEntity)entityIn).getMainHandStack().getItem() : Items.AIR, entityIn instanceof LivingEntity ? ((LivingEntity)entityIn)::canWalkOnFluid : (p_237494_0_) -> {
++      this(entityIn, entityIn.isDescending(), entityIn.getY(), entityIn instanceof LivingEntity ? ((LivingEntity)entityIn).getMainHandStack().getItem() : Items.AIR, entityIn instanceof LivingEntity ? ((LivingEntity)entityIn)::canWalkOnFluid : (p_237494_0_) -> {
+          return false;
+       });
+    }
+@@ -54,4 +59,11 @@
+    public boolean isAbove(VoxelShape shape, BlockPos pos, boolean p_216378_3_) {
+       return this.minY > (double)pos.getY() + shape.getMax(Direction.Axis.Y) - (double)1.0E-5F;
+    }
++
++   private final @javax.annotation.Nullable Entity entity;
++
++   @Override
++   public @javax.annotation.Nullable Entity getEntity() {
++      return entity;
++   }
+ }

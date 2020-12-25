@@ -19,9 +19,9 @@
 
 package net.minecraftforge.event.entity.living;
 
-import net.minecraft.entity.AgeableEntity;
-import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
@@ -52,19 +52,19 @@ public class BabyEntitySpawnEvent extends net.minecraftforge.eventbus.api.Event
     private final MobEntity parentA;
     private final MobEntity parentB;
     private final PlayerEntity causedByPlayer;
-    private AgeableEntity child;
+    private PassiveEntity child;
 
-    public BabyEntitySpawnEvent(MobEntity parentA, MobEntity parentB, @Nullable AgeableEntity proposedChild)
+    public BabyEntitySpawnEvent(MobEntity parentA, MobEntity parentB, @Nullable PassiveEntity proposedChild)
     {
         //causedByPlayer calculated here to simplify the patch.
         PlayerEntity causedByPlayer = null;
         if (parentA instanceof AnimalEntity) {
-            causedByPlayer = ((AnimalEntity)parentA).getLoveCause();
+            causedByPlayer = ((AnimalEntity)parentA).getLovingPlayer();
         }
 
         if (causedByPlayer == null && parentB instanceof AnimalEntity)
         {
-            causedByPlayer = ((AnimalEntity)parentB).getLoveCause();
+            causedByPlayer = ((AnimalEntity)parentB).getLovingPlayer();
         }
 
         this.parentA = parentA;
@@ -90,12 +90,12 @@ public class BabyEntitySpawnEvent extends net.minecraftforge.eventbus.api.Event
     }
 
     @Nullable
-    public AgeableEntity getChild()
+    public PassiveEntity getChild()
     {
         return child;
     }
 
-    public void setChild(AgeableEntity proposedChild)
+    public void setChild(PassiveEntity proposedChild)
     {
         child = proposedChild;
     }

@@ -1,0 +1,28 @@
+--- a/net/minecraft/loot/context/LootContext.java
++++ b/net/minecraft/loot/context/LootContext.java
+@@ -95,6 +95,10 @@
+       return this.world;
+    }
+ 
++   public int getLootingModifier() {
++      return net.minecraftforge.common.ForgeHooks.getLootingLevel(get(LootContextParameters.THIS_ENTITY), get(LootContextParameters.KILLER_ENTITY), get(LootContextParameters.DAMAGE_SOURCE));
++   }
++
+    public static class Builder {
+       private final ServerWorld world;
+       private final Map<LootContextParameter<?>, Object> parameters = Maps.newIdentityHashMap();
+@@ -106,6 +110,14 @@
+          this.world = worldIn;
+       }
+ 
++      public Builder(LootContext context) {
++         this.world = context.world;
++         this.parameters.putAll(context.parameters);
++         this.drops.putAll(context.drops);
++         this.random = context.random;
++         this.luck = context.luck;
++      }
++
+       public LootContext.Builder random(Random randomIn) {
+          this.random = randomIn;
+          return this;

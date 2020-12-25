@@ -1,0 +1,39 @@
+--- a/net/minecraft/block/CropBlock.java
++++ b/net/minecraft/block/CropBlock.java
+@@ -60,12 +60,14 @@
+    }
+ 
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random) {
++      if (!worldIn.isAreaLoaded(pos, 1)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+       if (worldIn.getBaseLightLevel(pos, 0) >= 9) {
+          int i = this.getAge(state);
+          if (i < this.getMaxAge()) {
+             float f = getAvailableMoisture(this, worldIn, pos);
+-            if (random.nextInt((int)(25.0F / f) + 1) == 0) {
++            if (net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, random.nextInt((int)(25.0F / f) + 1) == 0)) {
+                worldIn.setBlockState(pos, this.withAge(i + 1), 2);
++               net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state);
+             }
+          }
+       }
+@@ -94,9 +96,9 @@
+          for(int j = -1; j <= 1; ++j) {
+             float f1 = 0.0F;
+             BlockState blockstate = worldIn.getBlockState(blockpos.add(i, 0, j));
+-            if (blockstate.isOf(Blocks.FARMLAND)) {
++            if (blockstate.canSustainPlant(worldIn, blockpos.add(i, 0, j), net.minecraft.util.math.Direction.UP, (net.minecraftforge.common.IPlantable) blockIn)) {
+                f1 = 1.0F;
+-               if (blockstate.get(FarmlandBlock.MOISTURE) > 0) {
++               if (blockstate.isFertile(worldIn, pos.add(i, 0, j))) {
+                   f1 = 3.0F;
+                }
+             }
+@@ -132,7 +134,7 @@
+    }
+ 
+    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn) {
+-      if (entityIn instanceof RavagerEntity && worldIn.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
++      if (entityIn instanceof RavagerEntity && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(worldIn, entityIn)) {
+          worldIn.breakBlock(pos, true, entityIn);
+       }
+ 

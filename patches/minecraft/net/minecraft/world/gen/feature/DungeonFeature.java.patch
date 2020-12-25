@@ -1,0 +1,10 @@
+--- a/net/minecraft/world/gen/feature/DungeonFeature.java
++++ b/net/minecraft/world/gen/feature/DungeonFeature.java
+@@ -123,6 +123,6 @@
+    }
+ 
+    private EntityType<?> getMobSpawnerEntity(Random rand) {
+-      return Util.getRandom(MOB_SPAWNER_ENTITIES, rand);
++      return net.minecraftforge.common.DungeonHooks.getRandomDungeonMob(rand);
+    }
+ }

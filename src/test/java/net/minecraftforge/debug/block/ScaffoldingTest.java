@@ -22,21 +22,23 @@ package net.minecraftforge.debug.block;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Material;
+import net.minecraft.block.MaterialColor;
 import net.minecraft.block.ScaffoldingBlock;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialColor;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.tag.BlockTags;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.WorldView;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.Tags.IOptionalNamedTag;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import net.minecraftforge.debug.block.ScaffoldingTest.ScaffoldingBlockState;
+import net.minecraftforge.debug.block.ScaffoldingTest.ScaffoldingMethodTestBlock;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
@@ -54,9 +56,9 @@ public class ScaffoldingTest
 {
     static final String MODID = "scaffolding_test";
     static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
-    static final IOptionalNamedTag<Block> SCAFFOLDING = BlockTags.createOptional(new ResourceLocation("forge", "scaffolding"));
+    static final IOptionalNamedTag<Block> SCAFFOLDING = BlockTags.createOptional(new Identifier("forge", "scaffolding"));
 
-    static final RegistryObject<Block> SCAFFOLDING_METHOD_TEST = BLOCKS.register("scaffolding_method_test", () -> new ScaffoldingMethodTestBlock(AbstractBlock.Properties.create(Material.MISCELLANEOUS, MaterialColor.SAND).doesNotBlockMovement().sound(SoundType.SCAFFOLDING).variableOpacity()));
+    static final RegistryObject<Block> SCAFFOLDING_METHOD_TEST = BLOCKS.register("scaffolding_method_test", () -> new ScaffoldingMethodTestBlock(AbstractBlock.Settings.of(Material.SUPPORTED, MaterialColor.SAND).noCollision().sounds(BlockSoundGroup.SCAFFOLDING).dynamicBounds()));
 
     public ScaffoldingTest()
     {
@@ -68,7 +70,7 @@ public class ScaffoldingTest
     private void gatherData(final GatherDataEvent event)
     {
         DataGenerator gen = event.getGenerator();
-        if(event.includeClient()) gen.addProvider(new ScaffoldingBlockState(gen, MODID, event.getExistingFileHelper()));
+        if(event.includeClient()) gen.install(new ScaffoldingBlockState(gen, MODID, event.getExistingFileHelper()));
     }
 
     static class ScaffoldingBlockState extends BlockStateProvider
@@ -81,20 +83,20 @@ public class ScaffoldingTest
         @Override
         protected void registerStatesAndModels()
         {
-            this.getVariantBuilder(SCAFFOLDING_METHOD_TEST.get()).forAllStatesExcept((state) -> ConfiguredModel.builder().modelFile(state.get(ScaffoldingBlock.BOTTOM) ? new ModelFile.ExistingModelFile(new ResourceLocation("block/scaffolding_unstable"), this.models().existingFileHelper) : new ModelFile.ExistingModelFile(new ResourceLocation("block/scaffolding_stable"), this.models().existingFileHelper)).build(), ScaffoldingBlock.DISTANCE, ScaffoldingBlock.WATERLOGGED);
+            this.getVariantBuilder(SCAFFOLDING_METHOD_TEST.get()).forAllStatesExcept((state) -> ConfiguredModel.builder().modelFile(state.get(ScaffoldingBlock.BOTTOM) ? new ModelFile.ExistingModelFile(new Identifier("block/scaffolding_unstable"), this.models().existingFileHelper) : new ModelFile.ExistingModelFile(new Identifier("block/scaffolding_stable"), this.models().existingFileHelper)).build(), ScaffoldingBlock.DISTANCE, ScaffoldingBlock.WATERLOGGED);
         }
     }
 
     static class ScaffoldingMethodTestBlock extends ScaffoldingBlock
     {
 
-        public ScaffoldingMethodTestBlock(Properties properties)
+        public ScaffoldingMethodTestBlock(Settings properties)
         {
             super(properties);
         }
 
         @Override
-        public boolean isScaffolding(BlockState state, IWorldReader world, BlockPos pos, LivingEntity entity)
+        public boolean isScaffolding(BlockState state, WorldView world, BlockPos pos, LivingEntity entity)
         {
             return true;
         }

@@ -1,0 +1,103 @@
+--- a/net/minecraft/structure/Structure.java
++++ b/net/minecraft/structure/Structure.java
+@@ -191,6 +191,10 @@
+       return transformAround(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getPosition());
+    }
+ 
++   public static Vec3d transformedVec3d(StructurePlacementData placementIn, Vec3d pos) {
++      return transformAround(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getPosition());
++   }
++
+    public void place(ServerWorldAccess p_237144_1_, BlockPos p_237144_2_, StructurePlacementData p_237144_3_, Random p_237144_4_) {
+       p_237144_3_.calculateBoundingBox();
+       this.placeAndNotifyListeners(p_237144_1_, p_237144_2_, p_237144_3_, p_237144_4_);
+@@ -216,7 +220,7 @@
+             int i1 = Integer.MIN_VALUE;
+             int j1 = Integer.MIN_VALUE;
+ 
+-            for(Structure.StructureBlockInfo template$blockinfo : process(p_237146_1_, p_237146_2_, p_237146_3_, p_237146_4_, list)) {
++            for(Structure.StructureBlockInfo template$blockinfo : processBlockInfos(p_237146_1_, p_237146_2_, p_237146_3_, p_237146_4_, list, this)) {
+                BlockPos blockpos = template$blockinfo.pos;
+                if (mutableboundingbox == null || mutableboundingbox.contains(blockpos)) {
+                   FluidState fluidstate = p_237146_4_.shouldPlaceFluids() ? p_237146_1_.getFluidState(blockpos) : null;
+@@ -331,7 +335,7 @@
+             }
+ 
+             if (!p_237146_4_.shouldIgnoreEntities()) {
+-               this.spawnEntities(p_237146_1_, p_237146_2_, p_237146_4_.getMirror(), p_237146_4_.getRotation(), p_237146_4_.getPosition(), mutableboundingbox, p_237146_4_.method_27265());
++               this.addEntitiesToWorld(p_237146_1_, p_237146_2_, p_237146_4_);
+             }
+ 
+             return true;
+@@ -360,14 +364,19 @@
+       });
+    }
+ 
++   @Deprecated //Use Forge version
+    public static List<Structure.StructureBlockInfo> process(WorldAccess p_237145_0_, BlockPos p_237145_1_, BlockPos p_237145_2_, StructurePlacementData p_237145_3_, List<Structure.StructureBlockInfo> p_237145_4_) {
++      return processBlockInfos(p_237145_0_, p_237145_1_, p_237145_2_, p_237145_3_, p_237145_4_, null);
++   }
++
++   public static List<Structure.StructureBlockInfo> processBlockInfos(WorldAccess p_237145_0_, BlockPos p_237145_1_, BlockPos p_237145_2_, StructurePlacementData p_237145_3_, List<Structure.StructureBlockInfo> p_237145_4_, @Nullable Structure template) {
+       List<Structure.StructureBlockInfo> list = Lists.newArrayList();
+ 
+       for(Structure.StructureBlockInfo template$blockinfo : p_237145_4_) {
+          BlockPos blockpos = transform(p_237145_3_, template$blockinfo.pos).add(p_237145_1_);
+          Structure.StructureBlockInfo template$blockinfo1 = new Structure.StructureBlockInfo(blockpos, template$blockinfo.state, template$blockinfo.tag != null ? template$blockinfo.tag.copy() : null);
+ 
+-         for(Iterator<StructureProcessor> iterator = p_237145_3_.getProcessors().iterator(); template$blockinfo1 != null && iterator.hasNext(); template$blockinfo1 = iterator.next().process(p_237145_0_, p_237145_1_, p_237145_2_, template$blockinfo, template$blockinfo1, p_237145_3_)) {
++         for(Iterator<StructureProcessor> iterator = p_237145_3_.getProcessors().iterator(); template$blockinfo1 != null && iterator.hasNext(); template$blockinfo1 = iterator.next().process(p_237145_0_, p_237145_1_, p_237145_2_, template$blockinfo, template$blockinfo1, p_237145_3_, template)) {
+          }
+ 
+          if (template$blockinfo1 != null) {
+@@ -378,13 +387,30 @@
+       return list;
+    }
+ 
+-   private void spawnEntities(ServerWorldAccess p_237143_1_, BlockPos p_237143_2_, BlockMirror p_237143_3_, BlockRotation p_237143_4_, BlockPos p_237143_5_, @Nullable BlockBox p_237143_6_, boolean p_237143_7_) {
+-      for(Structure.StructureEntityInfo template$entityinfo : this.entities) {
+-         BlockPos blockpos = transformAround(template$entityinfo.blockPos, p_237143_3_, p_237143_4_, p_237143_5_).add(p_237143_2_);
+-         if (p_237143_6_ == null || p_237143_6_.contains(blockpos)) {
++   public static List<Structure.StructureEntityInfo> processEntityInfos(@Nullable Structure template, WorldAccess worldIn, BlockPos offsetPos, StructurePlacementData placementSettingsIn, List<Structure.StructureEntityInfo> blockInfos) {
++      List<Structure.StructureEntityInfo> list = Lists.newArrayList();
++      for(Structure.StructureEntityInfo entityInfo : blockInfos) {
++         Vec3d pos = transformedVec3d(placementSettingsIn, entityInfo.pos).add(Vec3d.of(offsetPos));
++         BlockPos blockpos = transform(placementSettingsIn, entityInfo.blockPos).add(offsetPos);
++         Structure.StructureEntityInfo info = new Structure.StructureEntityInfo(pos, blockpos, entityInfo.tag);
++         for (StructureProcessor proc : placementSettingsIn.getProcessors()) {
++            info = proc.processEntity(worldIn, offsetPos, entityInfo, info, placementSettingsIn, template);
++            if (info == null)
++               break;
++         }
++         if (info != null)
++            list.add(info);
++      }
++      return list;
++   }
++
++   private void addEntitiesToWorld(ServerWorldAccess p_237143_1_, BlockPos p_237143_2_, StructurePlacementData placementIn) {
++      for(Structure.StructureEntityInfo template$entityinfo : processEntityInfos(this, p_237143_1_, p_237143_2_, placementIn, this.entities)) {
++         BlockPos blockpos = transformAround(template$entityinfo.blockPos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getPosition()).add(p_237143_2_);
++         blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
++         if (placementIn.getBoundingBox() == null || placementIn.getBoundingBox().contains(blockpos)) {
+             CompoundTag compoundnbt = template$entityinfo.tag.copy();
+-            Vec3d vector3d = transformAround(template$entityinfo.pos, p_237143_3_, p_237143_4_, p_237143_5_);
+-            Vec3d vector3d1 = vector3d.add((double)p_237143_2_.getX(), (double)p_237143_2_.getY(), (double)p_237143_2_.getZ());
++            Vec3d vector3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
+             ListTag listnbt = new ListTag();
+             listnbt.add(DoubleTag.of(vector3d1.x));
+             listnbt.add(DoubleTag.of(vector3d1.y));
+@@ -392,10 +418,10 @@
+             compoundnbt.put("Pos", listnbt);
+             compoundnbt.remove("UUID");
+             getEntity(p_237143_1_, compoundnbt).ifPresent((p_242927_6_) -> {
+-               float f = p_242927_6_.applyMirror(p_237143_3_);
+-               f = f + (p_242927_6_.yaw - p_242927_6_.applyRotation(p_237143_4_));
++               float f = p_242927_6_.applyMirror(placementIn.getMirror());
++               f = f + (p_242927_6_.yaw - p_242927_6_.applyRotation(placementIn.getRotation()));
+                p_242927_6_.refreshPositionAndAngles(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.pitch);
+-               if (p_237143_7_ && p_242927_6_ instanceof MobEntity) {
++               if (placementIn.method_27265() && p_242927_6_ instanceof MobEntity) {
+                   ((MobEntity)p_242927_6_).initialize(p_237143_1_, p_237143_1_.getLocalDifficulty(new BlockPos(vector3d1)), SpawnReason.STRUCTURE, (EntityData)null, compoundnbt);
+                }
+ 

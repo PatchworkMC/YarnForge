@@ -1,0 +1,11 @@
+--- a/net/minecraft/particle/ItemStackParticleEffect.java
++++ b/net/minecraft/particle/ItemStackParticleEffect.java
+@@ -39,7 +39,7 @@
+ 
+    public ItemStackParticleEffect(ParticleType<ItemStackParticleEffect> p_i47952_1_, ItemStack p_i47952_2_) {
+       this.type = p_i47952_1_;
+-      this.stack = p_i47952_2_;
++      this.stack = p_i47952_2_.copy(); //Forge: Fix stack updating after the fact causing particle changes.
+    }
+ 
+    public void write(PacketByteBuf buffer) {

@@ -26,9 +26,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient.IItemList;
+import net.minecraft.recipe.Ingredient.Entry;
 
-public class StackList implements IItemList
+public class StackList implements Entry
 {
     private Collection<ItemStack> items;
     public StackList(Collection<ItemStack> items)
@@ -43,7 +43,7 @@ public class StackList implements IItemList
     }
 
     @Override
-    public JsonObject serialize()
+    public JsonObject toJson()
     {
         if (items.size() == 1)
             return toJson(items.iterator().next());

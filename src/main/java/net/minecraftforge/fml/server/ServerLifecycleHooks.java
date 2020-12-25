@@ -58,35 +58,34 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.ProtocolType;
-import net.minecraft.network.handshake.client.CHandshakePacket;
-import net.minecraft.network.login.server.SDisconnectLoginPacket;
-import net.minecraft.resources.IPackNameDecorator;
-import net.minecraft.resources.ResourcePackInfo;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.NetworkState;
+import net.minecraft.network.packet.c2s.handshake.HandshakeC2SPacket;
+import net.minecraft.network.packet.s2c.login.LoginDisconnectS2CPacket;
+import net.minecraft.resource.ResourcePackProfile;
+import net.minecraft.resource.ResourcePackSource;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.storage.FolderName;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.WorldSavePath;
 
 import static net.minecraftforge.fml.Logging.CORE;
 
 public class ServerLifecycleHooks {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final Marker SERVERHOOKS = MarkerManager.getMarker("SERVERHOOKS");
-	private static final FolderName SERVERCONFIG = new FolderName("serverconfig");
+	private static final WorldSavePath SERVERCONFIG = new WorldSavePath("serverconfig");
 	private static volatile CountDownLatch exitLatch = null;
 	private static MinecraftServer currentServer;
 
 	private static Path getServerConfigPath(final MinecraftServer server) {
-		final Path serverConfig = server.func_240776_a_(SERVERCONFIG);
+		final Path serverConfig = server.getSavePath(SERVERCONFIG);
 		FileUtils.getOrCreateDirectory(serverConfig, "serverconfig");
 		return serverConfig;
 	}
 
 	public static boolean handleServerAboutToStart(final MinecraftServer server) {
 		currentServer = server;
-		currentServer.getServerStatusResponse().setForgeData(new FMLStatusPing()); //gathers NetworkRegistry data
+		currentServer.getServerMetadata().setForgeData(new FMLStatusPing()); //gathers NetworkRegistry data
 		// on the dedi server we need to force the stuff to setup properly
 		LogicalSidedProvider.setServer(() -> server);
 		ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.SERVER, getServerConfigPath(server));
@@ -113,7 +112,7 @@ public class ServerLifecycleHooks {
 	}
 
 	public static void handleServerStopped(final MinecraftServer server) {
-		if (!server.isDedicatedServer()) {
+		if (!server.isDedicated()) {
 			GameData.revertToFrozen();
 		}
 		MinecraftForge.EVENT_BUS.post(new FMLServerStoppedEvent(server));
@@ -134,16 +133,16 @@ public class ServerLifecycleHooks {
 
 	private static final AtomicBoolean allowLogins = new AtomicBoolean(false);
 
-	public static boolean handleServerLogin(final CHandshakePacket packet, final NetworkManager manager) {
+	public static boolean handleServerLogin(final HandshakeC2SPacket packet, final ClientConnection manager) {
 		if (!allowLogins.get()) {
-			StringTextComponent text = new StringTextComponent("Server is still starting! Please wait before reconnecting.");
-			LOGGER.info(SERVERHOOKS, "Disconnecting Player (server is still starting): {}", text.getUnformattedComponentText());
-			manager.sendPacket(new SDisconnectLoginPacket(text));
-			manager.closeChannel(text);
+			LiteralText text = new LiteralText("Server is still starting! Please wait before reconnecting.");
+			LOGGER.info(SERVERHOOKS, "Disconnecting Player (server is still starting): {}", text.asString());
+			manager.send(new LoginDisconnectS2CPacket(text));
+			manager.disconnect(text);
 			return false;
 		}
 
-		if (packet.getRequestedState() == ProtocolType.LOGIN) {
+		if (packet.getIntendedState() == NetworkState.LOGIN) {
 			final ConnectionType connectionType = ConnectionType.forVersionFlag(packet.getFMLVersion());
 			final int versionNumber = connectionType.getFMLVersionNumber(packet.getFMLVersion());
 
@@ -158,7 +157,7 @@ public class ServerLifecycleHooks {
 			}
 		}
 
-		if (packet.getRequestedState() == ProtocolType.STATUS) {
+		if (packet.getIntendedState() == NetworkState.STATUS) {
 			return true;
 		}
 
@@ -168,12 +167,12 @@ public class ServerLifecycleHooks {
 
 	}
 
-	private static void rejectConnection(final NetworkManager manager, ConnectionType type, String message) {
-		manager.setConnectionState(ProtocolType.LOGIN);
+	private static void rejectConnection(final ClientConnection manager, ConnectionType type, String message) {
+		manager.setState(NetworkState.LOGIN);
 		LOGGER.info(SERVERHOOKS, "Disconnecting {} connection attempt: {}", type, message);
-		StringTextComponent text = new StringTextComponent(message);
-		manager.sendPacket(new SDisconnectLoginPacket(text));
-		manager.closeChannel(text);
+		LiteralText text = new LiteralText(message);
+		manager.send(new LoginDisconnectS2CPacket(text));
+		manager.disconnect(text);
 	}
 
 	public static void handleExit(int retVal) {
@@ -182,18 +181,18 @@ public class ServerLifecycleHooks {
 
 	//INTERNAL MODDERS DO NOT USE
 	@Deprecated
-	public static ResourcePackLoader.IPackInfoFinder buildPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ResourcePackInfo> packSetter) {
+	public static ResourcePackLoader.IPackInfoFinder buildPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ResourcePackProfile> packSetter) {
 		return (packList, factory) -> serverPackFinder(modResourcePacks, packSetter, packList, factory);
 	}
 
-	private static void serverPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ResourcePackInfo> packSetter, Consumer<ResourcePackInfo> consumer, ResourcePackInfo.IFactory factory) {
+	private static void serverPackFinder(Map<ModFile, ? extends ModFileResourcePack> modResourcePacks, BiConsumer<? super ModFileResourcePack, ResourcePackProfile> packSetter, Consumer<ResourcePackProfile> consumer, ResourcePackProfile.Factory factory) {
 		for (Entry<ModFile, ? extends ModFileResourcePack> e : modResourcePacks.entrySet()) {
 			IModInfo mod = e.getKey().getModInfos().get(0);
 			if (Objects.equals(mod.getModId(), "minecraft")) {
 				continue; // skip the minecraft "mod"
 			}
 			final String name = "mod:" + mod.getModId();
-			final ResourcePackInfo packInfo = ResourcePackInfo.createResourcePack(name, true, e::getValue, factory, ResourcePackInfo.Priority.BOTTOM, IPackNameDecorator.PLAIN);
+			final ResourcePackProfile packInfo = ResourcePackProfile.of(name, true, e::getValue, factory, ResourcePackProfile.InsertionPosition.BOTTOM, ResourcePackSource.field_25347);
 			if (packInfo == null) {
 				// Vanilla only logs an error, instead of propagating, so handle null and warn that something went wrong
 				ModLoader.get().addWarning(new ModLoadingWarning(mod, ModLoadingStage.ERROR, "fml.modloading.brokenresources", e.getKey()));

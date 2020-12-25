@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/packet/s2c/login/LoginQueryRequestS2CPacket.java
++++ b/net/minecraft/network/packet/s2c/login/LoginQueryRequestS2CPacket.java
+@@ -10,7 +10,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class LoginQueryRequestS2CPacket implements Packet<ClientLoginPacketListener> {
++public class LoginQueryRequestS2CPacket implements Packet<ClientLoginPacketListener>, net.minecraftforge.fml.network.ICustomPacket<LoginQueryRequestS2CPacket> {
+    private int queryId;
+    private Identifier channel;
+    private PacketByteBuf payload;

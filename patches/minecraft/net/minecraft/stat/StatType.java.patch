@@ -1,0 +1,11 @@
+--- a/net/minecraft/stat/StatType.java
++++ b/net/minecraft/stat/StatType.java
+@@ -12,7 +12,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class StatType<T> implements Iterable<Stat<T>> {
++public class StatType<T> extends net.minecraftforge.registries.ForgeRegistryEntry<StatType<?>> implements Iterable<Stat<T>> {
+    private final Registry<T> registry;
+    private final Map<T, Stat<T>> stats = new IdentityHashMap<>();
+    @Nullable

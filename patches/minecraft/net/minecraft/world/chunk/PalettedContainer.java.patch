@@ -1,0 +1,39 @@
+--- a/net/minecraft/world/chunk/PalettedContainer.java
++++ b/net/minecraft/world/chunk/PalettedContainer.java
+@@ -68,6 +68,9 @@
+    }
+ 
+    private void setPaletteSize(int bitsIn) {
++      setBits(bitsIn, false);
++   }
++   private void setBits(int bitsIn, boolean forceBits) {
+       if (bitsIn != this.paletteSize) {
+          this.paletteSize = bitsIn;
+          if (this.paletteSize <= 4) {
+@@ -78,6 +81,8 @@
+          } else {
+             this.palette = this.fallbackPalette;
+             this.paletteSize = MathHelper.log2DeBruijn(this.idList.size());
++            if (forceBits)
++               this.paletteSize = bitsIn;
+          }
+ 
+          this.palette.getIndex(this.defaultValue);
+@@ -140,12 +145,16 @@
+       this.lock();
+       int i = buf.readByte();
+       if (this.paletteSize != i) {
+-         this.setPaletteSize(i);
++         this.setBits(i, true); //Forge, Force bit density to fix network issues, resize below if needed.
+       }
+ 
+       this.palette.fromPacket(buf);
+       buf.readLongArray(this.data.getStorage());
+       this.unlock();
++
++      int regSize = MathHelper.log2DeBruijn(this.idList.size());
++      if (this.palette == fallbackPalette && this.paletteSize != regSize) // Resize bits to fit registry.
++         this.onResize(regSize, defaultValue);
+    }
+ 
+    public void toPacket(PacketByteBuf buf) {

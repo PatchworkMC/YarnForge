@@ -1,0 +1,67 @@
+--- a/net/minecraft/entity/vehicle/StorageMinecartEntity.java
++++ b/net/minecraft/entity/vehicle/StorageMinecartEntity.java
+@@ -118,17 +118,18 @@
+    }
+ 
+    @Nullable
+-   public Entity moveToWorld(ServerWorld server) {
++   public Entity changeDimension(ServerWorld server, net.minecraftforge.common.util.ITeleporter teleporter) {
+       this.field_7733 = false;
+-      return super.moveToWorld(server);
++      return super.changeDimension(server, teleporter);
+    }
+ 
+-   public void remove() {
++   @Override
++   public void remove(boolean keepData) {
+       if (!this.world.isClient && this.field_7733) {
+          ItemScatterer.spawn(this.world, this, this);
+       }
+ 
+-      super.remove();
++      super.remove(keepData);
+    }
+ 
+    protected void writeCustomDataToTag(CompoundTag compound) {
+@@ -157,6 +158,8 @@
+    }
+ 
+    public ActionResult interact(PlayerEntity player, Hand hand) {
++      ActionResult ret = super.interact(player, hand);
++      if (ret.isAccepted()) return ret;
+       player.openHandledScreen(this);
+       if (!player.world.isClient) {
+          PiglinBrain.onGuardedBlockInteracted(player, true);
+@@ -185,6 +188,8 @@
+ 
+          this.lootTableId = null;
+          LootContext.Builder lootcontext$builder = (new LootContext.Builder((ServerWorld)this.world)).parameter(LootContextParameters.ORIGIN, this.getPos()).random(this.lootSeed);
++         // Forge: add this entity to loot context, however, currently Vanilla uses 'this' for the player creating the chests. So we take over 'killer_entity' for this.
++         lootcontext$builder.parameter(LootContextParameters.KILLER_ENTITY, this);
+          if (player != null) {
+             lootcontext$builder.luck(player.getLuck()).parameter(LootContextParameters.THIS_ENTITY, player);
+          }
+@@ -215,4 +220,23 @@
+    }
+ 
+    protected abstract ScreenHandler getScreenHandler(int id, PlayerInventory playerInventoryIn);
++
++   private net.minecraftforge.common.util.LazyOptional<?> itemHandler = net.minecraftforge.common.util.LazyOptional.of(() -> new net.minecraftforge.items.wrapper.InvWrapper(this));
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.util.math.Direction facing) {
++      if (this.isAlive() && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
++         return itemHandler.cast();
++      return super.getCapability(capability, facing);
++   }
++
++   @Override
++   protected void invalidateCaps() {
++      super.invalidateCaps();
++      itemHandler.invalidate();
++   }
++
++   public void dropContentsWhenDead(boolean value) {
++      this.field_7733 = value;
++   }
+ }

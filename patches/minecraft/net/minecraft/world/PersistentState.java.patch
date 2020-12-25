@@ -1,0 +1,26 @@
+--- a/net/minecraft/world/PersistentState.java
++++ b/net/minecraft/world/PersistentState.java
+@@ -8,7 +8,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public abstract class PersistentState {
++public abstract class PersistentState implements net.minecraftforge.common.util.INBTSerializable<CompoundTag> {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final String key;
+    private boolean dirty;
+@@ -52,4 +52,14 @@
+          this.setDirty(false);
+       }
+    }
++
++   @Override
++   public void deserializeNBT(CompoundTag nbt) {
++      fromTag(nbt);
++   }
++
++   @Override
++   public CompoundTag serializeNBT() {
++      return toTag(new CompoundTag());
++   }
+ }

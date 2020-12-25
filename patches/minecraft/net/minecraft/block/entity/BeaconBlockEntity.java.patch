@@ -1,0 +1,21 @@
+--- a/net/minecraft/block/entity/BeaconBlockEntity.java
++++ b/net/minecraft/block/entity/BeaconBlockEntity.java
+@@ -13,7 +13,6 @@
+ import net.minecraft.block.Block;
+ import net.minecraft.block.BlockState;
+ import net.minecraft.block.Blocks;
+-import net.minecraft.block.Stainable;
+ import net.minecraft.entity.effect.StatusEffect;
+ import net.minecraft.entity.effect.StatusEffectInstance;
+ import net.minecraft.entity.effect.StatusEffects;
+@@ -115,8 +114,8 @@
+       for(int i1 = 0; i1 < 10 && blockpos.getY() <= l; ++i1) {
+          BlockState blockstate = this.world.getBlockState(blockpos);
+          Block block = blockstate.getBlock();
+-         if (block instanceof Stainable) {
+-            float[] afloat = ((Stainable)block).getColor().getColorComponents();
++         float[] afloat = blockstate.getBeaconColorMultiplier(this.world, blockpos, getPos());
++         if (afloat != null) {
+             if (this.field_19178.size() <= 1) {
+                beacontileentity$beamsegment = new BeaconBlockEntity.BeamSegment(afloat);
+                this.field_19178.add(beacontileentity$beamsegment);

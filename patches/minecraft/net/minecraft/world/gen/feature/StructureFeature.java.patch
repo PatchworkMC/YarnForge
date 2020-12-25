@@ -1,0 +1,32 @@
+--- a/net/minecraft/world/gen/feature/StructureFeature.java
++++ b/net/minecraft/world/gen/feature/StructureFeature.java
+@@ -38,7 +38,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public abstract class StructureFeature<C extends FeatureConfig> {
++public abstract class StructureFeature<C extends FeatureConfig> extends net.minecraftforge.registries.ForgeRegistryEntry<StructureFeature<?>> implements net.minecraftforge.common.extensions.IForgeStructure {
+    public static final BiMap<String, StructureFeature<?>> STRUCTURES = HashBiMap.create();
+    private static final Map<StructureFeature<?>, GenerationStep.Feature> STRUCTURE_TO_GENERATION_STEP = Maps.newHashMap();
+    private static final Logger LOGGER = LogManager.getLogger();
+@@ -237,13 +237,18 @@
+    }
+ 
+    public List<SpawnSettings.SpawnEntry> getMonsterSpawns() {
+-      return ImmutableList.of();
++      return getSpawnList(net.minecraft.entity.SpawnGroup.MONSTER);
+    }
+ 
+    public List<SpawnSettings.SpawnEntry> getCreatureSpawns() {
+-      return ImmutableList.of();
++      return getSpawnList(net.minecraft.entity.SpawnGroup.CREATURE);
+    }
+ 
++   @Override
++   public final List<SpawnSettings.SpawnEntry> getSpawnList(net.minecraft.entity.SpawnGroup classification) {
++      return net.minecraftforge.common.world.StructureSpawnManager.getSpawnList(getStructure(), classification);
++   }
++
+    public interface StructureStartFactory<C extends FeatureConfig> {
+       StructureStart<C> create(StructureFeature<C> p_create_1_, int p_create_2_, int p_create_3_, BlockBox p_create_4_, int p_create_5_, long p_create_6_);
+    }

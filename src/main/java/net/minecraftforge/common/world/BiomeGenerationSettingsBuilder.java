@@ -19,13 +19,12 @@
 
 package net.minecraftforge.common.world;
 
-import net.minecraft.world.biome.BiomeGenerationSettings;
-import net.minecraft.world.gen.GenerationStage;
+import net.minecraft.world.biome.GenerationSettings;
+import net.minecraft.world.gen.GenerationStep;
 import net.minecraft.world.gen.carver.ConfiguredCarver;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
-import net.minecraft.world.gen.feature.StructureFeature;
-import net.minecraft.world.gen.surfacebuilders.ConfiguredSurfaceBuilder;
-
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
+import net.minecraft.world.gen.surfacebuilder.ConfiguredSurfaceBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,18 +32,18 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class BiomeGenerationSettingsBuilder extends BiomeGenerationSettings.Builder
+public class BiomeGenerationSettingsBuilder extends GenerationSettings.Builder
 {
-    public BiomeGenerationSettingsBuilder(BiomeGenerationSettings orig)
+    public BiomeGenerationSettingsBuilder(GenerationSettings orig)
     {
         surfaceBuilder = Optional.of(orig.getSurfaceBuilder());
-        orig.getCarvingStages().forEach(k -> carvers.put(k, new ArrayList<>(orig.getCarvers(k))));
+        orig.getCarvingStages().forEach(k -> carvers.put(k, new ArrayList<>(orig.getCarversForStep(k))));
         orig.getFeatures().forEach(l -> features.add(new ArrayList<>(l)));
-        structures.addAll(orig.getStructures());
+        structureFeatures.addAll(orig.getStructureFeatures());
     }
 
-    public List<Supplier<ConfiguredFeature<?, ?>>> getFeatures(GenerationStage.Decoration stage) {
-        populateStageEntries(stage.ordinal());
+    public List<Supplier<ConfiguredFeature<?, ?>>> getFeatures(GenerationStep.Feature stage) {
+        addFeatureStep(stage.ordinal());
         return features.get(stage.ordinal());
     }
 
@@ -52,11 +51,11 @@ public class BiomeGenerationSettingsBuilder extends BiomeGenerationSettings.Buil
         return surfaceBuilder;
     }
 
-    public List<Supplier<ConfiguredCarver<?>>> getCarvers(GenerationStage.Carving stage) {
+    public List<Supplier<ConfiguredCarver<?>>> getCarvers(GenerationStep.Carver stage) {
         return carvers.computeIfAbsent(stage, key -> new ArrayList<>());
     }
 
-    public List<Supplier<StructureFeature<?, ?>>> getStructures() {
-        return structures;
+    public List<Supplier<ConfiguredStructureFeature<?, ?>>> getStructures() {
+        return structureFeatures;
     }
 }

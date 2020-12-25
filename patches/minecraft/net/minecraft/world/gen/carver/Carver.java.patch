@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/carver/Carver.java
++++ b/net/minecraft/world/gen/carver/Carver.java
+@@ -22,7 +22,7 @@
+ import net.minecraft.world.gen.ProbabilityConfig;
+ import org.apache.commons.lang3.mutable.MutableBoolean;
+ 
+-public abstract class Carver<C extends CarverConfig> {
++public abstract class Carver<C extends CarverConfig> extends net.minecraftforge.registries.ForgeRegistryEntry<Carver<?>> {
+    public static final Carver<ProbabilityConfig> CAVE = register("cave", new CaveCarver(ProbabilityConfig.CODEC, 256));
+    public static final Carver<ProbabilityConfig> NETHER_CAVE = register("nether_cave", new NetherCaveCarver(ProbabilityConfig.CODEC));
+    public static final Carver<ProbabilityConfig> CANYON = register("canyon", new RavineCarver(ProbabilityConfig.CODEC));

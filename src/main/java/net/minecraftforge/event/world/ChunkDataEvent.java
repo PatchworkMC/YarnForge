@@ -22,13 +22,11 @@ package net.minecraftforge.event.world;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
-
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.world.IWorld;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.IChunk;
 
 /**
  * ChunkDataEvent is fired when an event involving chunk data occurs.<br>
@@ -40,19 +38,19 @@ import net.minecraft.world.chunk.IChunk;
  * All children of this event are fired on the {@link MinecraftForge#EVENT_BUS}.<br>
  **/
 public class ChunkDataEvent extends ChunkEvent {
-	private final CompoundNBT data;
+	private final CompoundTag data;
 
-	public ChunkDataEvent(IChunk chunk, CompoundNBT data) {
+	public ChunkDataEvent(Chunk chunk, CompoundTag data) {
 		super(chunk);
 		this.data = data;
 	}
 
-	public ChunkDataEvent(IChunk chunk, IWorld world, CompoundNBT data) {
+	public ChunkDataEvent(Chunk chunk, WorldAccess world, CompoundTag data) {
 		super(chunk, world);
 		this.data = data;
 	}
 
-	public CompoundNBT getData() {
+	public CompoundTag getData() {
 		return data;
 	}
 
@@ -68,14 +66,14 @@ public class ChunkDataEvent extends ChunkEvent {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Load extends ChunkDataEvent {
-		private final ChunkStatus.Type status;
+		private final ChunkStatus.ChunkType status;
 
-		public Load(IChunk chunk, CompoundNBT data, ChunkStatus.Type status) {
+		public Load(Chunk chunk, CompoundTag data, ChunkStatus.ChunkType status) {
 			super(chunk, data);
 			this.status = status;
 		}
 
-		public ChunkStatus.Type getStatus() {
+		public ChunkStatus.ChunkType getStatus() {
 			return this.status;
 		}
 	}
@@ -92,7 +90,7 @@ public class ChunkDataEvent extends ChunkEvent {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Save extends ChunkDataEvent {
-		public Save(IChunk chunk, IWorld world, CompoundNBT data) {
+		public Save(Chunk chunk, WorldAccess world, CompoundTag data) {
 			super(chunk, world, data);
 		}
 	}

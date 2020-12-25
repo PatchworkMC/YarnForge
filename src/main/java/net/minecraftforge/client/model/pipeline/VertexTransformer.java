@@ -19,9 +19,9 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
 
 public class VertexTransformer implements IVertexConsumer
 {
@@ -45,7 +45,7 @@ public class VertexTransformer implements IVertexConsumer
     }
 
     @Override
-    public void setTexture(TextureAtlasSprite texture)
+    public void setTexture(Sprite texture)
     {
         parent.setTexture(texture);
     }

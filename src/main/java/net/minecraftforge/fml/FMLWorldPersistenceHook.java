@@ -25,6 +25,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.google.common.collect.Multimap;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.SaveProperties;
+import net.minecraft.world.level.storage.LevelStorage;
 import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.GameData;
 import net.minecraftforge.registries.RegistryManager;
@@ -32,12 +37,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.storage.IServerConfiguration;
-import net.minecraft.world.storage.SaveFormat;
 
 /**
  * @author cpw
@@ -54,35 +53,35 @@ public final class FMLWorldPersistenceHook implements WorldPersistenceHooks.Worl
 	}
 
 	@Override
-	public CompoundNBT getDataForWriting(SaveFormat.LevelSave levelSave, IServerConfiguration serverInfo) {
-		CompoundNBT fmlData = new CompoundNBT();
-		ListNBT modList = new ListNBT();
+	public CompoundTag getDataForWriting(LevelStorage.Session levelSave, SaveProperties serverInfo) {
+		CompoundTag fmlData = new CompoundTag();
+		ListTag modList = new ListTag();
 		ModList.get().getMods().forEach(mi ->
 		{
-			final CompoundNBT mod = new CompoundNBT();
+			final CompoundTag mod = new CompoundTag();
 			mod.putString("ModId", mi.getModId());
 			mod.putString("ModVersion", MavenVersionStringHelper.artifactVersionToString(mi.getVersion()));
 			modList.add(mod);
 		});
 		fmlData.put("LoadingModList", modList);
 
-		CompoundNBT registries = new CompoundNBT();
+		CompoundTag registries = new CompoundTag();
 		fmlData.put("Registries", registries);
-		LOGGER.debug(WORLDPERSISTENCE, "Gathering id map for writing to world save {}", serverInfo.getWorldName());
+		LOGGER.debug(WORLDPERSISTENCE, "Gathering id map for writing to world save {}", serverInfo.getLevelName());
 
-		for (Map.Entry<ResourceLocation, ForgeRegistry.Snapshot> e : RegistryManager.ACTIVE.takeSnapshot(true).entrySet()) {
+		for (Map.Entry<Identifier, ForgeRegistry.Snapshot> e : RegistryManager.ACTIVE.takeSnapshot(true).entrySet()) {
 			registries.put(e.getKey().toString(), e.getValue().write());
 		}
-		LOGGER.debug(WORLDPERSISTENCE, "ID Map collection complete {}", serverInfo.getWorldName());
+		LOGGER.debug(WORLDPERSISTENCE, "ID Map collection complete {}", serverInfo.getLevelName());
 		return fmlData;
 	}
 
 	@Override
-	public void readData(SaveFormat.LevelSave levelSave, IServerConfiguration serverInfo, CompoundNBT tag) {
+	public void readData(LevelStorage.Session levelSave, SaveProperties serverInfo, CompoundTag tag) {
 		if (tag.contains("LoadingModList")) {
-			ListNBT modList = tag.getList("LoadingModList", (byte) 10);
+			ListTag modList = tag.getList("LoadingModList", (byte) 10);
 			for (int i = 0; i < modList.size(); i++) {
-				CompoundNBT mod = modList.getCompound(i);
+				CompoundTag mod = modList.getCompound(i);
 				String modId = mod.getString("ModId");
 				if (Objects.equals("minecraft", modId)) {
 					continue;
@@ -99,14 +98,14 @@ public final class FMLWorldPersistenceHook implements WorldPersistenceHooks.Worl
 			}
 		}
 
-		Multimap<ResourceLocation, ResourceLocation> failedElements = null;
+		Multimap<Identifier, Identifier> failedElements = null;
 
 		if (tag.contains("Registries")) // 1.8, genericed out the 'registries' list
 		{
-			Map<ResourceLocation, ForgeRegistry.Snapshot> snapshot = new HashMap<>();
-			CompoundNBT regs = tag.getCompound("Registries");
-			for (String key : regs.keySet()) {
-				snapshot.put(new ResourceLocation(key), ForgeRegistry.Snapshot.read(regs.getCompound(key)));
+			Map<Identifier, ForgeRegistry.Snapshot> snapshot = new HashMap<>();
+			CompoundTag regs = tag.getCompound("Registries");
+			for (String key : regs.getKeys()) {
+				snapshot.put(new Identifier(key), ForgeRegistry.Snapshot.read(regs.getCompound(key)));
 			}
 			failedElements = GameData.injectSnapshot(snapshot, true, true);
 		}

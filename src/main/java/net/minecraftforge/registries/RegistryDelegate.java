@@ -20,8 +20,7 @@
 package net.minecraftforge.registries;
 
 import com.google.common.base.Objects;
-
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 /*
  * This is the internal implementation class of the delegate.
@@ -29,7 +28,7 @@ import net.minecraft.util.ResourceLocation;
 final class RegistryDelegate<T> implements IRegistryDelegate<T>
 {
     private T referent;
-    private ResourceLocation name;
+    private Identifier name;
     private final Class<T> type;
 
     public RegistryDelegate(T referent, Class<T> type)
@@ -41,12 +40,12 @@ final class RegistryDelegate<T> implements IRegistryDelegate<T>
     @Override
     public T get() { return referent; }
     @Override
-    public ResourceLocation name() { return name; }
+    public Identifier name() { return name; }
     @Override
     public Class<T> type() { return this.type; }
 
     void changeReference(T newTarget){ this.referent = newTarget; }
-    public void setName(ResourceLocation name) { this.name = name; }
+    public void setName(Identifier name) { this.name = name; }
 
     @Override
     public boolean equals(Object obj)

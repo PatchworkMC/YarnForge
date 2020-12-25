@@ -1,0 +1,10 @@
+--- a/net/minecraft/item/MiningToolItem.java
++++ b/net/minecraft/item/MiningToolItem.java
+@@ -32,6 +32,7 @@
+    }
+ 
+    public float getMiningSpeedMultiplier(ItemStack stack, BlockState state) {
++      if (getToolTypes(stack).stream().anyMatch(e -> state.isToolEffective(e))) return miningSpeed;
+       return this.effectiveBlocks.contains(state.getBlock()) ? this.miningSpeed : 1.0F;
+    }
+ 

@@ -19,7 +19,7 @@
 
 package net.minecraftforge.debug.entity.player;
 
-import net.minecraft.world.GameType;
+import net.minecraft.world.GameMode;
 import net.minecraftforge.client.event.ClientPlayerChangeGameModeEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -40,7 +40,7 @@ public class PlayerGameModeEventTest
     {
         if (!ENABLE) return;
         LOGGER.info("{} changed game mode. Current GameType: {}. New Game Type: {}", event.getPlayer(), event.getCurrentGameMode(), event.getNewGameMode());
-        if (event.getNewGameMode() == GameType.SURVIVAL)
+        if (event.getNewGameMode() == GameMode.SURVIVAL)
             event.setCanceled(true);
     }
 
@@ -48,6 +48,6 @@ public class PlayerGameModeEventTest
     public static void onClientPlayerChangeGameModeEvent(ClientPlayerChangeGameModeEvent event)
     {
         if (!ENABLE) return;
-        LOGGER.info("Client notified of changed game mode from '{}'. Current GameType: {}. New Game Type: {}", event.getInfo().getGameProfile(), event.getCurrentGameMode(), event.getNewGameMode());
+        LOGGER.info("Client notified of changed game mode from '{}'. Current GameType: {}. New Game Type: {}", event.getInfo().getProfile(), event.getCurrentGameMode(), event.getNewGameMode());
     }
 }

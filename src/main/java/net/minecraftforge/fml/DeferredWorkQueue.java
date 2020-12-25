@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.google.common.base.Stopwatch;
+import net.minecraftforge.fml.DeferredWorkQueue.TaskInfo;
 import net.minecraftforge.fml.event.lifecycle.ParallelDispatchEvent;
 import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.commons.lang3.time.StopWatch;

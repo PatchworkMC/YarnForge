@@ -1,10 +1,10 @@
 --- a/net/minecraft/client/gui/screen/DeathScreen.java
 +++ b/net/minecraft/client/gui/screen/DeathScreen.java
-@@ -35,6 +35,7 @@
+@@ -37,6 +37,7 @@
        }));
-       Button button = this.func_230480_a_(new Button(this.field_230708_k_ / 2 - 100, this.field_230709_l_ / 4 + 96, 200, 20, new TranslationTextComponent("deathScreen.titleScreen"), (p_213020_1_) -> {
-          if (this.field_213023_c) {
-+            func_213022_a(true);
-             this.func_228177_a_();
+       ButtonWidget button = this.addButton(new ButtonWidget(this.width / 2 - 100, this.height / 4 + 96, 200, 20, new TranslatableText("deathScreen.titleScreen"), (p_213020_1_) -> {
+          if (this.isHardcore) {
++            onConfirmQuit(true);
+             this.quitLevel();
           } else {
-             ConfirmScreen confirmscreen = new ConfirmScreen(this::func_213022_a, new TranslationTextComponent("deathScreen.quit.confirm"), StringTextComponent.field_240750_d_, new TranslationTextComponent("deathScreen.titleScreen"), new TranslationTextComponent("deathScreen.respawn"));
+             ConfirmScreen confirmscreen = new ConfirmScreen(this::onConfirmQuit, new TranslatableText("deathScreen.quit.confirm"), LiteralText.EMPTY, new TranslatableText("deathScreen.titleScreen"), new TranslatableText("deathScreen.respawn"));

@@ -19,16 +19,18 @@
 
 package net.minecraftforge.debug.item;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.DispenserBlock;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.entity.IEntityRenderer;
-import net.minecraft.client.renderer.entity.layers.ElytraLayer;
-import net.minecraft.client.renderer.entity.model.PlayerModel;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.render.entity.feature.ElytraFeatureRenderer;
+import net.minecraft.client.render.entity.feature.FeatureRendererContext;
+import net.minecraft.client.render.entity.model.PlayerEntityModel;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.*;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -47,7 +49,7 @@ public class CustomElytraTest
 {
     public static final String MOD_ID = "custom_elytra_test";
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
-    private static final RegistryObject<Item> TEST_ELYTRA = ITEMS.register("test_elytra",() -> new CustomElytra(new Item.Properties().maxDamage(100).group(ItemGroup.MISC)));
+    private static final RegistryObject<Item> TEST_ELYTRA = ITEMS.register("test_elytra",() -> new CustomElytra(new Item.Settings().maxDamage(100).group(ItemGroup.MISC)));
 
     public CustomElytraTest()
     {
@@ -61,26 +63,26 @@ public class CustomElytraTest
         registerElytraLayer();
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     private void registerElytraLayer()
     {
-        Minecraft.getInstance().getRenderManager().getSkinMap().values().forEach(player -> player.addLayer(new CustomElytraLayer(player)));
+        MinecraftClient.getInstance().getEntityRenderDispatcher().getSkinMap().values().forEach(player -> player.addFeature(new CustomElytraLayer(player)));
     }
 
     public static class CustomElytra extends Item
     {
 
-        public CustomElytra(Properties properties)
+        public CustomElytra(Settings properties)
         {
             super(properties);
-            DispenserBlock.registerDispenseBehavior(this, ArmorItem.DISPENSER_BEHAVIOR);
+            DispenserBlock.registerBehavior(this, ArmorItem.DISPENSER_BEHAVIOR);
         }
 
         @Nullable
         @Override
-        public EquipmentSlotType getEquipmentSlot(ItemStack stack)
+        public EquipmentSlot getEquipmentSlot(ItemStack stack)
         {
-            return EquipmentSlotType.CHEST; //Or you could just extend ItemArmor
+            return EquipmentSlot.CHEST; //Or you could just extend ItemArmor
         }
 
         @Override
@@ -93,20 +95,20 @@ public class CustomElytraTest
         public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks)
         {
             //Adding 1 to ticksElytraFlying prevents damage on the very first tick.
-            if (!entity.world.isRemote && (flightTicks + 1) % 20 == 0)
+            if (!entity.world.isClient && (flightTicks + 1) % 20 == 0)
             {
-                stack.damageItem(1, entity, e -> e.sendBreakAnimation(EquipmentSlotType.CHEST));
+                stack.damage(1, entity, e -> e.sendEquipmentBreakStatus(EquipmentSlot.CHEST));
             }
             return true;
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public static class CustomElytraLayer extends ElytraLayer<AbstractClientPlayerEntity, PlayerModel<AbstractClientPlayerEntity>>
+    @Environment(EnvType.CLIENT)
+    public static class CustomElytraLayer extends ElytraFeatureRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>>
     {
-        private static final ResourceLocation TEXTURE_ELYTRA = new ResourceLocation(MOD_ID, "textures/entity/custom_elytra.png");
+        private static final Identifier TEXTURE_ELYTRA = new Identifier(MOD_ID, "textures/entity/custom_elytra.png");
 
-        public CustomElytraLayer(IEntityRenderer<AbstractClientPlayerEntity, PlayerModel<AbstractClientPlayerEntity>> rendererIn)
+        public CustomElytraLayer(FeatureRendererContext<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> rendererIn)
         {
             super(rendererIn);
         }
@@ -118,7 +120,7 @@ public class CustomElytraTest
         }
 
         @Override
-        public ResourceLocation getElytraTexture(ItemStack stack, AbstractClientPlayerEntity entity)
+        public Identifier getElytraTexture(ItemStack stack, AbstractClientPlayerEntity entity)
         {
             return TEXTURE_ELYTRA;
         }

@@ -20,8 +20,7 @@
 package net.minecraftforge.event;
 
 import com.mojang.brigadier.ParseResults;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
@@ -43,16 +42,16 @@ import net.minecraftforge.eventbus.api.Event;
 @Cancelable
 public class CommandEvent extends Event
 {
-    private ParseResults<CommandSource> parse;
+    private ParseResults<ServerCommandSource> parse;
     private Throwable exception;
 
-    public CommandEvent(ParseResults<CommandSource> parse)
+    public CommandEvent(ParseResults<ServerCommandSource> parse)
     {
         this.parse = parse;
     }
 
-    public ParseResults<CommandSource> getParseResults() { return parse; }
-    public void setParseResults(ParseResults<CommandSource> parse) { this.parse = parse; }
+    public ParseResults<ServerCommandSource> getParseResults() { return parse; }
+    public void setParseResults(ParseResults<ServerCommandSource> parse) { this.parse = parse; }
     public Throwable getException() { return exception; }
     public void setException(Throwable exception) { this.exception = exception; }
 }

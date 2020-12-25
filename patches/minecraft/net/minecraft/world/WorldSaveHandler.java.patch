@@ -1,0 +1,27 @@
+--- a/net/minecraft/world/WorldSaveHandler.java
++++ b/net/minecraft/world/WorldSaveHandler.java
+@@ -33,6 +33,7 @@
+          File file2 = new File(this.playerDataDir, player.getUuidAsString() + ".dat");
+          File file3 = new File(this.playerDataDir, player.getUuidAsString() + ".dat_old");
+          Util.backupAndReplace(file2, file1, file3);
++         net.minecraftforge.event.ForgeEventFactory.firePlayerSavingEvent(player, playerDataDir, player.getUuidAsString());
+       } catch (Exception exception) {
+          LOGGER.warn("Failed to save player data for {}", (Object)player.getName().getString());
+       }
+@@ -56,6 +57,7 @@
+          int i = compoundnbt.contains("DataVersion", 3) ? compoundnbt.getInt("DataVersion") : -1;
+          player.fromTag(NbtHelper.update(this.dataFixer, DataFixTypes.PLAYER, compoundnbt, i));
+       }
++      net.minecraftforge.event.ForgeEventFactory.firePlayerLoadingEvent(player, playerDataDir, player.getUuidAsString());
+ 
+       return compoundnbt;
+    }
+@@ -74,4 +76,8 @@
+ 
+       return astring;
+    }
++
++   public File getPlayerDataFolder() {
++      return playerDataDir;
++   }
+ }

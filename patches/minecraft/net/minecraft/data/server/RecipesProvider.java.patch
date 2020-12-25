@@ -1,0 +1,28 @@
+--- a/net/minecraft/data/server/RecipesProvider.java
++++ b/net/minecraft/data/server/RecipesProvider.java
+@@ -69,6 +69,7 @@
+ 
+          }
+       });
++      if (this.getClass() == RecipesProvider.class) //Forge: Subclasses don't need this.
+       saveRecipeAdvancement(cache, Advancement.Task.create().criterion("impossible", new ImpossibleCriterion.Conditions()).toJson(), path.resolve("data/minecraft/advancements/recipes/root.json"));
+    }
+ 
+@@ -91,7 +92,7 @@
+ 
+    }
+ 
+-   protected static void saveRecipeAdvancement(DataCache cache, JsonObject cache2, Path advancementJson) {
++   protected void saveRecipeAdvancement(DataCache cache, JsonObject cache2, Path advancementJson) {
+       try {
+          String s = GSON.toJson((JsonElement)cache2);
+          String s1 = SHA1.hashUnencodedChars(s).toString();
+@@ -110,7 +111,7 @@
+ 
+    }
+ 
+-   protected static void generate(Consumer<RecipeJsonProvider> consumer) {
++   protected void generate(Consumer<RecipeJsonProvider> consumer) {
+       method_24475(consumer, Blocks.ACACIA_PLANKS, ItemTags.ACACIA_LOGS);
+       method_24477(consumer, Blocks.BIRCH_PLANKS, ItemTags.BIRCH_LOGS);
+       method_24477(consumer, Blocks.CRIMSON_PLANKS, ItemTags.CRIMSON_STEMS);

@@ -20,32 +20,32 @@
 package net.minecraftforge.debug.gameplay.loot;
 
 import com.google.gson.JsonObject;
-import net.minecraft.advancements.criterion.EnchantmentPredicate;
-import net.minecraft.advancements.criterion.ItemPredicate;
-import net.minecraft.advancements.criterion.MinMaxBounds;
 import net.minecraft.block.Blocks;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.EnchantmentType;
+import net.minecraft.enchantment.EnchantmentTarget;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.inventory.Inventory;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.crafting.FurnaceRecipe;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.loot.LootContext;
-import net.minecraft.loot.LootParameterSets;
-import net.minecraft.loot.LootParameters;
 import net.minecraft.loot.LootTable;
-import net.minecraft.loot.conditions.BlockStateProperty;
-import net.minecraft.loot.conditions.ILootCondition;
-import net.minecraft.loot.conditions.MatchTool;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.loot.condition.BlockStatePropertyLootCondition;
+import net.minecraft.loot.condition.LootCondition;
+import net.minecraft.loot.condition.MatchToolLootCondition;
+import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContextParameters;
+import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.predicate.NumberRange;
+import net.minecraft.predicate.item.EnchantmentPredicate;
+import net.minecraft.predicate.item.ItemPredicate;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.SmeltingRecipe;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 import net.minecraftforge.common.data.GlobalLootModifierProvider;
 import net.minecraftforge.common.loot.GlobalLootModifierSerializer;
 import net.minecraftforge.common.loot.LootModifier;
@@ -83,7 +83,7 @@ public class GlobalLootModifiersTest {
     private static final RegistryObject<SmeltingEnchantmentModifier.Serializer> SMELTING = GLM.register("smelting", SmeltingEnchantmentModifier.Serializer::new);
     private static final RegistryObject<WheatSeedsConverterModifier.Serializer> WHEATSEEDS = GLM.register("wheat_harvest", WheatSeedsConverterModifier.Serializer::new);
     private static final RegistryObject<SilkTouchTestModifier.Serializer> SILKTOUCH = GLM.register("silk_touch_bamboo", SilkTouchTestModifier.Serializer::new);
-    private static final RegistryObject<Enchantment> SMELT = ENCHANTS.register("smelt", () -> new SmelterEnchantment(Rarity.UNCOMMON, EnchantmentType.DIGGER, EquipmentSlotType.MAINHAND));
+    private static final RegistryObject<Enchantment> SMELT = ENCHANTS.register("smelt", () -> new SmelterEnchantment(Rarity.UNCOMMON, EnchantmentTarget.DIGGER, EquipmentSlot.MAINHAND));
 
     @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD)
     public static class EventHandlers {
@@ -91,7 +91,7 @@ public class GlobalLootModifiersTest {
         public static void runData(GatherDataEvent event)
         {
             if(ENABLE)
-                event.getGenerator().addProvider(new DataProvider(event.getGenerator(), MODID));
+                event.getGenerator().install(new DataProvider(event.getGenerator(), MODID));
         }
     }
 
@@ -106,18 +106,18 @@ public class GlobalLootModifiersTest {
         protected void start()
         {
             add("smelting", SMELTING.get(), new SmeltingEnchantmentModifier(
-                    new ILootCondition[]{
-                            MatchTool.builder(
+                    new LootCondition[]{
+                            MatchToolLootCondition.builder(
                                     ItemPredicate.Builder.create().enchantment(
-                                            new EnchantmentPredicate(SMELT.get(), MinMaxBounds.IntBound.atLeast(1))))
+                                            new EnchantmentPredicate(SMELT.get(), NumberRange.IntRange.atLeast(1))))
                                     .build()
                     })
             );
 
             add("wheat_harvest", WHEATSEEDS.get(), new WheatSeedsConverterModifier(
-                    new ILootCondition[] {
-                            MatchTool.builder(ItemPredicate.Builder.create().item(Items.SHEARS)).build(),
-                            BlockStateProperty.builder(Blocks.WHEAT).build()
+                    new LootCondition[] {
+                            MatchToolLootCondition.builder(ItemPredicate.Builder.create().item(Items.SHEARS)).build(),
+                            BlockStatePropertyLootCondition.builder(Blocks.WHEAT).build()
                     },
                     3, Items.WHEAT_SEEDS, Items.WHEAT)
             );
@@ -125,7 +125,7 @@ public class GlobalLootModifiersTest {
     }
 
     private static class SmelterEnchantment extends Enchantment {
-        protected SmelterEnchantment(Rarity rarityIn, EnchantmentType typeIn, EquipmentSlotType... slots) {
+        protected SmelterEnchantment(Rarity rarityIn, EnchantmentTarget typeIn, EquipmentSlot... slots) {
             super(rarityIn, typeIn, slots);
         }
     }
@@ -135,7 +135,7 @@ public class GlobalLootModifiersTest {
      *
      */
     private static class SmeltingEnchantmentModifier extends LootModifier {
-        public SmeltingEnchantmentModifier(ILootCondition[] conditionsIn) {
+        public SmeltingEnchantmentModifier(LootCondition[] conditionsIn) {
             super(conditionsIn);
         }
 
@@ -148,8 +148,8 @@ public class GlobalLootModifiersTest {
         }
 
         private static ItemStack smelt(ItemStack stack, LootContext context) {
-            return context.getWorld().getRecipeManager().getRecipe(IRecipeType.SMELTING, new Inventory(stack), context.getWorld())
-                    .map(FurnaceRecipe::getRecipeOutput)
+            return context.getWorld().getRecipeManager().getFirstMatch(RecipeType.SMELTING, new SimpleInventory(stack), context.getWorld())
+                    .map(SmeltingRecipe::getOutput)
                     .filter(itemStack -> !itemStack.isEmpty())
                     .map(itemStack -> ItemHandlerHelper.copyStackWithSize(itemStack, stack.getCount() * itemStack.getCount()))
                     .orElse(stack);
@@ -157,7 +157,7 @@ public class GlobalLootModifiersTest {
 
         private static class Serializer extends GlobalLootModifierSerializer<SmeltingEnchantmentModifier> {
             @Override
-            public SmeltingEnchantmentModifier read(ResourceLocation name, JsonObject json, ILootCondition[] conditionsIn) {
+            public SmeltingEnchantmentModifier read(Identifier name, JsonObject json, LootCondition[] conditionsIn) {
                 return new SmeltingEnchantmentModifier(conditionsIn);
             }
 
@@ -173,28 +173,28 @@ public class GlobalLootModifiersTest {
      *
      */
     private static class SilkTouchTestModifier extends LootModifier {
-        public SilkTouchTestModifier(ILootCondition[] conditionsIn) {
+        public SilkTouchTestModifier(LootCondition[] conditionsIn) {
             super(conditionsIn);
         }
 
         @Nonnull
         @Override
         public List<ItemStack> doApply(List<ItemStack> generatedLoot, LootContext context) {
-            ItemStack ctxTool = context.get(LootParameters.TOOL);
+            ItemStack ctxTool = context.get(LootContextParameters.TOOL);
             //return early if silk-touch is already applied (otherwise we'll get stuck in an infinite loop).
-            if(EnchantmentHelper.getEnchantments(ctxTool).containsKey(Enchantments.SILK_TOUCH)) return generatedLoot;
+            if(EnchantmentHelper.get(ctxTool).containsKey(Enchantments.SILK_TOUCH)) return generatedLoot;
             ItemStack fakeTool = ctxTool.copy();
             fakeTool.addEnchantment(Enchantments.SILK_TOUCH, 1);
             LootContext.Builder builder = new LootContext.Builder(context);
-            builder.withParameter(LootParameters.TOOL, fakeTool);
-            LootContext ctx = builder.build(LootParameterSets.BLOCK);
-            LootTable loottable = context.getWorld().getServer().getLootTableManager().getLootTableFromLocation(context.get(LootParameters.BLOCK_STATE).getBlock().getLootTable());
-            return loottable.generate(ctx);
+            builder.parameter(LootContextParameters.TOOL, fakeTool);
+            LootContext ctx = builder.build(LootContextTypes.BLOCK);
+            LootTable loottable = context.getWorld().getServer().getLootManager().getTable(context.get(LootContextParameters.BLOCK_STATE).getBlock().getLootTableId());
+            return loottable.generateLoot(ctx);
         }
 
         private static class Serializer extends GlobalLootModifierSerializer<SilkTouchTestModifier> {
             @Override
-            public SilkTouchTestModifier read(ResourceLocation name, JsonObject json, ILootCondition[] conditionsIn) {
+            public SilkTouchTestModifier read(Identifier name, JsonObject json, LootCondition[] conditionsIn) {
                 return new SilkTouchTestModifier(conditionsIn);
             }
 
@@ -214,7 +214,7 @@ public class GlobalLootModifiersTest {
         private final int numSeedsToConvert;
         private final Item itemToCheck;
         private final Item itemReward;
-        public WheatSeedsConverterModifier(ILootCondition[] conditionsIn, int numSeeds, Item itemCheck, Item reward) {
+        public WheatSeedsConverterModifier(LootCondition[] conditionsIn, int numSeeds, Item itemCheck, Item reward) {
             super(conditionsIn);
             numSeedsToConvert = numSeeds;
             itemToCheck = itemCheck;
@@ -246,10 +246,10 @@ public class GlobalLootModifiersTest {
         private static class Serializer extends GlobalLootModifierSerializer<WheatSeedsConverterModifier> {
 
             @Override
-            public WheatSeedsConverterModifier read(ResourceLocation name, JsonObject object, ILootCondition[] conditionsIn) {
-                int numSeeds = JSONUtils.getInt(object, "numSeeds");
-                Item seed = ForgeRegistries.ITEMS.getValue(new ResourceLocation((JSONUtils.getString(object, "seedItem"))));
-                Item wheat = ForgeRegistries.ITEMS.getValue(new ResourceLocation(JSONUtils.getString(object, "replacement")));
+            public WheatSeedsConverterModifier read(Identifier name, JsonObject object, LootCondition[] conditionsIn) {
+                int numSeeds = JsonHelper.getInt(object, "numSeeds");
+                Item seed = ForgeRegistries.ITEMS.getValue(new Identifier((JsonHelper.getString(object, "seedItem"))));
+                Item wheat = ForgeRegistries.ITEMS.getValue(new Identifier(JsonHelper.getString(object, "replacement")));
                 return new WheatSeedsConverterModifier(conditionsIn, numSeeds, seed, wheat);
             }
 

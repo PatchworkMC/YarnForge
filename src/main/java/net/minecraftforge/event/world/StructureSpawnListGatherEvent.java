@@ -24,13 +24,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
-
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.world.biome.MobSpawnInfo;
-import net.minecraft.world.gen.feature.structure.Structure;
 
 /**
  * This event fires when a Structure is gathering what mobs/creatures can spawn in it.
@@ -47,23 +45,23 @@ import net.minecraft.world.gen.feature.structure.Structure;
  */
 public class StructureSpawnListGatherEvent extends Event {
 
-	private final Structure<?> structure;
-	private final Map<EntityClassification, List<MobSpawnInfo.Spawners>> entitySpawns = new HashMap<>();
-	private final Map<EntityClassification, List<MobSpawnInfo.Spawners>> entitySpawnsUnmodifiableLists = new HashMap<>();
-	private final Map<EntityClassification, List<MobSpawnInfo.Spawners>> entitySpawnsUnmodifiable = Collections.unmodifiableMap(entitySpawnsUnmodifiableLists);
+	private final StructureFeature<?> structure;
+	private final Map<SpawnGroup, List<SpawnSettings.SpawnEntry>> entitySpawns = new HashMap<>();
+	private final Map<SpawnGroup, List<SpawnSettings.SpawnEntry>> entitySpawnsUnmodifiableLists = new HashMap<>();
+	private final Map<SpawnGroup, List<SpawnSettings.SpawnEntry>> entitySpawnsUnmodifiable = Collections.unmodifiableMap(entitySpawnsUnmodifiableLists);
 	private boolean insideOnly;
 
-	public StructureSpawnListGatherEvent(Structure<?> structure) {
+	public StructureSpawnListGatherEvent(StructureFeature<?> structure) {
 		this.structure = structure;
 		this.insideOnly = this.structure.getDefaultRestrictsSpawnsToInside();
-		addEntitySpawns(EntityClassification.MONSTER, this.structure.getDefaultSpawnList());
-		addEntitySpawns(EntityClassification.CREATURE, this.structure.getDefaultCreatureSpawnList());
+		addEntitySpawns(SpawnGroup.MONSTER, this.structure.getDefaultSpawnList());
+		addEntitySpawns(SpawnGroup.CREATURE, this.structure.getDefaultCreatureSpawnList());
 	}
 
 	/**
 	 * @return Structure to add or remove spawns to/from.
 	 */
-	public Structure<?> getStructure() {
+	public StructureFeature<?> getStructure() {
 		return structure;
 	}
 
@@ -87,16 +85,16 @@ public class StructureSpawnListGatherEvent extends Event {
 	 * @param classification Entity Classification
 	 * @return The list of spawns for the given classification.
 	 */
-	public List<MobSpawnInfo.Spawners> getEntitySpawns(EntityClassification classification) {
+	public List<SpawnSettings.SpawnEntry> getEntitySpawns(SpawnGroup classification) {
 		return this.entitySpawnsUnmodifiableLists.getOrDefault(classification, Collections.emptyList());
 	}
 
 	/**
 	 * Gets the internal spawn list for a given entity classification, or adds one if needed. (This includes adding it to the unmodifiable view)
 	 */
-	private List<MobSpawnInfo.Spawners> getOrCreateEntitySpawns(EntityClassification classification) {
+	private List<SpawnSettings.SpawnEntry> getOrCreateEntitySpawns(SpawnGroup classification) {
 		return this.entitySpawns.computeIfAbsent(classification, c -> {
-			List<MobSpawnInfo.Spawners> spawners = new ArrayList<>();
+			List<SpawnSettings.SpawnEntry> spawners = new ArrayList<>();
 			//If the classification isn't in entitySpawns yet, also add an unmodifiable view of the list to
 			// the unmodifiable list spawn map
 			this.entitySpawnsUnmodifiableLists.put(c, Collections.unmodifiableList(spawners));
@@ -109,7 +107,7 @@ public class StructureSpawnListGatherEvent extends Event {
 	 * @param classification Entity Classification
 	 * @param spawner        Spawner
 	 */
-	public void addEntitySpawn(EntityClassification classification, MobSpawnInfo.Spawners spawner) {
+	public void addEntitySpawn(SpawnGroup classification, SpawnSettings.SpawnEntry spawner) {
 		getOrCreateEntitySpawns(classification).add(spawner);
 	}
 
@@ -118,7 +116,7 @@ public class StructureSpawnListGatherEvent extends Event {
 	 * @param classification Entity Classification
 	 * @param spawners       Spawners to add
 	 */
-	public void addEntitySpawns(EntityClassification classification, List<MobSpawnInfo.Spawners> spawners) {
+	public void addEntitySpawns(SpawnGroup classification, List<SpawnSettings.SpawnEntry> spawners) {
 		getOrCreateEntitySpawns(classification).addAll(spawners);
 	}
 
@@ -127,7 +125,7 @@ public class StructureSpawnListGatherEvent extends Event {
 	 * @param classification Entity Classification
 	 * @param spawner        Spawner
 	 */
-	public void removeEntitySpawn(EntityClassification classification, MobSpawnInfo.Spawners spawner) {
+	public void removeEntitySpawn(SpawnGroup classification, SpawnSettings.SpawnEntry spawner) {
 		if (this.entitySpawns.containsKey(classification)) {
 			this.entitySpawns.get(classification).remove(spawner);
 		}
@@ -136,7 +134,7 @@ public class StructureSpawnListGatherEvent extends Event {
 	/**
 	 * Gets an unmodifiable view of the map of spawns based on entity classification that is used to fill in the various spawn lists for the structure.
 	 */
-	public Map<EntityClassification, List<MobSpawnInfo.Spawners>> getEntitySpawns() {
+	public Map<SpawnGroup, List<SpawnSettings.SpawnEntry>> getEntitySpawns() {
 		return entitySpawnsUnmodifiable;
 	}
 }

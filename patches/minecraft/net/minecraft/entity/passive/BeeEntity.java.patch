@@ -1,11 +1,19 @@
 --- a/net/minecraft/entity/passive/BeeEntity.java
 +++ b/net/minecraft/entity/passive/BeeEntity.java
-@@ -425,7 +425,7 @@
+@@ -21,7 +21,6 @@
+ import net.minecraft.block.TallPlantBlock;
+ import net.minecraft.block.entity.BeehiveBlockEntity;
+ import net.minecraft.block.entity.BlockEntity;
+-import net.minecraft.block.entity.BlockEntityType;
+ import net.minecraft.block.enums.DoubleBlockHalf;
+ import net.minecraft.entity.Entity;
+ import net.minecraft.entity.EntityDimensions;
+@@ -427,7 +426,7 @@
           return false;
        } else {
-          TileEntity tileentity = this.field_70170_p.func_175625_s(this.field_226369_bI_);
--         return tileentity != null && tileentity.func_200662_C() == TileEntityType.field_226985_G_;
-+         return tileentity instanceof BeehiveTileEntity;
+          BlockEntity tileentity = this.world.getBlockEntity(this.hivePos);
+-         return tileentity != null && tileentity.getType() == BlockEntityType.BEEHIVE;
++         return tileentity instanceof BeehiveBlockEntity;
        }
     }
  

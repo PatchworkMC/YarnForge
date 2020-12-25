@@ -1,0 +1,22 @@
+--- a/net/minecraft/village/ZombieSiegeManager.java
++++ b/net/minecraft/village/ZombieSiegeManager.java
+@@ -78,7 +78,9 @@
+                   this.startX = blockpos.getX() + MathHelper.floor(MathHelper.cos(f) * 32.0F);
+                   this.startY = blockpos.getY();
+                   this.startZ = blockpos.getZ() + MathHelper.floor(MathHelper.sin(f) * 32.0F);
+-                  if (this.getSpawnVector(world, new BlockPos(this.startX, this.startY, this.startZ)) != null) {
++                  Vec3d siegeLocation = this.getSpawnVector(world, new BlockPos(this.startX, this.startY, this.startZ));
++                  if (siegeLocation != null) {
++                     if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.village.VillageSiegeEvent(this, world, playerentity, siegeLocation))) return false;
+                      this.countdown = 0;
+                      this.remaining = 20;
+                      break;
+@@ -98,7 +100,7 @@
+       if (vector3d != null) {
+          ZombieEntity zombieentity;
+          try {
+-            zombieentity = new ZombieEntity(world);
++            zombieentity = EntityType.ZOMBIE.create(world); //Forge: Direct Initialization is deprecated, use EntityType.
+             zombieentity.initialize(world, world.getLocalDifficulty(zombieentity.getBlockPos()), SpawnReason.EVENT, (EntityData)null, (CompoundTag)null);
+          } catch (Exception exception) {
+             field_26390.warn("Failed to create zombie for village siege at {}", vector3d, exception);

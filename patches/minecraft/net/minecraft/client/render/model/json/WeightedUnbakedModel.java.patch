@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/render/model/json/WeightedUnbakedModel.java
++++ b/net/minecraft/client/render/model/json/WeightedUnbakedModel.java
+@@ -72,7 +72,7 @@
+          WeightedBakedModel.Builder weightedbakedmodel$builder = new WeightedBakedModel.Builder();
+ 
+          for(ModelVariant variant : this.getVariants()) {
+-            BakedModel ibakedmodel = modelBakeryIn.bake(variant.getLocation(), variant);
++            BakedModel ibakedmodel = modelBakeryIn.getBakedModel(variant.getLocation(), variant, spriteGetterIn);
+             weightedbakedmodel$builder.add(ibakedmodel, variant.getWeight());
+          }
+ 

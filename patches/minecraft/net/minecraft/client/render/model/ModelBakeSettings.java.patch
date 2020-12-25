@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/render/model/ModelBakeSettings.java
++++ b/net/minecraft/client/render/model/ModelBakeSettings.java
+@@ -7,7 +7,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @Environment(EnvType.CLIENT)
+-public interface ModelBakeSettings {
++public interface ModelBakeSettings extends net.minecraftforge.client.extensions.IForgeModelTransform {
+    default AffineTransformation getRotation() {
+       return AffineTransformation.identity();
+    }

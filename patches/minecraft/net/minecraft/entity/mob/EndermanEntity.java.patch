@@ -1,0 +1,74 @@
+--- a/net/minecraft/entity/mob/EndermanEntity.java
++++ b/net/minecraft/entity/mob/EndermanEntity.java
+@@ -97,7 +97,6 @@
+    }
+ 
+    public void setTarget(@Nullable LivingEntity entitylivingbaseIn) {
+-      super.setTarget(entitylivingbaseIn);
+       EntityAttributeInstance modifiableattributeinstance = this.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+       if (entitylivingbaseIn == null) {
+          this.ageWhenTargetSet = 0;
+@@ -112,6 +111,7 @@
+          }
+       }
+ 
++      super.setTarget(entitylivingbaseIn); //Forge: Moved down to allow event handlers to write data manager values.
+    }
+ 
+    protected void initDataTracker() {
+@@ -185,7 +185,7 @@
+ 
+    private boolean isPlayerStaring(PlayerEntity player) {
+       ItemStack itemstack = player.inventory.armor.get(3);
+-      if (itemstack.getItem() == Blocks.CARVED_PUMPKIN.asItem()) {
++      if (itemstack.isEnderMask(player, this)) {
+          return false;
+       } else {
+          Vec3d vector3d = player.getRotationVec(1.0F).normalize();
+@@ -264,7 +264,9 @@
+       boolean flag = blockstate.getMaterial().blocksMovement();
+       boolean flag1 = blockstate.getFluidState().isIn(FluidTags.WATER);
+       if (flag && !flag1) {
+-         boolean flag2 = this.teleport(x, y, z, true);
++         net.minecraftforge.event.entity.living.EnderTeleportEvent event = new net.minecraftforge.event.entity.living.EnderTeleportEvent(this, x, y, z, 0);
++         if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) return false;
++         boolean flag2 = this.teleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true);
+          if (flag2 && !this.isSilent()) {
+             this.world.playSound((PlayerEntity)null, this.prevX, this.prevY, this.prevZ, SoundEvents.ENTITY_ENDERMAN_TELEPORT, this.getSoundCategory(), 1.0F, 1.0F);
+             this.playSound(SoundEvents.ENTITY_ENDERMAN_TELEPORT, 1.0F, 1.0F);
+@@ -428,7 +430,7 @@
+       public boolean canStart() {
+          if (this.enderman.getCarriedBlock() == null) {
+             return false;
+-         } else if (!this.enderman.world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
++         } else if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.enderman.world, this.enderman)) {
+             return false;
+          } else {
+             return this.enderman.getRandom().nextInt(2000) == 0;
+@@ -448,7 +450,7 @@
+          BlockState blockstate2 = this.enderman.getCarriedBlock();
+          if (blockstate2 != null) {
+             blockstate2 = Block.postProcessState(blockstate2, this.enderman.world, blockpos);
+-            if (this.canPlaceOn(world, blockpos, blockstate2, blockstate, blockstate1, blockpos1)) {
++            if (this.canPlaceOn(world, blockpos, blockstate2, blockstate, blockstate1, blockpos1) && !net.minecraftforge.event.ForgeEventFactory.onBlockPlace(enderman, net.minecraftforge.common.util.BlockSnapshot.create(world.getRegistryKey(), world, blockpos1), net.minecraft.util.math.Direction.UP)) {
+                world.setBlockState(blockpos, blockstate2, 3);
+                this.enderman.setCarriedBlock((BlockState)null);
+             }
+@@ -457,7 +459,7 @@
+       }
+ 
+       private boolean canPlaceOn(World p_220836_1_, BlockPos p_220836_2_, BlockState p_220836_3_, BlockState p_220836_4_, BlockState p_220836_5_, BlockPos p_220836_6_) {
+-         return p_220836_4_.isAir() && !p_220836_5_.isAir() && !p_220836_5_.isOf(Blocks.BEDROCK) && p_220836_5_.isFullCube(p_220836_1_, p_220836_6_) && p_220836_3_.canPlaceAt(p_220836_1_, p_220836_2_) && p_220836_1_.getOtherEntities(this.enderman, Box.method_29968(Vec3d.of(p_220836_2_))).isEmpty();
++         return p_220836_4_.isAir(p_220836_1_, p_220836_2_) && !p_220836_5_.isAir(p_220836_1_, p_220836_6_) && !p_220836_5_.isOf(Blocks.BEDROCK) && p_220836_5_.isFullCube(p_220836_1_, p_220836_6_) && p_220836_3_.canPlaceAt(p_220836_1_, p_220836_2_) && p_220836_1_.getOtherEntities(this.enderman, Box.method_29968(Vec3d.of(p_220836_2_))).isEmpty();
+       }
+    }
+ 
+@@ -499,7 +501,7 @@
+       public boolean canStart() {
+          if (this.enderman.getCarriedBlock() != null) {
+             return false;
+-         } else if (!this.enderman.world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
++         } else if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.enderman.world, this.enderman)) {
+             return false;
+          } else {
+             return this.enderman.getRandom().nextInt(20) == 0;

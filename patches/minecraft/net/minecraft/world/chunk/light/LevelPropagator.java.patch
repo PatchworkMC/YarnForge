@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/chunk/light/LevelPropagator.java
++++ b/net/minecraft/world/chunk/light/LevelPropagator.java
+@@ -228,4 +228,8 @@
+    protected abstract void setLevel(long sectionPosIn, int level);
+ 
+    protected abstract int getPropagatedLevel(long startPos, long endPos, int startLevel);
++
++   protected int queuedUpdateSize() {
++      return pendingUpdates.size();
++   }
+ }

@@ -22,6 +22,8 @@ package net.minecraftforge.event;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.*;
 import net.minecraft.resources.*;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 
@@ -34,21 +36,21 @@ import net.minecraftforge.eventbus.api.Event;
  */
 public class RegisterCommandsEvent extends Event
 {
-    private final CommandDispatcher<CommandSource> dispatcher;
-    private final Commands.EnvironmentType environment;
+    private final CommandDispatcher<ServerCommandSource> dispatcher;
+    private final CommandManager.RegistrationEnvironment environment;
     
-    public RegisterCommandsEvent(CommandDispatcher<CommandSource> dispatcher, Commands.EnvironmentType environment)
+    public RegisterCommandsEvent(CommandDispatcher<ServerCommandSource> dispatcher, CommandManager.RegistrationEnvironment environment)
     {
         this.dispatcher = dispatcher;
         this.environment = environment;
     }
     
-    public CommandDispatcher<CommandSource> getDispatcher()
+    public CommandDispatcher<ServerCommandSource> getDispatcher()
     {
         return dispatcher;
     }
     
-    public Commands.EnvironmentType getEnvironment()
+    public CommandManager.RegistrationEnvironment getEnvironment()
     {
         return environment;
     }

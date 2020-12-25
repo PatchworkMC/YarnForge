@@ -1,0 +1,12 @@
+--- a/net/minecraft/world/gen/feature/PillagerOutpostFeature.java
++++ b/net/minecraft/world/gen/feature/PillagerOutpostFeature.java
+@@ -19,7 +19,8 @@
+       super(p_i231977_1_, 0, true, true);
+    }
+ 
+-   public List<SpawnSettings.SpawnEntry> getMonsterSpawns() {
++   @Override
++   public List<SpawnSettings.SpawnEntry> getDefaultSpawnList() {
+       return MONSTER_SPAWNS;
+    }
+ 

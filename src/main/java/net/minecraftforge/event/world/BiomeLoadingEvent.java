@@ -25,10 +25,9 @@ import net.minecraftforge.common.world.BiomeGenerationSettingsBuilder;
 import net.minecraftforge.common.world.MobSpawnInfoBuilder;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
-
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeAmbience;
+import net.minecraft.world.biome.BiomeEffects;
 
 /**
  * This event fires when a Biome is created from json or when a registered biome is re-created for worldgen.
@@ -45,18 +44,18 @@ import net.minecraft.world.biome.BiomeAmbience;
  * always be the same, depending on other mods.
  */
 public class BiomeLoadingEvent extends Event {
-	private final ResourceLocation name;
-	private Biome.Climate climate;
+	private final Identifier name;
+	private Biome.Weather climate;
 	private Biome.Category category;
 	private float depth;
 	private float scale;
-	private BiomeAmbience effects;
+	private BiomeEffects effects;
 	private final BiomeGenerationSettingsBuilder gen;
 	private final MobSpawnInfoBuilder spawns;
 
 	public BiomeLoadingEvent(
 		@Nullable
-		final ResourceLocation name, final Biome.Climate climate, final Biome.Category category, final float depth, final float scale, final BiomeAmbience effects, final BiomeGenerationSettingsBuilder gen, final MobSpawnInfoBuilder spawns) {
+		final Identifier name, final Biome.Weather climate, final Biome.Category category, final float depth, final float scale, final BiomeEffects effects, final BiomeGenerationSettingsBuilder gen, final MobSpawnInfoBuilder spawns) {
 		this.name = name;
 		this.climate = climate;
 		this.category = category;
@@ -73,15 +72,15 @@ public class BiomeLoadingEvent extends Event {
 	 * Do check for this possibility!
 	 */
 	@Nullable
-	public ResourceLocation getName() {
+	public Identifier getName() {
 		return name;
 	}
 
-	public Biome.Climate getClimate() {
+	public Biome.Weather getClimate() {
 		return climate;
 	}
 
-	public void setClimate(final Biome.Climate value) {
+	public void setClimate(final Biome.Weather value) {
 		this.climate = value;
 	}
 
@@ -109,11 +108,11 @@ public class BiomeLoadingEvent extends Event {
 		this.scale = value;
 	}
 
-	public BiomeAmbience getEffects() {
+	public BiomeEffects getEffects() {
 		return effects;
 	}
 
-	public void setEffects(final BiomeAmbience value) {
+	public void setEffects(final BiomeEffects value) {
 		this.effects = value;
 	}
 

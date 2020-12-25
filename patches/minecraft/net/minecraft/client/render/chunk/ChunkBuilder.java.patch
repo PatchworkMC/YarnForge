@@ -1,0 +1,172 @@
+--- a/net/minecraft/client/render/chunk/ChunkBuilder.java
++++ b/net/minecraft/client/render/chunk/ChunkBuilder.java
+@@ -69,12 +69,15 @@
+    private Vec3d cameraPosition = Vec3d.ZERO;
+ 
+    public ChunkBuilder(World worldIn, WorldRenderer worldRendererIn, Executor executorIn, boolean java64bit, BlockBufferBuilderStorage fixedBuilderIn) {
++      this(worldIn, worldRendererIn, executorIn, java64bit, fixedBuilderIn, -1);
++   }
++   public ChunkBuilder(World worldIn, WorldRenderer worldRendererIn, Executor executorIn, boolean java64bit, BlockBufferBuilderStorage fixedBuilderIn, int countRenderBuilders) {
+       this.world = worldIn;
+       this.worldRenderer = worldRendererIn;
+       int i = Math.max(1, (int)((double)Runtime.getRuntime().maxMemory() * 0.3D) / (RenderLayer.getBlockLayers().stream().mapToInt(RenderLayer::getExpectedBufferSize).sum() * 4) - 1);
+       int j = Runtime.getRuntime().availableProcessors();
+       int k = java64bit ? j : Math.min(j, 4);
+-      int l = Math.max(1, Math.min(k, i));
++      int l = countRenderBuilders < 0 ? Math.max(1, Math.min(k, i)) : countRenderBuilders;
+       this.buffers = fixedBuilderIn;
+       List<BlockBufferBuilderStorage> list = Lists.newArrayListWithExpectedSize(l);
+ 
+@@ -207,7 +210,7 @@
+    }
+ 
+    @Environment(EnvType.CLIENT)
+-   public class BuiltChunk {
++   public class BuiltChunk implements net.minecraftforge.client.extensions.IForgeRenderChunk {
+       public final AtomicReference<ChunkBuilder.ChunkData> data = new AtomicReference<>(ChunkBuilder.ChunkData.EMPTY);
+       @Nullable
+       private ChunkBuilder.BuiltChunk.RebuildTask rebuildTask;
+@@ -333,7 +336,7 @@
+          if (!chunkrenderdispatcher$compiledchunk.initializedLayers.contains(renderTypeIn)) {
+             return false;
+          } else {
+-            this.sortTask = new ChunkBuilder.BuiltChunk.SortTask(this.getSquaredCameraDistance(), chunkrenderdispatcher$compiledchunk);
++            this.sortTask = new ChunkBuilder.BuiltChunk.SortTask(new net.minecraft.util.math.ChunkPos(getOrigin()), this.getSquaredCameraDistance(), chunkrenderdispatcher$compiledchunk);
+             renderDispatcherIn.send(this.sortTask);
+             return true;
+          }
+@@ -356,8 +359,8 @@
+          this.cancel();
+          BlockPos blockpos = this.origin.toImmutable();
+          int i = 1;
+-         ChunkRendererRegion chunkrendercache = ChunkRendererRegion.create(ChunkBuilder.this.world, blockpos.add(-1, -1, -1), blockpos.add(16, 16, 16), 1);
+-         this.rebuildTask = new ChunkBuilder.BuiltChunk.RebuildTask(this.getSquaredCameraDistance(), chunkrendercache);
++         ChunkRendererRegion chunkrendercache = createRegionRenderCache(ChunkBuilder.this.world, blockpos.add(-1, -1, -1), blockpos.add(16, 16, 16), 1);
++         this.rebuildTask = new ChunkBuilder.BuiltChunk.RebuildTask(new net.minecraft.util.math.ChunkPos(getOrigin()), this.getSquaredCameraDistance(), chunkrendercache);
+          return this.rebuildTask;
+       }
+ 
+@@ -385,9 +388,19 @@
+       abstract class Task implements Comparable<ChunkBuilder.BuiltChunk.Task> {
+          protected final double distance;
+          protected final AtomicBoolean cancelled = new AtomicBoolean(false);
++         protected java.util.Map<net.minecraft.util.math.BlockPos, net.minecraftforge.client.model.data.IModelData> modelData;
+ 
+          public Task(double distanceSqIn) {
++            this(null, distanceSqIn);
++         }
++
++         public Task(@Nullable net.minecraft.util.math.ChunkPos pos, double distanceSqIn) {
+             this.distance = distanceSqIn;
++            if (pos == null) {
++               this.modelData = java.util.Collections.emptyMap();
++            } else {
++               this.modelData = net.minecraftforge.client.model.ModelDataManager.getModelData(net.minecraft.client.MinecraftClient.getInstance().world, pos);
++            }
+          }
+ 
+          public abstract CompletableFuture<ChunkBuilder.Result> run(BlockBufferBuilderStorage builderIn);
+@@ -397,6 +410,10 @@
+          public int compareTo(ChunkBuilder.BuiltChunk.Task p_compareTo_1_) {
+             return Doubles.compare(this.distance, p_compareTo_1_.distance);
+          }
++
++         public net.minecraftforge.client.model.data.IModelData getModelData(net.minecraft.util.math.BlockPos pos) {
++            return modelData.getOrDefault(pos, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++         }
+       }
+ 
+       @Environment(EnvType.CLIENT)
+@@ -404,8 +421,13 @@
+          @Nullable
+          protected ChunkRendererRegion region;
+ 
++         @Deprecated
+          public RebuildTask(double distanceSqIn, @Nullable ChunkRendererRegion renderCacheIn) {
+-            super(distanceSqIn);
++            this(null, distanceSqIn, renderCacheIn);
++         }
++
++         public RebuildTask(@Nullable net.minecraft.util.math.ChunkPos pos, double distanceSqIn, @Nullable ChunkRendererRegion renderCacheIn) {
++            super(pos, distanceSqIn);
+             this.region = renderCacheIn;
+          }
+ 
+@@ -471,7 +493,7 @@
+                      visgraph.markClosed(blockpos2);
+                   }
+ 
+-                  if (block.hasBlockEntity()) {
++                  if (blockstate.hasTileEntity()) {
+                      BlockEntity tileentity = chunkrendercache.getBlockEntity(blockpos2, WorldChunk.CreationType.CHECK);
+                      if (tileentity != null) {
+                         this.addBlockEntity(compiledChunkIn, set, tileentity);
+@@ -479,8 +501,10 @@
+                   }
+ 
+                   FluidState fluidstate = chunkrendercache.getFluidState(blockpos2);
+-                  if (!fluidstate.isEmpty()) {
+-                     RenderLayer rendertype = RenderLayers.getFluidLayer(fluidstate);
++                  net.minecraftforge.client.model.data.IModelData modelData = getModelData(blockpos2);
++                  for (RenderLayer rendertype : RenderLayer.getBlockLayers()) {
++                     net.minecraftforge.client.ForgeHooksClient.setRenderLayer(rendertype);
++                  if (!fluidstate.isEmpty() && RenderLayers.canRenderInLayer(fluidstate, rendertype)) {
+                      BufferBuilder bufferbuilder = builderIn.get(rendertype);
+                      if (compiledChunkIn.initializedLayers.add(rendertype)) {
+                         BuiltChunk.this.beginBufferBuilding(bufferbuilder);
+@@ -492,8 +516,8 @@
+                      }
+                   }
+ 
+-                  if (blockstate.getRenderType() != BlockRenderType.INVISIBLE) {
+-                     RenderLayer rendertype1 = RenderLayers.getBlockLayer(blockstate);
++                  if (blockstate.getRenderType() != BlockRenderType.INVISIBLE && RenderLayers.canRenderInLayer(blockstate, rendertype)) {
++                     RenderLayer rendertype1 = rendertype;
+                      BufferBuilder bufferbuilder2 = builderIn.get(rendertype1);
+                      if (compiledChunkIn.initializedLayers.add(rendertype1)) {
+                         BuiltChunk.this.beginBufferBuilding(bufferbuilder2);
+@@ -501,14 +525,16 @@
+ 
+                      matrixstack.push();
+                      matrixstack.translate((double)(blockpos2.getX() & 15), (double)(blockpos2.getY() & 15), (double)(blockpos2.getZ() & 15));
+-                     if (blockrendererdispatcher.renderBlock(blockstate, blockpos2, chunkrendercache, matrixstack, bufferbuilder2, true, random)) {
++                     if (blockrendererdispatcher.renderModel(blockstate, blockpos2, chunkrendercache, matrixstack, bufferbuilder2, true, random, modelData)) {
+                         compiledChunkIn.empty = false;
+                         compiledChunkIn.nonEmptyLayers.add(rendertype1);
+                      }
+ 
+                      matrixstack.pop();
+                   }
++                  }
+                }
++               net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+ 
+                if (compiledChunkIn.nonEmptyLayers.contains(RenderLayer.getTranslucent())) {
+                   BufferBuilder bufferbuilder1 = builderIn.get(RenderLayer.getTranslucent());
+@@ -527,10 +553,10 @@
+          private <E extends BlockEntity> void addBlockEntity(ChunkBuilder.ChunkData compiledChunkIn, Set<BlockEntity> tileEntitiesIn, E tileEntityIn) {
+             BlockEntityRenderer<E> tileentityrenderer = BlockEntityRenderDispatcher.INSTANCE.get(tileEntityIn);
+             if (tileentityrenderer != null) {
+-               compiledChunkIn.blockEntities.add(tileEntityIn);
+                if (tileentityrenderer.rendersOutsideBoundingBox(tileEntityIn)) {
+                   tileEntitiesIn.add(tileEntityIn);
+                }
++               else compiledChunkIn.blockEntities.add(tileEntityIn); //FORGE: Fix MC-112730
+             }
+ 
+          }
+@@ -548,8 +574,13 @@
+       class SortTask extends ChunkBuilder.BuiltChunk.Task {
+          private final ChunkBuilder.ChunkData data;
+ 
++         @Deprecated
+          public SortTask(double distanceSqIn, ChunkBuilder.ChunkData compiledChunkIn) {
+-            super(distanceSqIn);
++            this(null, distanceSqIn, compiledChunkIn);
++         }
++
++         public SortTask(@Nullable net.minecraft.util.math.ChunkPos pos, double distanceSqIn, ChunkBuilder.ChunkData compiledChunkIn) {
++            super(pos, distanceSqIn);
+             this.data = compiledChunkIn;
+          }
+ 

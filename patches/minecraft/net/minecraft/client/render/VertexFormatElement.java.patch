@@ -1,0 +1,15 @@
+--- a/net/minecraft/client/render/VertexFormatElement.java
++++ b/net/minecraft/client/render/VertexFormatElement.java
+@@ -90,6 +90,12 @@
+       this.type.endDrawing(this.index);
+    }
+ 
++    //Forge Start
++    public int getElementCount() {
++       return count;
++    }
++    //Forge End
++
+    @Environment(EnvType.CLIENT)
+    public static enum Format {
+       FLOAT(4, "Float", 5126),

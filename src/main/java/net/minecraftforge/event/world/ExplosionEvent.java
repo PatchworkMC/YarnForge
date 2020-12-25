@@ -27,8 +27,8 @@ import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
+import net.minecraft.world.explosion.Explosion;
 
 /** ExplosionEvent triggers when an explosion happens in the world.<br>
  * <br>
@@ -86,7 +86,7 @@ public class ExplosionEvent extends Event {
 
 		/** return the list of blocks affected by the explosion. */
 		public List<BlockPos> getAffectedBlocks() {
-			return getExplosion().getAffectedBlockPositions();
+			return getExplosion().getAffectedBlocks();
 		}
 
 		/** return the list of entities affected by the explosion. */

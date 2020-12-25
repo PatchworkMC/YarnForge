@@ -19,11 +19,11 @@
 
 package net.minecraftforge.common.crafting.conditions;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public interface ICondition
 {
-    ResourceLocation getID();
+    Identifier getID();
 
     boolean test();
 }

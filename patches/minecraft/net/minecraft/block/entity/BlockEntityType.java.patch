@@ -1,0 +1,34 @@
+--- a/net/minecraft/block/entity/BlockEntityType.java
++++ b/net/minecraft/block/entity/BlockEntityType.java
+@@ -16,7 +16,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public class BlockEntityType<T extends BlockEntity> {
++public class BlockEntityType<T extends BlockEntity> extends net.minecraftforge.registries.ForgeRegistryEntry<BlockEntityType<?>> {
+    private static final Logger LOGGER = LogManager.getLogger();
+    public static final BlockEntityType<FurnaceBlockEntity> FURNACE = create("furnace", BlockEntityType.Builder.create(FurnaceBlockEntity::new, Blocks.FURNACE));
+    public static final BlockEntityType<ChestBlockEntity> CHEST = create("chest", BlockEntityType.Builder.create(ChestBlockEntity::new, Blocks.CHEST));
+@@ -54,6 +54,7 @@
+    private final Supplier<? extends T> supplier;
+    private final Set<Block> blocks;
+    private final Type<?> type;
++   private final net.minecraftforge.common.util.ReverseTagWrapper<BlockEntityType<?>> reverseTags = new net.minecraftforge.common.util.ReverseTagWrapper<>(this, () -> net.minecraft.tag.ServerTagManagerHolder.getTagManager().getCustomTypeCollection(net.minecraftforge.registries.ForgeRegistries.TILE_ENTITIES));
+ 
+    @Nullable
+    public static Identifier getId(BlockEntityType<?> tileEntityTypeIn) {
+@@ -75,6 +76,14 @@
+       this.type = dataFixerType;
+    }
+ 
++   public java.util.Set<net.minecraft.util.Identifier> getTags() {
++      return reverseTags.getTagNames();
++   }
++
++   public boolean isIn(net.minecraft.tag.Tag<BlockEntityType<?>> tag) {
++      return tag.contains(this);
++   }
++
+    @Nullable
+    public T instantiate() {
+       return this.supplier.get();

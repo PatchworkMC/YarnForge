@@ -25,12 +25,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -54,8 +53,8 @@ public class DeferredRegistryTest {
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     private static final DeferredRegister<Custom> CUSTOMS = DeferredRegister.create(Custom.class, MODID);
 
-    private static final RegistryObject<Block> BLOCK = BLOCKS.register("test", () -> new Block(Block.Properties.create(Material.ROCK)));
-    private static final RegistryObject<Item>  ITEM  = ITEMS .register("test", () -> new BlockItem(BLOCK.get(), new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)));
+    private static final RegistryObject<Block> BLOCK = BLOCKS.register("test", () -> new Block(Block.Properties.of(Material.STONE)));
+    private static final RegistryObject<Item>  ITEM  = ITEMS .register("test", () -> new BlockItem(BLOCK.get(), new Item.Settings().group(ItemGroup.BUILDING_BLOCKS)));
     private static final RegistryObject<Custom> CUSTOM = CUSTOMS.register("test", () -> new Custom(){});
 
     private static final Supplier<IForgeRegistry<Custom>> CUSTOM_REG = CUSTOMS.makeRegistry("test_registry", () ->
@@ -75,7 +74,7 @@ public class DeferredRegistryTest {
         DataGenerator gen = event.getGenerator();
 
         if (event.includeClient()) {
-            gen.addProvider(new BlockStateProvider(gen, MODID, event.getExistingFileHelper()) {
+            gen.install(new BlockStateProvider(gen, MODID, event.getExistingFileHelper()) {
                 @Override
                 protected void registerStatesAndModels() {
                     ModelFile model = models().cubeAll(BLOCK.get().getRegistryName().getPath(), mcLoc("block/furnace_top"));

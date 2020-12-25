@@ -22,7 +22,6 @@ package net.minecraftforge.event.entity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
 

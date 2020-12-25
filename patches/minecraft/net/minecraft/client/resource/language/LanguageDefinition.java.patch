@@ -1,0 +1,24 @@
+--- a/net/minecraft/client/resource/language/LanguageDefinition.java
++++ b/net/minecraft/client/resource/language/LanguageDefinition.java
+@@ -17,6 +17,12 @@
+       this.name = regionIn;
+       this.region = nameIn;
+       this.rightToLeft = bidirectionalIn;
++      String[] splitLangCode = code.split("_", 2);
++      if (splitLangCode.length == 1) { // Vanilla has some languages without underscores
++         this.javaLocale = new java.util.Locale(code);
++      } else {
++         this.javaLocale = new java.util.Locale(splitLangCode[0], splitLangCode[1]);
++      }
+    }
+ 
+    public String getCode() {
+@@ -54,4 +60,8 @@
+    public int compareTo(LanguageDefinition p_compareTo_1_) {
+       return this.code.compareTo(p_compareTo_1_.code);
+    }
++
++   // Forge: add access to Locale so modders can create correct string and number formatters
++   private final java.util.Locale javaLocale;
++   public java.util.Locale getJavaLocale() { return javaLocale; }
+ }

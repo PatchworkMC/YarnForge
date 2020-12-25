@@ -28,13 +28,13 @@ import javax.annotation.Nonnull;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
-import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.command.arguments.ArgumentTypes;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SCommandListPacket;
-import net.minecraft.network.play.server.SEntityPropertiesPacket;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.argument.ArgumentTypes;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.Packet;
+import net.minecraft.network.packet.s2c.play.CommandTreeS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntityAttributesS2CPacket;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -48,18 +48,18 @@ import com.mojang.brigadier.tree.RootCommandNode;
  * A filter for network packets, used to filter/modify parts of vanilla network messages that
  * will cause errors or warnings on vanilla clients, for example entity attributes that are added by Forge or mods.
  */
-public class VanillaConnectionNetworkFilter extends MessageToMessageEncoder<IPacket<?>>
+public class VanillaConnectionNetworkFilter extends MessageToMessageEncoder<Packet<?>>
 {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final Map<Class<? extends IPacket<?>>, Function<IPacket<?>, ? extends IPacket<?>>> handlers = ImmutableMap.<Class<? extends IPacket<?>>, Function<IPacket<?>, ? extends IPacket<?>>>builder()
-            .put(handler(SEntityPropertiesPacket.class, VanillaConnectionNetworkFilter::filterEntityProperties))
-            .put(handler(SCommandListPacket.class, VanillaConnectionNetworkFilter::filterCommandList))
+    private static final Map<Class<? extends Packet<?>>, Function<Packet<?>, ? extends Packet<?>>> handlers = ImmutableMap.<Class<? extends Packet<?>>, Function<Packet<?>, ? extends Packet<?>>>builder()
+            .put(handler(EntityAttributesS2CPacket.class, VanillaConnectionNetworkFilter::filterEntityProperties))
+            .put(handler(CommandTreeS2CPacket.class, VanillaConnectionNetworkFilter::filterCommandList))
             .build();
 
 
-    public static void injectIfNecessary(NetworkManager manager)
+    public static void injectIfNecessary(ClientConnection manager)
     {
         if (NetworkHooks.isVanillaConnection(manager))
         {
@@ -72,7 +72,7 @@ public class VanillaConnectionNetworkFilter extends MessageToMessageEncoder<IPac
      * Helper function for building the handler map.
      */
     @Nonnull
-    private static <T extends IPacket<?>> Map.Entry<Class<? extends IPacket<?>>, Function<IPacket<?>, ? extends IPacket<?>>> handler(Class<T> cls, Function<T, ? extends IPacket<?>> function)
+    private static <T extends Packet<?>> Map.Entry<Class<? extends Packet<?>>, Function<Packet<?>, ? extends Packet<?>>> handler(Class<T> cls, Function<T, ? extends Packet<?>> function)
     {
         return new AbstractMap.SimpleEntry<>(cls, function.compose(cls::cast));
     }
@@ -82,15 +82,15 @@ public class VanillaConnectionNetworkFilter extends MessageToMessageEncoder<IPac
      * A vanilla client would ignore these with an error log.
      */
     @Nonnull
-    private static SEntityPropertiesPacket filterEntityProperties(SEntityPropertiesPacket msg)
+    private static EntityAttributesS2CPacket filterEntityProperties(EntityAttributesS2CPacket msg)
     {
-        SEntityPropertiesPacket newPacket = new SEntityPropertiesPacket();
-        msg.getSnapshots().stream()
+        EntityAttributesS2CPacket newPacket = new EntityAttributesS2CPacket();
+        msg.getEntries().stream()
                 .filter(snapshot -> {
-                    ResourceLocation key = ForgeRegistries.ATTRIBUTES.getKey(snapshot.func_240834_a_());
+                    Identifier key = ForgeRegistries.ATTRIBUTES.getKey(snapshot.getId());
                     return key != null && key.getNamespace().equals("minecraft");
                 })
-                .forEach(snapshot -> newPacket.getSnapshots().add(snapshot));
+                .forEach(snapshot -> newPacket.getEntries().add(snapshot));
         return newPacket;
     }
 
@@ -99,20 +99,20 @@ public class VanillaConnectionNetworkFilter extends MessageToMessageEncoder<IPac
      * A vanilla client would fail to deserialize the packet and disconnect with an error message if these were sent.
      */
     @Nonnull
-    private static SCommandListPacket filterCommandList(SCommandListPacket packet)
+    private static CommandTreeS2CPacket filterCommandList(CommandTreeS2CPacket packet)
     {
-        RootCommandNode<ISuggestionProvider> root = packet.getRoot();
-        RootCommandNode<ISuggestionProvider> newRoot = CommandTreeCleaner.cleanArgumentTypes(root, argType -> {
-            ResourceLocation id = ArgumentTypes.getId(argType);
+        RootCommandNode<CommandSource> root = packet.getCommandTree();
+        RootCommandNode<CommandSource> newRoot = CommandTreeCleaner.cleanArgumentTypes(root, argType -> {
+            Identifier id = ArgumentTypes.getId(argType);
             return id != null && (id.getNamespace().equals("minecraft") || id.getNamespace().equals("brigadier"));
         });
-        return new SCommandListPacket(newRoot);
+        return new CommandTreeS2CPacket(newRoot);
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, IPacket<?> msg, List<Object> out)
+    protected void encode(ChannelHandlerContext ctx, Packet<?> msg, List<Object> out)
     {
-        Function<IPacket<?>, ? extends IPacket<?>> function = handlers.getOrDefault(msg.getClass(), Function.identity());
+        Function<Packet<?>, ? extends Packet<?>> function = handlers.getOrDefault(msg.getClass(), Function.identity());
         out.add(function.apply(msg));
     }
 }

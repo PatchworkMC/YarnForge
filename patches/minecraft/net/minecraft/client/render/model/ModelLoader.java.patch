@@ -1,0 +1,109 @@
+--- a/net/minecraft/client/render/model/ModelLoader.java
++++ b/net/minecraft/client/render/model/ModelLoader.java
+@@ -151,8 +151,17 @@
+    });
+ 
+    public ModelLoader(ResourceManager resourceManagerIn, BlockColors blockColorsIn, Profiler profilerIn, int maxMipmapLevel) {
++      this(resourceManagerIn, blockColorsIn, true);
++      processLoading(profilerIn, maxMipmapLevel);
++   }
++
++   protected ModelLoader(ResourceManager resourceManagerIn, BlockColors blockColorsIn, boolean vanillaBakery) {
+       this.resourceManager = resourceManagerIn;
+       this.blockColors = blockColorsIn;
++   }
++
++   protected void processLoading(Profiler profilerIn, int maxMipmapLevel) {
++      net.minecraftforge.client.model.ModelLoaderRegistry.onModelLoadingStart();
+       profilerIn.push("missing_model");
+ 
+       try {
+@@ -185,12 +194,16 @@
+ 
+       profilerIn.swap("special");
+       this.addModel(new ModelIdentifier("minecraft:trident_in_hand#inventory"));
++      for (Identifier rl : getSpecialModels()) {
++         addModelToCache(rl);
++      }
+       profilerIn.swap("textures");
+       Set<Pair<String, String>> set = Sets.newLinkedHashSet();
+       Set<SpriteIdentifier> set1 = this.modelsToBake.values().stream().flatMap((p_229342_2_) -> {
+          return p_229342_2_.getTextureDependencies(this::getOrLoadModel, set).stream();
+       }).collect(Collectors.toSet());
+       set1.addAll(DEFAULT_TEXTURES);
++      net.minecraftforge.client.ForgeHooksClient.gatherFluidTextures(set1);
+       set.stream().filter((p_229346_0_) -> {
+          return !p_229346_0_.getSecond().equals(field_21773);
+       }).forEach((p_229330_0_) -> {
+@@ -229,6 +242,7 @@
+          try {
+             ibakedmodel = this.bake(p_229350_1_, ModelRotation.X0_Y0);
+          } catch (Exception exception) {
++            exception.printStackTrace();
+             LOGGER.warn("Unable to bake model: '{}': {}", p_229350_1_, exception);
+          }
+ 
+@@ -447,6 +461,13 @@
+       this.modelsToLoad.addAll(modelIn.getModelDependencies());
+    }
+ 
++   // Same as loadTopModel but without restricting to MRL's
++   private void addModelToCache(Identifier locationIn) {
++      UnbakedModel iunbakedmodel = this.getOrLoadModel(locationIn);
++      this.unbakedModels.put(locationIn, iunbakedmodel);
++      this.modelsToBake.put(locationIn, iunbakedmodel);
++   }
++
+    private void addModel(ModelIdentifier locationIn) {
+       UnbakedModel iunbakedmodel = this.getOrLoadModel(locationIn);
+       this.unbakedModels.put(locationIn, iunbakedmodel);
+@@ -461,7 +482,13 @@
+    }
+ 
+    @Nullable
++   @Deprecated
+    public BakedModel bake(Identifier locationIn, ModelBakeSettings transformIn) {
++      return getBakedModel(locationIn, transformIn, this.spriteAtlasManager::getSprite);
++   }
++
++   @Nullable
++   public BakedModel getBakedModel(Identifier locationIn, ModelBakeSettings transformIn, java.util.function.Function<SpriteIdentifier, net.minecraft.client.texture.Sprite> textureGetter) {
+       Triple<Identifier, AffineTransformation, Boolean> triple = Triple.of(locationIn, transformIn.getRotation(), transformIn.isShaded());
+       if (this.bakedModelCache.containsKey(triple)) {
+          return this.bakedModelCache.get(triple);
+@@ -472,11 +499,11 @@
+          if (iunbakedmodel instanceof JsonUnbakedModel) {
+             JsonUnbakedModel blockmodel = (JsonUnbakedModel)iunbakedmodel;
+             if (blockmodel.getRootModel() == GENERATION_MARKER) {
+-               return ITEM_MODEL_GENERATOR.create(this.spriteAtlasManager::getSprite, blockmodel).bake(this, blockmodel, this.spriteAtlasManager::getSprite, transformIn, locationIn, false);
++               return ITEM_MODEL_GENERATOR.create(textureGetter, blockmodel).bake(this, blockmodel, this.spriteAtlasManager::getSprite, transformIn, locationIn, false);
+             }
+          }
+ 
+-         BakedModel ibakedmodel = iunbakedmodel.bake(this, this.spriteAtlasManager::getSprite, transformIn, locationIn);
++         BakedModel ibakedmodel = iunbakedmodel.bake(this, textureGetter, transformIn, locationIn);
+          this.bakedModelCache.put(triple, ibakedmodel);
+          return ibakedmodel;
+       }
+@@ -529,6 +556,10 @@
+       return this.stateLookup;
+    }
+ 
++   public Set<Identifier> getSpecialModels() {
++      return java.util.Collections.emptySet();
++   }
++
+    @Environment(EnvType.CLIENT)
+    static class ModelLoaderException extends RuntimeException {
+       public ModelLoaderException(String message) {
+@@ -536,6 +567,10 @@
+       }
+    }
+ 
++   public SpriteAtlasManager getSpriteMap() {
++      return this.spriteAtlasManager;
++   }
++
+    @Environment(EnvType.CLIENT)
+    static class ModelDefinition {
+       private final List<UnbakedModel> components;

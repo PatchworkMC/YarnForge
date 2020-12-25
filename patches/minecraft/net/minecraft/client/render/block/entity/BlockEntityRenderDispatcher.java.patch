@@ -1,0 +1,12 @@
+--- a/net/minecraft/client/render/block/entity/BlockEntityRenderDispatcher.java
++++ b/net/minecraft/client/render/block/entity/BlockEntityRenderDispatcher.java
+@@ -137,4 +137,9 @@
+    public TextRenderer getTextRenderer() {
+       return this.textRenderer;
+    }
++
++   //Internal, Do not call Use ClientRegistry.
++   public synchronized <T extends BlockEntity> void setSpecialRendererInternal(BlockEntityType<T> tileEntityType, BlockEntityRenderer<? super T> specialRenderer) {
++      this.renderers.put(tileEntityType, specialRenderer);
++   }
+ }

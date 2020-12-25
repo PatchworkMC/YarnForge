@@ -1,0 +1,15 @@
+--- a/net/minecraft/entity/vehicle/SpawnerMinecartEntity.java
++++ b/net/minecraft/entity/vehicle/SpawnerMinecartEntity.java
+@@ -25,6 +25,12 @@
+       public BlockPos getPos() {
+          return SpawnerMinecartEntity.this.getBlockPos();
+       }
++
++      @Override
++      @javax.annotation.Nullable
++      public net.minecraft.entity.Entity getSpawnerEntity() {
++         return SpawnerMinecartEntity.this;
++      }
+    };
+ 
+    public SpawnerMinecartEntity(EntityType<? extends SpawnerMinecartEntity> type, World world) {

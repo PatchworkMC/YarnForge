@@ -25,15 +25,23 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.JsonUnbakedModel;
+import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
+import net.minecraft.util.math.Direction;
 import net.minecraftforge.client.model.geometry.IModelGeometry;
 
 import javax.annotation.Nullable;
@@ -42,49 +50,49 @@ import java.util.function.Function;
 
 public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspectiveModel>
 {
-    private final BlockModel baseModel;
-    private final ImmutableMap<ItemCameraTransforms.TransformType, BlockModel> perspectives;
+    private final JsonUnbakedModel baseModel;
+    private final ImmutableMap<ModelTransformation.Mode, JsonUnbakedModel> perspectives;
 
-    public SeparatePerspectiveModel(BlockModel baseModel, ImmutableMap<ItemCameraTransforms.TransformType, BlockModel> perspectives)
+    public SeparatePerspectiveModel(JsonUnbakedModel baseModel, ImmutableMap<ModelTransformation.Mode, JsonUnbakedModel> perspectives)
     {
         this.baseModel = baseModel;
         this.perspectives = perspectives;
     }
 
     @Override
-    public IBakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ItemOverrideList overrides, ResourceLocation modelLocation)
+    public net.minecraft.client.render.model.BakedModel bake(IModelConfiguration owner, ModelLoader bakery, Function<SpriteIdentifier, Sprite> spriteGetter, ModelBakeSettings modelTransform, ModelOverrideList overrides, Identifier modelLocation)
     {
         return new BakedModel(
                 owner.useSmoothLighting(), owner.isShadedInGui(), owner.isSideLit(),
                 spriteGetter.apply(owner.resolveTexture("particle")), overrides,
-                baseModel.bakeModel(bakery, baseModel, spriteGetter, modelTransform, modelLocation, owner.isSideLit()),
+                baseModel.bake(bakery, baseModel, spriteGetter, modelTransform, modelLocation, owner.isSideLit()),
                 ImmutableMap.copyOf(Maps.transformValues(perspectives, value -> {
-                    return value.bakeModel(bakery, value, spriteGetter, modelTransform, modelLocation, owner.isSideLit());
+                    return value.bake(bakery, value, spriteGetter, modelTransform, modelLocation, owner.isSideLit());
                 }))
         );
     }
 
     @Override
-    public Collection<RenderMaterial> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
+    public Collection<SpriteIdentifier> getTextures(IModelConfiguration owner, Function<Identifier, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
     {
-        Set<RenderMaterial> textures = Sets.newHashSet();
-        textures.addAll(baseModel.getTextures(modelGetter, missingTextureErrors));
-        for(BlockModel model : perspectives.values())
-            textures.addAll(model.getTextures(modelGetter, missingTextureErrors));
+        Set<SpriteIdentifier> textures = Sets.newHashSet();
+        textures.addAll(baseModel.getTextureDependencies(modelGetter, missingTextureErrors));
+        for(JsonUnbakedModel model : perspectives.values())
+            textures.addAll(model.getTextureDependencies(modelGetter, missingTextureErrors));
         return textures;
     }
 
-    public static class BakedModel implements IBakedModel
+    public static class BakedModel implements net.minecraft.client.render.model.BakedModel
     {
         private final boolean isAmbientOcclusion;
         private final boolean isGui3d;
         private final boolean isSideLit;
-        private final TextureAtlasSprite particle;
-        private final ItemOverrideList overrides;
-        private final IBakedModel baseModel;
-        private final ImmutableMap<ItemCameraTransforms.TransformType, IBakedModel> perspectives;
+        private final Sprite particle;
+        private final ModelOverrideList overrides;
+        private final net.minecraft.client.render.model.BakedModel baseModel;
+        private final ImmutableMap<ModelTransformation.Mode, net.minecraft.client.render.model.BakedModel> perspectives;
 
-        public BakedModel(boolean isAmbientOcclusion, boolean isGui3d, boolean isSideLit, TextureAtlasSprite particle, ItemOverrideList overrides, IBakedModel baseModel, ImmutableMap<ItemCameraTransforms.TransformType, IBakedModel> perspectives)
+        public BakedModel(boolean isAmbientOcclusion, boolean isGui3d, boolean isSideLit, Sprite particle, ModelOverrideList overrides, net.minecraft.client.render.model.BakedModel baseModel, ImmutableMap<ModelTransformation.Mode, net.minecraft.client.render.model.BakedModel> perspectives)
         {
             this.isAmbientOcclusion = isAmbientOcclusion;
             this.isGui3d = isGui3d;
@@ -102,13 +110,13 @@ public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspect
         }
 
         @Override
-        public boolean isAmbientOcclusion()
+        public boolean useAmbientOcclusion()
         {
             return isAmbientOcclusion;
         }
 
         @Override
-        public boolean isGui3d()
+        public boolean hasDepth()
         {
             return isGui3d;
         }
@@ -120,19 +128,19 @@ public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspect
         }
 
         @Override
-        public boolean isBuiltInRenderer()
+        public boolean isBuiltin()
         {
             return false;
         }
 
         @Override
-        public TextureAtlasSprite getParticleTexture()
+        public Sprite getSprite()
         {
             return particle;
         }
 
         @Override
-        public ItemOverrideList getOverrides()
+        public ModelOverrideList getOverrides()
         {
             return overrides;
         }
@@ -144,17 +152,17 @@ public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspect
         }
 
         @Override
-        public ItemCameraTransforms getItemCameraTransforms()
+        public ModelTransformation getTransformation()
         {
-            return ItemCameraTransforms.DEFAULT;
+            return ModelTransformation.NONE;
         }
 
         @Override
-        public IBakedModel handlePerspective(ItemCameraTransforms.TransformType cameraTransformType, MatrixStack mat)
+        public net.minecraft.client.render.model.BakedModel handlePerspective(ModelTransformation.Mode cameraTransformType, MatrixStack mat)
         {
             if (perspectives.containsKey(cameraTransformType))
             {
-                IBakedModel p = perspectives.get(cameraTransformType);
+                net.minecraft.client.render.model.BakedModel p = perspectives.get(cameraTransformType);
                 return p.handlePerspective(cameraTransformType, mat);
             }
             return baseModel.handlePerspective(cameraTransformType, mat);
@@ -165,20 +173,20 @@ public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspect
     {
         public static final Loader INSTANCE = new Loader();
 
-        public static final ImmutableBiMap<String, ItemCameraTransforms.TransformType> PERSPECTIVES = ImmutableBiMap.<String, ItemCameraTransforms.TransformType>builder()
-                .put("none", ItemCameraTransforms.TransformType.NONE)
-                .put("third_person_left_hand", ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND)
-                .put("third_person_right_hand", ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND)
-                .put("first_person_left_hand", ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND)
-                .put("first_person_right_hand", ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND)
-                .put("head", ItemCameraTransforms.TransformType.HEAD)
-                .put("gui", ItemCameraTransforms.TransformType.GUI)
-                .put("ground", ItemCameraTransforms.TransformType.GROUND)
-                .put("fixed", ItemCameraTransforms.TransformType.FIXED)
+        public static final ImmutableBiMap<String, ModelTransformation.Mode> PERSPECTIVES = ImmutableBiMap.<String, ModelTransformation.Mode>builder()
+                .put("none", ModelTransformation.Mode.NONE)
+                .put("third_person_left_hand", ModelTransformation.Mode.THIRD_PERSON_LEFT_HAND)
+                .put("third_person_right_hand", ModelTransformation.Mode.THIRD_PERSON_RIGHT_HAND)
+                .put("first_person_left_hand", ModelTransformation.Mode.FIRST_PERSON_LEFT_HAND)
+                .put("first_person_right_hand", ModelTransformation.Mode.FIRST_PERSON_RIGHT_HAND)
+                .put("head", ModelTransformation.Mode.HEAD)
+                .put("gui", ModelTransformation.Mode.GUI)
+                .put("ground", ModelTransformation.Mode.GROUND)
+                .put("fixed", ModelTransformation.Mode.FIXED)
                 .build();
 
         @Override
-        public void onResourceManagerReload(IResourceManager resourceManager)
+        public void apply(ResourceManager resourceManager)
         {
             // Not used
         }
@@ -186,16 +194,16 @@ public class SeparatePerspectiveModel implements IModelGeometry<SeparatePerspect
         @Override
         public SeparatePerspectiveModel read(JsonDeserializationContext deserializationContext, JsonObject modelContents)
         {
-            BlockModel baseModel = deserializationContext.deserialize(JSONUtils.getJsonObject(modelContents, "base"), BlockModel.class);
+            JsonUnbakedModel baseModel = deserializationContext.deserialize(JsonHelper.getObject(modelContents, "base"), JsonUnbakedModel.class);
 
-            JsonObject perspectiveData = JSONUtils.getJsonObject(modelContents, "perspectives");
+            JsonObject perspectiveData = JsonHelper.getObject(modelContents, "perspectives");
 
-            ImmutableMap.Builder<ItemCameraTransforms.TransformType, BlockModel> perspectives = ImmutableMap.builder();
-            for(Map.Entry<String, ItemCameraTransforms.TransformType> perspective : PERSPECTIVES.entrySet())
+            ImmutableMap.Builder<ModelTransformation.Mode, JsonUnbakedModel> perspectives = ImmutableMap.builder();
+            for(Map.Entry<String, ModelTransformation.Mode> perspective : PERSPECTIVES.entrySet())
             {
                 if (perspectiveData.has(perspective.getKey()))
                 {
-                    BlockModel perspectiveModel = deserializationContext.deserialize(JSONUtils.getJsonObject(perspectiveData, perspective.getKey()), BlockModel.class);
+                    JsonUnbakedModel perspectiveModel = deserializationContext.deserialize(JsonHelper.getObject(perspectiveData, perspective.getKey()), JsonUnbakedModel.class);
                     perspectives.put(perspective.getValue(), perspectiveModel);
                 }
             }

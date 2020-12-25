@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/network/OtherClientPlayerEntity.java
++++ b/net/minecraft/client/network/OtherClientPlayerEntity.java
+@@ -31,6 +31,7 @@
+    }
+ 
+    public boolean damage(DamageSource source, float amount) {
++      net.minecraftforge.common.ForgeHooks.onPlayerAttack(this, source, amount);
+       return true;
+    }
+ 

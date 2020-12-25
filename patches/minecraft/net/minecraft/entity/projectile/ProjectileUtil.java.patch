@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/projectile/ProjectileUtil.java
++++ b/net/minecraft/entity/projectile/ProjectileUtil.java
+@@ -62,7 +62,7 @@
+             Vec3d vector3d1 = optional.get();
+             double d1 = startVec.squaredDistanceTo(vector3d1);
+             if (d1 < d0 || d0 == 0.0D) {
+-               if (entity1.getRootVehicle() == shooter.getRootVehicle()) {
++               if (entity1.getRootVehicle() == shooter.getRootVehicle() && !entity1.canRiderInteract()) {
+                   if (d0 == 0.0D) {
+                      entity = entity1;
+                      vector3d = vector3d1;

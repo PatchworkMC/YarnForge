@@ -1,134 +1,134 @@
 --- a/net/minecraft/block/AbstractBlock.java
 +++ b/net/minecraft/block/AbstractBlock.java
-@@ -60,7 +60,8 @@
+@@ -59,7 +59,8 @@
  import net.minecraftforge.api.distmarker.Dist;
  import net.minecraftforge.api.distmarker.OnlyIn;
  
 -public abstract class AbstractBlock {
 +//TODO, Delegates are weird here now, because Block extends this.
 +public abstract class AbstractBlock extends net.minecraftforge.registries.ForgeRegistryEntry<Block> {
-    protected static final Direction[] field_212556_a = new Direction[]{Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.DOWN, Direction.UP};
-    protected final Material field_149764_J;
-    protected final boolean field_235688_at_;
-@@ -87,6 +88,8 @@
-       this.field_226887_g_ = p_i241196_1_.field_226894_k_;
-       this.field_208621_p = p_i241196_1_.field_208772_j;
-       this.field_235684_aB_ = p_i241196_1_;
-+      final ResourceLocation lootTableCache = p_i241196_1_.field_222381_j;
-+      this.lootTableSupplier = lootTableCache != null ? () -> lootTableCache : p_i241196_1_.lootTableSupplier != null ? p_i241196_1_.lootTableSupplier : () -> new ResourceLocation(this.getRegistryName().func_110624_b(), "blocks/" + this.getRegistryName().func_110623_a());
+    protected static final Direction[] FACINGS = new Direction[]{Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.DOWN, Direction.UP};
+    protected final Material material;
+    protected final boolean collidable;
+@@ -86,6 +87,8 @@
+       this.jumpVelocityMultiplier = properties.jumpVelocityMultiplier;
+       this.dynamicBounds = properties.dynamicBounds;
+       this.settings = properties;
++      final Identifier lootTableCache = properties.lootTableId;
++      this.lootTableSupplier = lootTableCache != null ? () -> lootTableCache : properties.lootTableSupplier != null ? properties.lootTableSupplier : () -> new Identifier(this.getRegistryName().getNamespace(), "blocks/" + this.getRegistryName().getPath());
     }
  
     @Deprecated
-@@ -129,7 +132,7 @@
+@@ -128,7 +131,7 @@
  
     @Deprecated
-    public void func_196243_a(BlockState p_196243_1_, World p_196243_2_, BlockPos p_196243_3_, BlockState p_196243_4_, boolean p_196243_5_) {
--      if (this.func_235695_q_() && !p_196243_1_.func_203425_a(p_196243_4_.func_177230_c())) {
-+      if (p_196243_1_.hasTileEntity() && (!p_196243_1_.func_203425_a(p_196243_4_.func_177230_c()) || !p_196243_4_.hasTileEntity())) {
-          p_196243_2_.func_175713_t(p_196243_3_);
+    public void onStateReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+-      if (this.hasBlockEntity() && !state.isOf(newState.getBlock())) {
++      if (state.hasTileEntity() && (!state.isOf(newState.getBlock()) || !newState.hasTileEntity())) {
+          worldIn.removeBlockEntity(pos);
        }
  
-@@ -191,7 +194,7 @@
+@@ -190,7 +193,7 @@
  
     @Deprecated
-    public boolean func_196253_a(BlockState p_196253_1_, BlockItemUseContext p_196253_2_) {
--      return this.field_149764_J.func_76222_j() && (p_196253_2_.func_195996_i().func_190926_b() || p_196253_2_.func_195996_i().func_77973_b() != this.func_199767_j());
-+      return p_196253_1_.func_185904_a().func_76222_j() && (p_196253_2_.func_195996_i().func_190926_b() || p_196253_2_.func_195996_i().func_77973_b() != this.func_199767_j());
+    public boolean canReplace(BlockState state, ItemPlacementContext useContext) {
+-      return this.material.isReplaceable() && (useContext.getStack().isEmpty() || useContext.getStack().getItem() != this.asItem());
++      return state.getMaterial().isReplaceable() && (useContext.getStack().isEmpty() || useContext.getStack().getItem() != this.asItem());
     }
  
     @Deprecated
-@@ -294,8 +297,8 @@
+@@ -293,8 +296,8 @@
        if (f == -1.0F) {
           return 0.0F;
        } else {
--         int i = p_180647_2_.func_234569_d_(p_180647_1_) ? 30 : 100;
--         return p_180647_2_.func_184813_a(p_180647_1_) / f / (float)i;
-+         int i = net.minecraftforge.common.ForgeHooks.canHarvestBlock(p_180647_1_, p_180647_2_, p_180647_3_, p_180647_4_) ? 30 : 100;
-+         return p_180647_2_.getDigSpeed(p_180647_1_, p_180647_4_) / f / (float)i;
+-         int i = player.isUsingEffectiveTool(state) ? 30 : 100;
+-         return player.getBlockBreakingSpeed(state) / f / (float)i;
++         int i = net.minecraftforge.common.ForgeHooks.canHarvestBlock(state, player, worldIn, pos) ? 30 : 100;
++         return player.getDigSpeed(state, pos) / f / (float)i;
        }
     }
  
-@@ -321,14 +324,14 @@
+@@ -320,14 +323,14 @@
        return 0;
     }
  
 +   @Deprecated //Forge: Use state.hasTileEntity()
-    public final boolean func_235695_q_() {
-       return this instanceof ITileEntityProvider;
+    public final boolean hasBlockEntity() {
+       return this instanceof BlockEntityProvider;
     }
  
-    public final ResourceLocation func_220068_i() {
-       if (this.field_220085_g == null) {
--         ResourceLocation resourcelocation = Registry.field_212618_g.func_177774_c(this.func_230328_p_());
--         this.field_220085_g = new ResourceLocation(resourcelocation.func_110624_b(), "blocks/" + resourcelocation.func_110623_a());
-+         this.field_220085_g = this.lootTableSupplier.get();
+    public final Identifier getLootTableId() {
+       if (this.lootTableId == null) {
+-         Identifier resourcelocation = Registry.BLOCK.getId(this.asBlock());
+-         this.lootTableId = new Identifier(resourcelocation.getNamespace(), "blocks/" + resourcelocation.getPath());
++         this.lootTableId = this.lootTableSupplier.get();
        }
  
-       return this.field_220085_g;
-@@ -346,6 +349,14 @@
-       return this.field_235684_aB_.field_235800_b_.apply(this.func_230328_p_().func_176223_P());
+       return this.lootTableId;
+@@ -345,6 +348,14 @@
+       return this.settings.materialColorFactory.apply(this.asBlock().getDefaultState());
     }
  
 +   protected boolean isAir(BlockState state) {
-+      return ((AbstractBlockState)state).field_235702_f_;
++      return ((AbstractBlockState)state).isAir;
 +   }
 +
 +   /* ======================================== FORGE START ===================================== */
-+   private final java.util.function.Supplier<ResourceLocation> lootTableSupplier;
++   private final java.util.function.Supplier<Identifier> lootTableSupplier;
 +   /* ========================================= FORGE END ====================================== */
 +
-    public abstract static class AbstractBlockState extends StateHolder<Block, BlockState> {
-       private final int field_215708_d;
-       private final boolean field_215709_e;
-@@ -428,14 +439,18 @@
-          return this.field_215708_d;
+    public abstract static class AbstractBlockState extends State<Block, BlockState> {
+       private final int luminance;
+       private final boolean hasSidedTransparency;
+@@ -427,14 +438,18 @@
+          return this.luminance;
        }
  
 +      /** @deprecated use {@link BlockState#isAir(IBlockReader, BlockPos) */
 +      @Deprecated
-       public boolean func_196958_f() {
--         return this.field_235702_f_;
-+         return this.func_177230_c().isAir((BlockState)this);
+       public boolean isAir() {
+-         return this.isAir;
++         return this.getBlock().isAir((BlockState)this);
        }
  
-       public MaterialColor func_185909_g(IBlockReader p_185909_1_, BlockPos p_185909_2_) {
-          return this.field_235704_h_;
+       public MaterialColor getTopMaterialColor(BlockView worldIn, BlockPos pos) {
+          return this.materialColor;
        }
  
 +      /** @deprecated use {@link BlockState#rotate(IWorld, BlockPos, Rotation) */
 +      @Deprecated
-       public BlockState func_185907_a(Rotation p_185907_1_) {
-          return this.func_177230_c().func_185499_a(this.func_230340_p_(), p_185907_1_);
+       public BlockState rotate(BlockRotation rot) {
+          return this.getBlock().rotate(this.asBlockState(), rot);
        }
-@@ -802,6 +817,9 @@
-       private ResourceLocation field_222381_j;
-       private boolean field_226895_m_ = true;
-       private boolean field_235813_o_;
+@@ -801,6 +816,9 @@
+       private Identifier lootTableId;
+       private boolean opaque = true;
+       private boolean isAir;
 +      private int harvestLevel = -1;
 +      private net.minecraftforge.common.ToolType harvestTool;
-+      private java.util.function.Supplier<ResourceLocation> lootTableSupplier;
-       private AbstractBlock.IExtendedPositionPredicate<EntityType<?>> field_235814_p_ = (p_235832_0_, p_235832_1_, p_235832_2_, p_235832_3_) -> {
-          return p_235832_0_.func_224755_d(p_235832_1_, p_235832_2_, Direction.UP) && p_235832_0_.func_185906_d() < 14;
++      private java.util.function.Supplier<Identifier> lootTableSupplier;
+       private AbstractBlock.TypedContextPredicate<EntityType<?>> allowsSpawningPredicate = (p_235832_0_, p_235832_1_, p_235832_2_, p_235832_3_) -> {
+          return p_235832_0_.isSideSolidFullSquare(p_235832_1_, p_235832_2_, Direction.UP) && p_235832_0_.getLuminance() < 14;
        };
-@@ -863,6 +881,8 @@
-          abstractblock$properties.field_226895_m_ = p_200950_0_.field_235684_aB_.field_226895_m_;
-          abstractblock$properties.field_235813_o_ = p_200950_0_.field_235684_aB_.field_235813_o_;
-          abstractblock$properties.field_235806_h_ = p_200950_0_.field_235684_aB_.field_235806_h_;
-+         abstractblock$properties.harvestLevel = p_200950_0_.field_235684_aB_.harvestLevel;
-+         abstractblock$properties.harvestTool = p_200950_0_.field_235684_aB_.harvestTool;
+@@ -862,6 +880,8 @@
+          abstractblock$properties.opaque = blockIn.settings.opaque;
+          abstractblock$properties.isAir = blockIn.settings.isAir;
+          abstractblock$properties.toolRequired = blockIn.settings.toolRequired;
++         abstractblock$properties.harvestLevel = blockIn.settings.harvestLevel;
++         abstractblock$properties.harvestTool = blockIn.settings.harvestTool;
           return abstractblock$properties;
        }
  
-@@ -877,6 +897,24 @@
+@@ -876,6 +896,24 @@
           return this;
        }
  
-+      public AbstractBlock.Properties harvestLevel(int harvestLevel) {
++      public AbstractBlock.Settings harvestLevel(int harvestLevel) {
 +         this.harvestLevel = harvestLevel;
 +         return this;
 +      }
 +
-+      public AbstractBlock.Properties harvestTool(net.minecraftforge.common.ToolType harvestTool) {
++      public AbstractBlock.Settings harvestTool(net.minecraftforge.common.ToolType harvestTool) {
 +         this.harvestTool = harvestTool;
 +         return this;
 +      }
@@ -141,15 +141,15 @@
 +         return this.harvestTool;
 +      }
 +
-       public AbstractBlock.Properties func_200941_a(float p_200941_1_) {
-          this.field_200961_i = p_200941_1_;
+       public AbstractBlock.Settings slipperiness(float slipperinessIn) {
+          this.slipperiness = slipperinessIn;
           return this;
-@@ -933,7 +971,7 @@
+@@ -932,7 +970,7 @@
        }
  
-       public AbstractBlock.Properties func_222379_b(Block p_222379_1_) {
--         this.field_222381_j = p_222379_1_.func_220068_i();
-+         this.lootTableSupplier = () -> p_222379_1_.delegate.get().func_220068_i();
+       public AbstractBlock.Settings dropsLike(Block blockIn) {
+-         this.lootTableId = blockIn.getLootTableId();
++         this.lootTableSupplier = () -> blockIn.delegate.get().getLootTableId();
           return this;
        }
  

@@ -24,33 +24,32 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import net.minecraft.tags.ITag;
-import net.minecraft.tags.ITagCollection;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagGroup;
+import net.minecraft.util.Identifier;
 
 public class ReverseTagWrapper<T>
 {
     private final T target;
-    private final Supplier<ITagCollection<T>> colSupplier;
+    private final Supplier<TagGroup<T>> colSupplier;
 
     //This map is immutable we track its identity change.
-    private Map<ResourceLocation, ITag<T>> colCache;
-    private Set<ResourceLocation> cache = null;
+    private Map<Identifier, Tag<T>> colCache;
+    private Set<Identifier> cache = null;
 
-    public ReverseTagWrapper(T target, Supplier<ITagCollection<T>> colSupplier)
+    public ReverseTagWrapper(T target, Supplier<TagGroup<T>> colSupplier)
     {
         this.target = target;
         this.colSupplier = colSupplier;
     }
 
-    public Set<ResourceLocation> getTagNames()
+    public Set<Identifier> getTagNames()
     {
-        ITagCollection<T> collection = colSupplier.get();
-        if (cache == null || colCache != collection.getIDTagMap()) // Identity equals.
+        TagGroup<T> collection = colSupplier.get();
+        if (cache == null || colCache != collection.getTags()) // Identity equals.
         {
-            this.cache = Collections.unmodifiableSet(new HashSet<>(collection.getOwningTags(target)));
-            this.colCache = collection.getIDTagMap();
+            this.cache = Collections.unmodifiableSet(new HashSet<>(collection.getTagsFor(target)));
+            this.colCache = collection.getTags();
         }
         return this.cache;
     }

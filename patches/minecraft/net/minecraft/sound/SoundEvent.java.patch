@@ -1,0 +1,11 @@
+--- a/net/minecraft/sound/SoundEvent.java
++++ b/net/minecraft/sound/SoundEvent.java
+@@ -7,7 +7,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class SoundEvent {
++public class SoundEvent extends net.minecraftforge.registries.ForgeRegistryEntry<SoundEvent> {
+    public static final Codec<SoundEvent> CODEC = Identifier.CODEC.xmap(SoundEvent::new, (p_232679_0_) -> {
+       return p_232679_0_.id;
+    });

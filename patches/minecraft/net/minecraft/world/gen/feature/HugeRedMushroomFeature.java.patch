@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/feature/HugeRedMushroomFeature.java
++++ b/net/minecraft/world/gen/feature/HugeRedMushroomFeature.java
+@@ -26,7 +26,7 @@
+                boolean flag5 = flag2 || flag3;
+                if (i >= p_225564_4_ || flag4 != flag5) {
+                   p_225564_5_.set(p_225564_3_, l, i, i1);
+-                  if (!p_225564_1_.getBlockState(p_225564_5_).isOpaqueFullCube(p_225564_1_, p_225564_5_)) {
++                  if (p_225564_1_.getBlockState(p_225564_5_).canBeReplacedByLeaves(p_225564_1_, p_225564_5_)) {
+                      this.setBlockState(p_225564_1_, p_225564_5_, p_225564_6_.capProvider.getBlockState(p_225564_2_, p_225564_3_).with(MushroomBlock.UP, Boolean.valueOf(i >= p_225564_4_ - 1)).with(MushroomBlock.WEST, Boolean.valueOf(l < -k)).with(MushroomBlock.EAST, Boolean.valueOf(l > k)).with(MushroomBlock.NORTH, Boolean.valueOf(i1 < -k)).with(MushroomBlock.SOUTH, Boolean.valueOf(i1 > k)));
+                   }
+                }

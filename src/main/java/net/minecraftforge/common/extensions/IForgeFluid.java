@@ -22,18 +22,17 @@ package net.minecraftforge.common.extensions;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
-import net.minecraft.tags.Tag;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.tag.SetTag;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.util.math.Box;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.WorldView;
+import net.minecraft.world.explosion.Explosion;
 import net.minecraftforge.fluids.FluidAttributes;
 
 public interface IForgeFluid
@@ -54,9 +53,9 @@ public interface IForgeFluid
      * @param tag Fluid category
      * @param testingHead when true, its testing the entities head for vision, breathing ect... otherwise its testing the body, for swimming and movement adjustment.
      */
-    default boolean isEntityInside(FluidState state, IWorldReader world, BlockPos pos, Entity entity, double yToTest, Tag<Fluid> tag, boolean testingHead)
+    default boolean isEntityInside(FluidState state, WorldView world, BlockPos pos, Entity entity, double yToTest, SetTag<Fluid> tag, boolean testingHead)
     {
-        return state.isTagged(tag) && yToTest < (double)(pos.getY() + state.getActualHeight(world, pos) + 0.11111111F);
+        return state.isIn(tag) && yToTest < (double)(pos.getY() + state.getHeight(world, pos) + 0.11111111F);
     }
 
     /**
@@ -70,7 +69,7 @@ public interface IForgeFluid
      * @return null for default behavior, true if the box is within the material, false if it was not.
      */
     @Nullable
-    default Boolean isAABBInsideMaterial(FluidState state, IWorldReader world, BlockPos pos, AxisAlignedBB boundingBox, Material materialIn)
+    default Boolean isAABBInsideMaterial(FluidState state, WorldView world, BlockPos pos, Box boundingBox, Material materialIn)
     {
         return null;
     }
@@ -84,7 +83,7 @@ public interface IForgeFluid
      * @return null for default behavior, true if the box is within the material, false if it was not.
      */
     @Nullable
-    default Boolean isAABBInsideLiquid(FluidState state, IWorldReader world, BlockPos pos, AxisAlignedBB boundingBox)
+    default Boolean isAABBInsideLiquid(FluidState state, WorldView world, BlockPos pos, Box boundingBox)
     {
         return null;
     }
@@ -98,9 +97,9 @@ public interface IForgeFluid
      * @return The amount of the explosion absorbed.
      */
     @SuppressWarnings("deprecation")
-    default float getExplosionResistance(FluidState state, IBlockReader world, BlockPos pos, Explosion explosion)
+    default float getExplosionResistance(FluidState state, BlockView world, BlockPos pos, Explosion explosion)
     {
-        return state.getExplosionResistance();
+        return state.getBlastResistance();
     }
 
     /**
@@ -117,7 +116,7 @@ public interface IForgeFluid
      * Retrieves a list of tags names this is known to be associated with.
      * This should be used in favor of TagCollection.getOwningTags, as this caches the result and automatically updates when the TagCollection changes.
      */
-    Set<ResourceLocation> getTags();
+    Set<Identifier> getTags();
 
     /**
      * Retrieves the non-vanilla fluid attributes, including localized name.

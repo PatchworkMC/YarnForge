@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/render/entity/FishingBobberEntityRenderer.java
++++ b/net/minecraft/client/render/entity/FishingBobberEntityRenderer.java
+@@ -50,7 +50,7 @@
+          matrixStackIn.pop();
+          int i = playerentity.getMainArm() == Arm.RIGHT ? 1 : -1;
+          ItemStack itemstack = playerentity.getMainHandStack();
+-         if (itemstack.getItem() != Items.FISHING_ROD) {
++         if (!(itemstack.getItem() instanceof net.minecraft.item.FishingRodItem)) {
+             i = -i;
+          }
+ 

@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/texture/TextureManager.java
++++ b/net/minecraft/client/texture/TextureManager.java
+@@ -159,6 +159,7 @@
+    public void destroyTexture(Identifier textureLocation) {
+       AbstractTexture texture = this.getTexture(textureLocation);
+       if (texture != null) {
++         this.textures.remove(textureLocation); // Forge: fix MC-98707
+          TextureUtil.deleteId(texture.getGlId());
+       }
+ 

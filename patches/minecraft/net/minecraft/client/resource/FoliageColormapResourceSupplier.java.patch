@@ -1,0 +1,12 @@
+--- a/net/minecraft/client/resource/FoliageColormapResourceSupplier.java
++++ b/net/minecraft/client/resource/FoliageColormapResourceSupplier.java
+@@ -27,4 +27,9 @@
+    protected void apply(int[] objectIn, ResourceManager resourceManagerIn, Profiler profilerIn) {
+       FoliageColors.setColorMap(objectIn);
+    }
++
++   //@Override //Forge: TODO: Filtered resource reloading
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.TEXTURES;
++   }
+ }

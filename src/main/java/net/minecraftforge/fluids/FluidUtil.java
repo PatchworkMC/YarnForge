@@ -24,20 +24,23 @@ import javax.annotation.Nullable;
 
 import com.google.common.base.Preconditions;
 import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Material;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.*;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
@@ -94,7 +97,7 @@ public class FluidUtil
         Preconditions.checkNotNull(hand);
         Preconditions.checkNotNull(handler);
 
-        ItemStack heldItem = player.getHeldItem(hand);
+        ItemStack heldItem = player.getStackInHand(hand);
         if (!heldItem.isEmpty())
         {
             return player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
@@ -108,7 +111,7 @@ public class FluidUtil
 
                     if (fluidActionResult.isSuccess())
                     {
-                        player.setHeldItem(hand, fluidActionResult.getResult());
+                        player.setStackInHand(hand, fluidActionResult.getResult());
                         return true;
                     }
                     return false;
@@ -145,7 +148,7 @@ public class FluidUtil
                             if (player != null)
                             {
                                 SoundEvent soundevent = simulatedTransfer.getFluid().getAttributes().getFillSound(simulatedTransfer);
-                                player.world.playSound(null, player.getPosX(), player.getPosY() + 0.5, player.getPosZ(), soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                                player.world.playSound(null, player.getX(), player.getY() + 0.5, player.getZ(), soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
                             }
                         }
                         else
@@ -189,7 +192,7 @@ public class FluidUtil
                     if (doDrain && player != null)
                     {
                         SoundEvent soundevent = transfer.getFluid().getAttributes().getEmptySound(transfer);
-                        player.world.playSound(null, player.getPosX(), player.getPosY() + 0.5, player.getPosZ(), soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                        player.world.playSound(null, player.getX(), player.getY() + 0.5, player.getZ(), soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
                     }
 
                     ItemStack resultContainer = containerFluidHandler.getContainer();
@@ -223,7 +226,7 @@ public class FluidUtil
             return FluidActionResult.FAILURE;
         }
 
-        if (player != null && player.abilities.isCreativeMode)
+        if (player != null && player.abilities.creativeMode)
         {
             FluidActionResult filledReal = tryFillContainer(container, fluidSource, maxAmount, player, doFill);
             if (filledReal.isSuccess())
@@ -258,7 +261,7 @@ public class FluidUtil
                     }
 
                     ItemStack containerCopy = container.copy();
-                    containerCopy.shrink(1);
+                    containerCopy.decrement(1);
                     return new FluidActionResult(containerCopy);
                 }
             }
@@ -291,7 +294,7 @@ public class FluidUtil
             return FluidActionResult.FAILURE;
         }
 
-        if (player != null && player.abilities.isCreativeMode)
+        if (player != null && player.abilities.creativeMode)
         {
             FluidActionResult emptiedReal = tryEmptyContainer(container, fluidDestination, maxAmount, player, doDrain);
             if (emptiedReal.isSuccess())
@@ -326,7 +329,7 @@ public class FluidUtil
                     }
 
                     ItemStack containerCopy = container.copy();
-                    containerCopy.shrink(1);
+                    containerCopy.decrement(1);
                     return new FluidActionResult(containerCopy);
                 }
             }
@@ -451,7 +454,7 @@ public class FluidUtil
 
         if (block.hasTileEntity(state))
         {
-            TileEntity tileEntity = world.getTileEntity(blockPos);
+            BlockEntity tileEntity = world.getBlockEntity(blockPos);
             if (tileEntity != null)
             {
                 return tileEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, side);
@@ -550,19 +553,19 @@ public class FluidUtil
             return false;
         }
 
-        BlockItemUseContext context = new BlockItemUseContext(new ItemUseContext(player, hand, new BlockRayTraceResult(Vector3d.ZERO, Direction.UP, pos, false))); //TODO: This neds proper context...
+        ItemPlacementContext context = new ItemPlacementContext(new ItemUsageContext(player, hand, new BlockHitResult(Vec3d.ZERO, Direction.UP, pos, false))); //TODO: This neds proper context...
 
         // check that we can place the fluid at the destination
         BlockState destBlockState = world.getBlockState(pos);
         Material destMaterial = destBlockState.getMaterial();
         boolean isDestNonSolid = !destMaterial.isSolid();
-        boolean isDestReplaceable = destBlockState.isReplaceable(context);
-        if (!world.isAirBlock(pos) && !isDestNonSolid && !isDestReplaceable)
+        boolean isDestReplaceable = destBlockState.canReplace(context);
+        if (!world.isAir(pos) && !isDestNonSolid && !isDestReplaceable)
         {
             return false; // Non-air, solid, unreplacable block. We can't put fluid here.
         }
 
-        if (world.getDimensionType().isUltrawarm() && fluid.getAttributes().doesVaporize(world, pos, resource))
+        if (world.getDimension().isUltrawarm() && fluid.getAttributes().doesVaporize(world, pos, resource))
         {
             FluidStack result = fluidSource.drain(resource, IFluidHandler.FluidAction.EXECUTE);
             if (!result.isEmpty())
@@ -609,7 +612,7 @@ public class FluidUtil
      */
     public static void destroyBlockOnFluidPlacement(World world, BlockPos pos)
     {
-        if (!world.isRemote)
+        if (!world.isClient)
         {
             BlockState destBlockState = world.getBlockState(pos);
             Material destMaterial = destBlockState.getMaterial();
@@ -617,7 +620,7 @@ public class FluidUtil
             boolean isDestReplaceable = false; //TODO: Needs BlockItemUseContext destBlockState.getBlock().isReplaceable(world, pos);
             if ((isDestNonSolid || isDestReplaceable) && !destMaterial.isLiquid())
             {
-                world.destroyBlock(pos, true);
+                world.breakBlock(pos, true);
             }
         }
     }
@@ -643,7 +646,7 @@ public class FluidUtil
             {
                 return new ItemStack(Items.LAVA_BUCKET);
             }
-            else if (fluid.getRegistryName().equals(new ResourceLocation("milk")))
+            else if (fluid.getRegistryName().equals(new Identifier("milk")))
             {
                 return new ItemStack(Items.MILK_BUCKET);
             }

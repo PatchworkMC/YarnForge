@@ -1,0 +1,11 @@
+--- a/net/minecraft/resource/ResourcePack.java
++++ b/net/minecraft/resource/ResourcePack.java
+@@ -13,7 +13,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public interface ResourcePack extends AutoCloseable {
++public interface ResourcePack extends AutoCloseable, net.minecraftforge.common.extensions.IForgeResourcePack {
+    @Environment(EnvType.CLIENT)
+    InputStream openRoot(String fileName) throws IOException;
+ 

@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/render/block/entity/ChestBlockEntityRenderer.java
++++ b/net/minecraft/client/render/block/entity/ChestBlockEntityRenderer.java
+@@ -102,7 +102,7 @@
+          f1 = 1.0F - f1;
+          f1 = 1.0F - f1 * f1 * f1;
+          int i = icallbackwrapper.<Int2IntFunction>apply(new LightmapCoordinatesRetriever<>()).applyAsInt(combinedLightIn);
+-         SpriteIdentifier rendermaterial = TexturedRenderLayers.getChestTexture(tileEntityIn, chesttype, this.christmas);
++         SpriteIdentifier rendermaterial = this.getMaterial(tileEntityIn, chesttype);
+          VertexConsumer ivertexbuilder = rendermaterial.getVertexConsumer(bufferIn, RenderLayer::getEntityCutout);
+          if (flag1) {
+             if (chesttype == ChestType.LEFT) {
+@@ -125,4 +125,8 @@
+       chestLatch.render(matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn);
+       chestBottom.render(matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn);
+    }
++
++   protected SpriteIdentifier getMaterial(T tileEntity, ChestType chestType) {
++      return TexturedRenderLayers.getChestTexture(tileEntity, chestType, this.christmas);
++   }
+ }

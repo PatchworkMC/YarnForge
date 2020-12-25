@@ -19,29 +19,29 @@
 
 package net.minecraftforge.client.model;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.SimpleBakedModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BasicBakedModel;
+import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
 
 public interface IModelBuilder<T extends IModelBuilder<T>>
 {
-    static IModelBuilder<?> of(IModelConfiguration owner, ItemOverrideList overrides, TextureAtlasSprite particle)
+    static IModelBuilder<?> of(IModelConfiguration owner, ModelOverrideList overrides, Sprite particle)
     {
-        return new Simple(new SimpleBakedModel.Builder(owner, overrides).setTexture(particle));
+        return new Simple(new BasicBakedModel.Builder(owner, overrides).setParticle(particle));
     }
 
     T addFaceQuad(Direction facing, BakedQuad quad);
     T addGeneralQuad(BakedQuad quad);
 
-    IBakedModel build();
+    BakedModel build();
 
     class Simple implements IModelBuilder<Simple> {
-        final SimpleBakedModel.Builder builder;
+        final BasicBakedModel.Builder builder;
 
-        Simple(SimpleBakedModel.Builder builder)
+        Simple(BasicBakedModel.Builder builder)
         {
             this.builder = builder;
         }
@@ -49,19 +49,19 @@ public interface IModelBuilder<T extends IModelBuilder<T>>
         @Override
         public Simple addFaceQuad(Direction facing, BakedQuad quad)
         {
-            builder.addFaceQuad(facing, quad);
+            builder.addQuad(facing, quad);
             return this;
         }
 
         @Override
         public Simple addGeneralQuad(BakedQuad quad)
         {
-            builder.addGeneralQuad(quad);
+            builder.addQuad(quad);
             return this;
         }
 
         @Override
-        public IBakedModel build()
+        public BakedModel build()
         {
             return builder.build();
         }

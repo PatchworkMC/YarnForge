@@ -1,0 +1,41 @@
+--- a/net/minecraft/client/render/SkyProperties.java
++++ b/net/minecraft/client/render/SkyProperties.java
+@@ -28,6 +28,9 @@
+    private final SkyProperties.SkyType skyType;
+    private final boolean brightenLighting;
+    private final boolean darkened;
++   private net.minecraftforge.client.IWeatherRenderHandler weatherRenderHandler = null;
++   private net.minecraftforge.client.ISkyRenderHandler skyRenderHandler = null;
++   private net.minecraftforge.client.ICloudRenderHandler cloudRenderHandler = null;
+ 
+    public SkyProperties(float p_i241259_1_, boolean p_i241259_2_, SkyProperties.SkyType p_i241259_3_, boolean p_i241259_4_, boolean p_i241259_5_) {
+       this.cloudsHeight = p_i241259_1_;
+@@ -84,6 +87,28 @@
+       return this.darkened;
+    }
+ 
++   public void setWeatherRenderHandler(net.minecraftforge.client.IWeatherRenderHandler weatherRenderHandler) {
++      this.weatherRenderHandler = weatherRenderHandler;
++   }
++   public void setSkyRenderHandler(net.minecraftforge.client.ISkyRenderHandler skyRenderHandler) {
++      this.skyRenderHandler = skyRenderHandler;
++   }
++   public void setCloudRenderHandler(net.minecraftforge.client.ICloudRenderHandler cloudRenderHandler) {
++      this.cloudRenderHandler = cloudRenderHandler;
++   }
++   @Nullable
++   public net.minecraftforge.client.ICloudRenderHandler getCloudRenderHandler() {
++      return cloudRenderHandler;
++   }
++   @Nullable
++   public net.minecraftforge.client.IWeatherRenderHandler getWeatherRenderHandler() {
++      return weatherRenderHandler;
++   }
++   @Nullable
++   public net.minecraftforge.client.ISkyRenderHandler getSkyRenderHandler() {
++      return skyRenderHandler;
++   }
++
+    @Environment(EnvType.CLIENT)
+    public static class End extends SkyProperties {
+       public End() {

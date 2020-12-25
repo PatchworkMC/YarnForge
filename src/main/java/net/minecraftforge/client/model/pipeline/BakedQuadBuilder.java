@@ -20,13 +20,12 @@
 package net.minecraftforge.client.model.pipeline;
 
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
 
 /**
  * Allows easier building of BakedQuad objects. During building, data is stored
@@ -34,12 +33,12 @@ import net.minecraft.util.Direction;
  */
 public class BakedQuadBuilder implements IVertexConsumer
 {
-    private static final int SIZE = DefaultVertexFormats.BLOCK.getElements().size();
+    private static final int SIZE = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getElements().size();
     
     private final float[][][] unpackedData = new float[4][SIZE][4];
     private int tint = -1;
     private Direction orientation;
-    private TextureAtlasSprite texture;
+    private Sprite texture;
     private boolean applyDiffuseLighting = true;
 
     private int vertices = 0;
@@ -49,7 +48,7 @@ public class BakedQuadBuilder implements IVertexConsumer
 
     public BakedQuadBuilder() {}
     
-    public BakedQuadBuilder(TextureAtlasSprite texture)
+    public BakedQuadBuilder(Sprite texture)
     {
         this.texture = texture;
     }
@@ -62,7 +61,7 @@ public class BakedQuadBuilder implements IVertexConsumer
     @Override
     public VertexFormat getVertexFormat()
     {
-        return DefaultVertexFormats.BLOCK;
+        return VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL;
     }
 
     @Override
@@ -78,7 +77,7 @@ public class BakedQuadBuilder implements IVertexConsumer
     }
 
     @Override
-    public void setTexture(TextureAtlasSprite texture)
+    public void setTexture(Sprite texture)
     {
         this.texture = texture;
     }
@@ -134,11 +133,11 @@ public class BakedQuadBuilder implements IVertexConsumer
             float tS = tX > tY ? tX : tY;
             float ep = 1f / (tS * 0x100);
             int uve = 0;
-            ImmutableList<VertexFormatElement> elements = DefaultVertexFormats.BLOCK.getElements();
+            ImmutableList<VertexFormatElement> elements = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getElements();
             while(uve < elements.size())
             {
                 VertexFormatElement e = elements.get(uve);
-                if(e.getUsage() == VertexFormatElement.Usage.UV && e.getIndex() == 0)
+                if(e.getType() == VertexFormatElement.Type.UV && e.getIndex() == 0)
                 {
                     break;
                 }
@@ -182,12 +181,12 @@ public class BakedQuadBuilder implements IVertexConsumer
                 }
             }
         }
-        int[] packed = new int[DefaultVertexFormats.BLOCK.getIntegerSize() * 4];
+        int[] packed = new int[VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSizeInteger() * 4];
         for (int v = 0; v < 4; v++)
         {
             for (int e = 0; e < SIZE; e++)
             {
-                LightUtil.pack(unpackedData[v][e], packed, DefaultVertexFormats.BLOCK, v, e);
+                LightUtil.pack(unpackedData[v][e], packed, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL, v, e);
             }
         }
         return new BakedQuad(packed, tint, orientation, texture, applyDiffuseLighting);

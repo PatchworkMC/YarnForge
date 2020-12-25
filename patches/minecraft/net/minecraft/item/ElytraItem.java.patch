@@ -1,19 +1,19 @@
 --- a/net/minecraft/item/ElytraItem.java
 +++ b/net/minecraft/item/ElytraItem.java
-@@ -35,4 +35,17 @@
-          return ActionResult.func_226251_d_(itemstack);
+@@ -34,4 +34,17 @@
+          return TypedActionResult.fail(itemstack);
        }
     }
 +
 +   @Override
 +   public boolean canElytraFly(ItemStack stack, net.minecraft.entity.LivingEntity entity) {
-+      return ElytraItem.func_185069_d(stack);
++      return ElytraItem.isUsable(stack);
 +   }
 +
 +   @Override
 +   public boolean elytraFlightTick(ItemStack stack, net.minecraft.entity.LivingEntity entity, int flightTicks) {
-+      if (!entity.field_70170_p.field_72995_K && (flightTicks + 1) % 20 == 0) {
-+         stack.func_222118_a(1, entity, e -> e.func_213361_c(net.minecraft.inventory.EquipmentSlotType.CHEST));
++      if (!entity.world.isClient && (flightTicks + 1) % 20 == 0) {
++         stack.damage(1, entity, e -> e.sendEquipmentBreakStatus(net.minecraft.entity.EquipmentSlot.CHEST));
 +      }
 +      return true;
 +   }

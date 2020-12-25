@@ -1,0 +1,13 @@
+--- a/net/minecraft/world/gen/chunk/DebugChunkGenerator.java
++++ b/net/minecraft/world/gen/chunk/DebugChunkGenerator.java
+@@ -106,4 +106,10 @@
+ 
+       return blockstate;
+    }
++   
++   public static void initValidStates() {
++      BLOCK_STATES = StreamSupport.stream(Registry.BLOCK.spliterator(), false).flatMap(block -> block.getStateManager().getStates().stream()).collect(Collectors.toList());
++      X_SIDE_LENGTH = MathHelper.ceil(MathHelper.sqrt(BLOCK_STATES.size()));
++      Z_SIDE_LENGTH = MathHelper.ceil((float) (BLOCK_STATES.size() / X_SIDE_LENGTH));
++   }
+ }

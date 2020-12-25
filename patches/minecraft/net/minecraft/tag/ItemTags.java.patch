@@ -1,0 +1,17 @@
+--- a/net/minecraft/tag/ItemTags.java
++++ b/net/minecraft/tag/ItemTags.java
+@@ -65,6 +65,14 @@
+       return REQUIRED_TAGS.add(id);
+    }
+ 
++   public static net.minecraftforge.common.Tags.IOptionalNamedTag<Item> createOptional(Identifier name) {
++       return createOptional(name, null);
++   }
++
++   public static net.minecraftforge.common.Tags.IOptionalNamedTag<Item> createOptional(Identifier name, @javax.annotation.Nullable java.util.Set<java.util.function.Supplier<Item>> defaults) {
++      return REQUIRED_TAGS.createOptional(name, defaults);
++   }
++
+    public static TagGroup<Item> getTagGroup() {
+       return REQUIRED_TAGS.getGroup();
+    }

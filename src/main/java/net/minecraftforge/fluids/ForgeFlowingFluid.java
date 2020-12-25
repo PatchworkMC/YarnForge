@@ -22,32 +22,30 @@ package net.minecraftforge.fluids;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.FlowingFluidBlock;
-import net.minecraft.fluid.FlowingFluid;
+import net.minecraft.block.FluidBlock;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.fluid.FlowableFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
-import net.minecraft.state.StateContainer;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
+import net.minecraft.state.StateManager;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
-
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.WorldView;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-public abstract class ForgeFlowingFluid extends FlowingFluid
+public abstract class ForgeFlowingFluid extends FlowableFluid
 {
     private final Supplier<? extends Fluid> flowing;
     private final Supplier<? extends Fluid> still;
     @Nullable
     private final Supplier<? extends Item> bucket;
     @Nullable
-    private final Supplier<? extends FlowingFluidBlock> block;
+    private final Supplier<? extends FluidBlock> block;
     private final FluidAttributes.Builder builder;
     private final boolean canMultiply;
     private final int slopeFindDistance;
@@ -70,77 +68,77 @@ public abstract class ForgeFlowingFluid extends FlowingFluid
     }
 
     @Override
-    public Fluid getFlowingFluid()
+    public Fluid getFlowing()
     {
         return flowing.get();
     }
 
     @Override
-    public Fluid getStillFluid()
+    public Fluid getStill()
     {
         return still.get();
     }
 
     @Override
-    protected boolean canSourcesMultiply()
+    protected boolean isInfinite()
     {
         return canMultiply;
     }
 
     @Override
-    protected void beforeReplacingBlock(IWorld worldIn, BlockPos pos, BlockState state)
+    protected void beforeBreakingBlock(WorldAccess worldIn, BlockPos pos, BlockState state)
     {
-        TileEntity tileentity = state.getBlock().hasTileEntity(state) ? worldIn.getTileEntity(pos) : null;
-        Block.spawnDrops(state, worldIn, pos, tileentity);
+        BlockEntity tileentity = state.getBlock().hasTileEntity(state) ? worldIn.getBlockEntity(pos) : null;
+        Block.dropStacks(state, worldIn, pos, tileentity);
     }
 
     @Override
-    protected int getSlopeFindDistance(IWorldReader worldIn)
+    protected int getFlowSpeed(WorldView worldIn)
     {
         return slopeFindDistance;
     }
 
     @Override
-    protected int getLevelDecreasePerBlock(IWorldReader worldIn)
+    protected int getLevelDecreasePerBlock(WorldView worldIn)
     {
         return levelDecreasePerBlock;
     }
 
     @Override
-    public Item getFilledBucket()
+    public Item getBucketItem()
     {
         return bucket != null ? bucket.get() : Items.AIR;
     }
 
     @Override
-    protected boolean canDisplace(FluidState state, IBlockReader world, BlockPos pos, Fluid fluidIn, Direction direction)
+    protected boolean canBeReplacedWith(FluidState state, BlockView world, BlockPos pos, Fluid fluidIn, Direction direction)
     {
         // Based on the water implementation, may need to be overriden for mod fluids that shouldn't behave like water.
-        return direction == Direction.DOWN && !isEquivalentTo(fluidIn);
+        return direction == Direction.DOWN && !matchesType(fluidIn);
     }
 
     @Override
-    public int getTickRate(IWorldReader world)
+    public int getTickRate(WorldView world)
     {
         return tickRate;
     }
 
     @Override
-    protected float getExplosionResistance()
+    protected float getBlastResistance()
     {
         return explosionResistance;
     }
 
     @Override
-    protected BlockState getBlockState(FluidState state)
+    protected BlockState toBlockState(FluidState state)
     {
         if (block != null)
-            return block.get().getDefaultState().with(FlowingFluidBlock.LEVEL, getLevelFromState(state));
+            return block.get().getDefaultState().with(FluidBlock.LEVEL, method_15741(state));
         return Blocks.AIR.getDefaultState();
     }
 
     @Override
-    public boolean isEquivalentTo(Fluid fluidIn) {
+    public boolean matchesType(Fluid fluidIn) {
         return fluidIn == still.get() || fluidIn == flowing.get();
     }
 
@@ -155,19 +153,19 @@ public abstract class ForgeFlowingFluid extends FlowingFluid
         public Flowing(Properties properties)
         {
             super(properties);
-            setDefaultState(getStateContainer().getBaseState().with(LEVEL_1_8, 7));
+            setDefaultState(getStateManager().getDefaultState().with(LEVEL, 7));
         }
 
-        protected void fillStateContainer(StateContainer.Builder<Fluid, FluidState> builder) {
-            super.fillStateContainer(builder);
-            builder.add(LEVEL_1_8);
+        protected void appendProperties(StateManager.Builder<Fluid, FluidState> builder) {
+            super.appendProperties(builder);
+            builder.add(LEVEL);
         }
 
         public int getLevel(FluidState state) {
-            return state.get(LEVEL_1_8);
+            return state.get(LEVEL);
         }
 
-        public boolean isSource(FluidState state) {
+        public boolean isStill(FluidState state) {
             return false;
         }
     }
@@ -183,7 +181,7 @@ public abstract class ForgeFlowingFluid extends FlowingFluid
             return 8;
         }
 
-        public boolean isSource(FluidState state) {
+        public boolean isStill(FluidState state) {
             return true;
         }
     }
@@ -195,7 +193,7 @@ public abstract class ForgeFlowingFluid extends FlowingFluid
         private FluidAttributes.Builder attributes;
         private boolean canMultiply;
         private Supplier<? extends Item> bucket;
-        private Supplier<? extends FlowingFluidBlock> block;
+        private Supplier<? extends FluidBlock> block;
         private int slopeFindDistance = 4;
         private int levelDecreasePerBlock = 1;
         private float explosionResistance = 1;
@@ -220,7 +218,7 @@ public abstract class ForgeFlowingFluid extends FlowingFluid
             return this;
         }
 
-        public Properties block(Supplier<? extends FlowingFluidBlock> block)
+        public Properties block(Supplier<? extends FluidBlock> block)
         {
             this.block = block;
             return this;

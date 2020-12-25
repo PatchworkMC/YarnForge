@@ -1,0 +1,58 @@
+--- a/net/minecraft/client/render/BackgroundRenderer.java
++++ b/net/minecraft/client/render/BackgroundRenderer.java
+@@ -158,17 +158,28 @@
+          }
+ 
+          float f9 = Math.min(1.0F / red, Math.min(1.0F / green, 1.0F / blue));
++         // Forge: fix MC-4647 and MC-10480
++         if (Float.isInfinite(f9)) f9 = Math.nextAfter(f9, 0.0);
+          red = red * (1.0F - f6) + red * f9 * f6;
+          green = green * (1.0F - f6) + green * f9 * f6;
+          blue = blue * (1.0F - f6) + blue * f9 * f6;
+       } else if (activeRenderInfoIn.getFocusedEntity() instanceof LivingEntity && ((LivingEntity)activeRenderInfoIn.getFocusedEntity()).hasStatusEffect(StatusEffects.NIGHT_VISION)) {
+          float f7 = GameRenderer.getNightVisionStrength((LivingEntity)activeRenderInfoIn.getFocusedEntity(), partialTicks);
+          float f10 = Math.min(1.0F / red, Math.min(1.0F / green, 1.0F / blue));
++         // Forge: fix MC-4647 and MC-10480
++         if (Float.isInfinite(f10)) f10 = Math.nextAfter(f10, 0.0);
+          red = red * (1.0F - f7) + red * f10 * f7;
+          green = green * (1.0F - f7) + green * f10 * f7;
+          blue = blue * (1.0F - f7) + blue * f10 * f7;
+       }
+ 
++      net.minecraftforge.client.event.EntityViewRenderEvent.FogColors event = new net.minecraftforge.client.event.EntityViewRenderEvent.FogColors(activeRenderInfoIn, partialTicks, red, green, blue);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
++
++      red = event.getRed();
++      green = event.getGreen();
++      blue = event.getBlue();
++
+       RenderSystem.clearColor(red, green, blue, 0.0F);
+    }
+ 
+@@ -176,10 +187,17 @@
+       RenderSystem.fogDensity(0.0F);
+       RenderSystem.fogMode(GlStateManager.FogMode.EXP2);
+    }
+-
++   @Deprecated // FORGE: Pass in partialTicks
+    public static void applyFog(Camera activeRenderInfoIn, BackgroundRenderer.FogType fogTypeIn, float farPlaneDistance, boolean nearFog) {
++      setupFog(activeRenderInfoIn, fogTypeIn, farPlaneDistance, nearFog, 0);
++   }
++
++   public static void setupFog(Camera activeRenderInfoIn, BackgroundRenderer.FogType fogTypeIn, float farPlaneDistance, boolean nearFog, float partialTicks) {
+       FluidState fluidstate = activeRenderInfoIn.getSubmergedFluidState();
+       Entity entity = activeRenderInfoIn.getFocusedEntity();
++      float hook = net.minecraftforge.client.ForgeHooksClient.getFogDensity(fogTypeIn, activeRenderInfoIn, partialTicks, 0.1F);
++      if (hook >= 0) RenderSystem.fogDensity(hook);
++      else
+       if (fluidstate.isIn(FluidTags.WATER)) {
+          float f = 1.0F;
+          f = 0.05F;
+@@ -230,6 +248,7 @@
+          RenderSystem.fogEnd(f3);
+          RenderSystem.fogMode(GlStateManager.FogMode.LINEAR);
+          RenderSystem.setupNvFogDistance();
++         net.minecraftforge.client.ForgeHooksClient.onFogRender(fogTypeIn, activeRenderInfoIn, partialTicks, f3);
+       }
+ 
+    }

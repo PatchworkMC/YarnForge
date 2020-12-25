@@ -1,0 +1,64 @@
+--- a/net/minecraft/world/biome/layer/SetBaseBiomesLayer.java
++++ b/net/minecraft/world/biome/layer/SetBaseBiomesLayer.java
+@@ -10,12 +10,13 @@
+    private static final int[] COOL_BIOMES = new int[]{4, 3, 5, 1};
+    private static final int[] SNOWY_BIOMES = new int[]{12, 12, 12, 30};
+    private int[] chosenGroup1 = DRY_BIOMES;
++   private final boolean legacyDesert;
++   private java.util.List<net.minecraftforge.common.BiomeManager.BiomeEntry>[] biomes = new java.util.ArrayList[net.minecraftforge.common.BiomeManager.BiomeType.values().length];
+ 
+    public SetBaseBiomesLayer(boolean p_i232147_1_) {
+-      if (p_i232147_1_) {
+-         this.chosenGroup1 = OLD_GROUP_1;
+-      }
+-
++      this.legacyDesert = p_i232147_1_;
++      for (net.minecraftforge.common.BiomeManager.BiomeType type : net.minecraftforge.common.BiomeManager.BiomeType.values())
++         biomes[type.ordinal()] = new java.util.ArrayList<>(net.minecraftforge.common.BiomeManager.getBiomes(type));
+    }
+ 
+    public int sample(LayerRandomnessSource context, int value) {
+@@ -28,21 +29,21 @@
+                return context.nextInt(3) == 0 ? 39 : 38;
+             }
+ 
+-            return this.chosenGroup1[context.nextInt(this.chosenGroup1.length)];
++            return getBiomeId(net.minecraftforge.common.BiomeManager.BiomeType.DESERT, context);
+          case 2:
+             if (i > 0) {
+                return 21;
+             }
+ 
+-            return TEMPERATE_BIOMES[context.nextInt(TEMPERATE_BIOMES.length)];
++            return getBiomeId(net.minecraftforge.common.BiomeManager.BiomeType.WARM, context);
+          case 3:
+             if (i > 0) {
+                return 32;
+             }
+ 
+-            return COOL_BIOMES[context.nextInt(COOL_BIOMES.length)];
++            return getBiomeId(net.minecraftforge.common.BiomeManager.BiomeType.COOL, context);
+          case 4:
+-            return SNOWY_BIOMES[context.nextInt(SNOWY_BIOMES.length)];
++            return getBiomeId(net.minecraftforge.common.BiomeManager.BiomeType.ICY, context);
+          default:
+             return 14;
+          }
+@@ -50,4 +51,17 @@
+          return value;
+       }
+    }
++
++   private int getBiomeId(net.minecraftforge.common.BiomeManager.BiomeType type, LayerRandomnessSource context) {
++      return net.minecraft.util.registry.BuiltinRegistries.BIOME.getRawId(
++         net.minecraft.util.registry.BuiltinRegistries.BIOME.get(getBiome(type, context)));
++   }
++   protected net.minecraft.util.registry.RegistryKey<net.minecraft.world.biome.Biome> getBiome(net.minecraftforge.common.BiomeManager.BiomeType type, LayerRandomnessSource context) {
++      if (type == net.minecraftforge.common.BiomeManager.BiomeType.DESERT && this.legacyDesert)
++         type = net.minecraftforge.common.BiomeManager.BiomeType.DESERT_LEGACY;
++      java.util.List<net.minecraftforge.common.BiomeManager.BiomeEntry> biomeList = biomes[type.ordinal()];
++      int totalWeight = net.minecraft.util.collection.WeightedPicker.getWeightSum(biomeList);
++      int weight = net.minecraftforge.common.BiomeManager.isTypeListModded(type) ? context.nextInt(totalWeight) : context.nextInt(totalWeight / 10) * 10;
++      return net.minecraft.util.collection.WeightedPicker.getAt(biomeList, weight).getKey();
++   }
+ }

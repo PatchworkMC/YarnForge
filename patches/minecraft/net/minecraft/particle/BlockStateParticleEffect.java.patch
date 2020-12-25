@@ -1,0 +1,18 @@
+--- a/net/minecraft/particle/BlockStateParticleEffect.java
++++ b/net/minecraft/particle/BlockStateParticleEffect.java
+@@ -56,4 +56,15 @@
+    public BlockState getBlockState() {
+       return this.blockState;
+    }
++
++   //FORGE: Add a source pos property, so we can provide models with additional model data
++   private net.minecraft.util.math.BlockPos pos;
++   public BlockStateParticleEffect setPos(net.minecraft.util.math.BlockPos pos) {
++      this.pos = pos;
++      return this;
++   }
++
++   public net.minecraft.util.math.BlockPos getPos() {
++      return pos;
++   }
+ }

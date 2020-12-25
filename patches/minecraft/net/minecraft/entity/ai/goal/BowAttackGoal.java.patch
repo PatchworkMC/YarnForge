@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/ai/goal/BowAttackGoal.java
++++ b/net/minecraft/entity/ai/goal/BowAttackGoal.java
+@@ -36,7 +36,7 @@
+    }
+ 
+    protected boolean isHoldingBow() {
+-      return this.actor.isHolding(Items.BOW);
++      return this.actor.isHolding(item -> item instanceof BowItem);
+    }
+ 
+    public boolean shouldContinue() {

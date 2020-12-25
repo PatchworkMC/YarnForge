@@ -28,23 +28,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
+import net.minecraft.network.Packet;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.packet.c2s.login.LoginQueryResponseC2SPacket;
+import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
+import net.minecraft.network.packet.s2c.login.LoginQueryRequestS2CPacket;
+import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.fml.unsafe.UnsafeHacks;
 
-import net.minecraft.network.IPacket;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.login.client.CCustomPayloadLoginPacket;
-import net.minecraft.network.login.server.SCustomPayloadLoginPacket;
-import net.minecraft.network.play.client.CCustomPayloadPacket;
-import net.minecraft.network.play.server.SCustomPayloadPlayPacket;
-import net.minecraft.util.ResourceLocation;
-
-public interface ICustomPacket<T extends IPacket<?>> {
+public interface ICustomPacket<T extends Packet<?>> {
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	enum Fields {
-		CPACKETCUSTOMPAYLOAD(CCustomPayloadPacket.class),
-		SPACKETCUSTOMPAYLOAD(SCustomPayloadPlayPacket.class),
-		CPACKETCUSTOMLOGIN(CCustomPayloadLoginPacket.class),
-		SPACKETCUSTOMLOGIN(SCustomPayloadLoginPacket.class),
+		CPACKETCUSTOMPAYLOAD(CustomPayloadC2SPacket.class),
+		SPACKETCUSTOMPAYLOAD(CustomPayloadS2CPacket.class),
+		CPACKETCUSTOMLOGIN(LoginQueryResponseC2SPacket.class),
+		SPACKETCUSTOMLOGIN(LoginQueryRequestS2CPacket.class),
 		;
 
 		static final Reference2ReferenceArrayMap<Class<?>, Fields> lookup;
@@ -63,8 +62,8 @@ public interface ICustomPacket<T extends IPacket<?>> {
 		Fields(Class<?> customPacketClass) {
 			this.clazz = customPacketClass;
 			Field[] fields = customPacketClass.getDeclaredFields();
-			data = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == PacketBuffer.class).findFirst();
-			channel = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == ResourceLocation.class).findFirst();
+			data = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == PacketByteBuf.class).findFirst();
+			channel = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == Identifier.class).findFirst();
 			index = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == int.class).findFirst();
 		}
 
@@ -73,23 +72,23 @@ public interface ICustomPacket<T extends IPacket<?>> {
 		}
 	}
 
-	default PacketBuffer getInternalData() {
-		return Fields.lookup.get(this.getClass()).data.map(f -> UnsafeHacks.<PacketBuffer>getField(f, this)).orElse(null);
+	default PacketByteBuf getInternalData() {
+		return Fields.lookup.get(this.getClass()).data.map(f -> UnsafeHacks.<PacketByteBuf>getField(f, this)).orElse(null);
 	}
 
-	default ResourceLocation getName() {
-		return Fields.lookup.get(this.getClass()).channel.map(f -> UnsafeHacks.<ResourceLocation>getField(f, this)).orElse(FMLLoginWrapper.WRAPPER);
+	default Identifier getName() {
+		return Fields.lookup.get(this.getClass()).channel.map(f -> UnsafeHacks.<Identifier>getField(f, this)).orElse(FMLLoginWrapper.WRAPPER);
 	}
 
 	default int getIndex() {
 		return Fields.lookup.get(this.getClass()).index.map(f -> UnsafeHacks.getIntField(f, this)).orElse(Integer.MIN_VALUE);
 	}
 
-	default void setData(PacketBuffer buffer) {
+	default void setData(PacketByteBuf buffer) {
 		Fields.lookup.get(this.getClass()).data.ifPresent(f -> UnsafeHacks.setField(f, this, buffer));
 	}
 
-	default void setName(ResourceLocation channelName) {
+	default void setName(Identifier channelName) {
 		Fields.lookup.get(this.getClass()).channel.ifPresent(f -> UnsafeHacks.setField(f, this, channelName));
 	}
 

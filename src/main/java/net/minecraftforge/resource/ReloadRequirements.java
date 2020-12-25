@@ -23,14 +23,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Sets;
-
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * Holds methods to create standard predicates to select {@link IResourceType}s that should be reloaded.
  */
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class ReloadRequirements
 {
     /**

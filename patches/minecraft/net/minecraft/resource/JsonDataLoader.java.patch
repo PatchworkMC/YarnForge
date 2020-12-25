@@ -1,0 +1,11 @@
+--- a/net/minecraft/resource/JsonDataLoader.java
++++ b/net/minecraft/resource/JsonDataLoader.java
+@@ -59,4 +59,8 @@
+ 
+       return map;
+    }
++
++   protected Identifier getPreparedPath(Identifier rl) {
++      return new Identifier(rl.getNamespace(), this.dataType + "/" + rl.getPath() + ".json");
++   }
+ }

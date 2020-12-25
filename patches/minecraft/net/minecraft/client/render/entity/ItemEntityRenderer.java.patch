@@ -1,0 +1,68 @@
+--- a/net/minecraft/client/render/entity/ItemEntityRenderer.java
++++ b/net/minecraft/client/render/entity/ItemEntityRenderer.java
+@@ -56,17 +56,14 @@
+       int j = this.getRenderedAmount(itemstack);
+       float f = 0.25F;
+       float f1 = MathHelper.sin(((float)entityIn.getAge() + partialTicks) / 10.0F + entityIn.hoverHeight) * 0.1F + 0.1F;
+-      float f2 = ibakedmodel.getTransformation().getTransformation(ModelTransformation.Mode.GROUND).scale.getY();
++      float f2 = shouldBob() ? ibakedmodel.getTransformation().getTransformation(ModelTransformation.Mode.GROUND).scale.getY() : 0;
+       matrixStackIn.translate(0.0D, (double)(f1 + 0.25F * f2), 0.0D);
+       float f3 = entityIn.method_27314(partialTicks);
+       matrixStackIn.multiply(Vector3f.POSITIVE_Y.getRadialQuaternion(f3));
+-      float f4 = ibakedmodel.getTransformation().ground.scale.getX();
+-      float f5 = ibakedmodel.getTransformation().ground.scale.getY();
+-      float f6 = ibakedmodel.getTransformation().ground.scale.getZ();
+       if (!flag) {
+-         float f7 = -0.0F * (float)(j - 1) * 0.5F * f4;
+-         float f8 = -0.0F * (float)(j - 1) * 0.5F * f5;
+-         float f9 = -0.09375F * (float)(j - 1) * 0.5F * f6;
++         float f7 = -0.0F * (float)(j - 1) * 0.5F;
++         float f8 = -0.0F * (float)(j - 1) * 0.5F;
++         float f9 = -0.09375F * (float)(j - 1) * 0.5F;
+          matrixStackIn.translate((double)f7, (double)f8, (double)f9);
+       }
+ 
+@@ -77,18 +74,18 @@
+                float f11 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                float f13 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                float f10 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+-               matrixStackIn.translate((double)f11, (double)f13, (double)f10);
++               matrixStackIn.translate(shouldSpreadItems() ? f11 : 0, shouldSpreadItems() ? f13 : 0, shouldSpreadItems() ? f10 : 0);
+             } else {
+                float f12 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
+                float f14 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
+-               matrixStackIn.translate((double)f12, (double)f14, 0.0D);
++               matrixStackIn.translate(shouldSpreadItems() ? f12 : 0, shouldSpreadItems() ? f14 : 0, 0.0D);
+             }
+          }
+ 
+          this.itemRenderer.renderItem(itemstack, ModelTransformation.Mode.GROUND, false, matrixStackIn, bufferIn, packedLightIn, OverlayTexture.DEFAULT_UV, ibakedmodel);
+          matrixStackIn.pop();
+          if (!flag) {
+-            matrixStackIn.translate((double)(0.0F * f4), (double)(0.0F * f5), (double)(0.09375F * f6));
++            matrixStackIn.translate(0.0, 0.0, 0.09375F);
+          }
+       }
+ 
+@@ -99,4 +96,21 @@
+    public Identifier getTexture(ItemEntity entity) {
+       return SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE;
+    }
++   
++   /*==================================== FORGE START ===========================================*/
++
++   /**
++    * @return If items should spread out when rendered in 3D
++    */
++   public boolean shouldSpreadItems() {
++      return true;
++   }
++
++   /**
++    * @return If items should have a bob effect
++    */
++   public boolean shouldBob() {
++      return true;
++   }
++   /*==================================== FORGE END =============================================*/
+ }

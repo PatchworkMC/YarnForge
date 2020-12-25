@@ -23,8 +23,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.BlockModelShapes;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
+import net.minecraft.client.render.block.BlockModels;
+import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.item.Item;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -38,28 +38,28 @@ import static net.minecraftforge.client.model.ModelLoader.getInventoryVariant;
 
 public class ModelLoaderErrorMessage extends SimpleMessage
 {
-    private final ModelResourceLocation resourceLocation;
+    private final ModelIdentifier resourceLocation;
     private final Exception exception;
 
-    private static Multimap<ModelResourceLocation, BlockState> reverseBlockMap = HashMultimap.create();
-    private static Multimap<ModelResourceLocation, String> reverseItemMap = HashMultimap.create();
+    private static Multimap<ModelIdentifier, BlockState> reverseBlockMap = HashMultimap.create();
+    private static Multimap<ModelIdentifier, String> reverseItemMap = HashMultimap.create();
 
     private static void buildLookups() {
         if (!reverseBlockMap.isEmpty()) return;
         
         ForgeRegistries.BLOCKS.getValues().stream()
-        	.flatMap(block -> block.getStateContainer().getValidStates().stream())
-        	.forEach(state -> reverseBlockMap.put(BlockModelShapes.getModelLocation(state), state));
+        	.flatMap(block -> block.getStateManager().getStates().stream())
+        	.forEach(state -> reverseBlockMap.put(BlockModels.getModelId(state), state));
 
         ForgeRegistries.ITEMS.forEach(item ->
         {
-        	ModelResourceLocation memory = getInventoryVariant(ForgeRegistries.ITEMS.getKey(item).toString());
+        	ModelIdentifier memory = getInventoryVariant(ForgeRegistries.ITEMS.getKey(item).toString());
         	reverseItemMap.put(memory, item.getRegistryName().toString());
         });
 
     }
 
-    public ModelLoaderErrorMessage(ModelResourceLocation resourceLocation, Exception exception)
+    public ModelLoaderErrorMessage(ModelIdentifier resourceLocation, Exception exception)
     {
         // if we're logging these error messages, this will get built for reference
         buildLookups();

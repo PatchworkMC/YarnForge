@@ -19,9 +19,8 @@
 
 package net.minecraftforge.event.entity.item;
 
+import net.minecraft.entity.ItemEntity;
 import net.minecraftforge.eventbus.api.Cancelable;
-
-import net.minecraft.entity.item.ItemEntity;
 
 /**
  * Event that is fired when an EntityItem's age has reached its maximum

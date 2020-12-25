@@ -19,11 +19,8 @@
 
 package net.minecraftforge.event.entity.player;
 
-import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.client.multiplayer.PlayerController;
 import net.minecraft.entity.Entity;
-import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
@@ -33,8 +30,6 @@ import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Direction;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 

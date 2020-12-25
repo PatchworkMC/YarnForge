@@ -28,10 +28,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-
-import net.minecraft.advancements.Advancement;
-import net.minecraft.data.IFinishedRecipe;
-import net.minecraft.util.JSONUtils;
+import net.minecraft.advancement.Advancement;
+import net.minecraft.data.server.recipe.RecipeJsonProvider;
+import net.minecraft.util.JsonHelper;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 
 import javax.annotation.Nullable;
@@ -55,7 +54,7 @@ public class ConditionalAdvancement
      */
     @Nullable
     public static JsonObject processConditional(JsonObject json) {
-        JsonArray entries = JSONUtils.getJsonArray(json, "advancements", null);
+        JsonArray entries = JsonHelper.getArray(json, "advancements", null);
         if (entries == null)
         {
             return CraftingHelper.processConditions(json, "conditions") ? json : null;
@@ -66,8 +65,8 @@ public class ConditionalAdvancement
         {
             if (!ele.isJsonObject())
                 throw new JsonSyntaxException("Invalid advancement entry at index " + idx + " Must be JsonObject");
-            if (CraftingHelper.processConditions(JSONUtils.getJsonArray(ele.getAsJsonObject(), "conditions")))
-                return JSONUtils.getJsonObject(ele.getAsJsonObject(), "advancement");
+            if (CraftingHelper.processConditions(JsonHelper.getArray(ele.getAsJsonObject(), "conditions")))
+                return JsonHelper.getObject(ele.getAsJsonObject(), "advancement");
             idx++;
         }
         return null;
@@ -89,7 +88,7 @@ public class ConditionalAdvancement
             return this;
         }
 
-        public Builder addAdvancement(Consumer<Consumer<Advancement.Builder>> callable)
+        public Builder addAdvancement(Consumer<Consumer<Advancement.Task>> callable)
         {
             if (locked)
                 throw new IllegalStateException("Attempted to modify finished builder");
@@ -97,14 +96,14 @@ public class ConditionalAdvancement
             return this;
         }
 
-        public Builder addAdvancement(Advancement.Builder advancement)
+        public Builder addAdvancement(Advancement.Task advancement)
         {
-            return addAdvancement(advancement::serialize);
+            return addAdvancement(advancement::toJson);
         }
 
-        public Builder addAdvancement(IFinishedRecipe fromRecipe)
+        public Builder addAdvancement(RecipeJsonProvider fromRecipe)
         {
-            return addAdvancement(fromRecipe::getAdvancementJson);
+            return addAdvancement(fromRecipe::toAdvancementJson);
         }
 
         private Builder addAdvancement(Supplier<JsonElement> jsonSupplier)

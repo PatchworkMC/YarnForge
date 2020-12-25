@@ -1,0 +1,16 @@
+--- a/net/minecraft/data/server/BlockTagsProvider.java
++++ b/net/minecraft/data/server/BlockTagsProvider.java
+@@ -9,9 +9,13 @@
+ import net.minecraft.util.registry.Registry;
+ 
+ public class BlockTagsProvider extends AbstractTagProvider<Block> {
++   @Deprecated
+    public BlockTagsProvider(DataGenerator generatorIn) {
+       super(generatorIn, Registry.BLOCK);
+    }
++   public BlockTagsProvider(DataGenerator generatorIn, String modId, @javax.annotation.Nullable net.minecraftforge.common.data.ExistingFileHelper existingFileHelper) {
++      super(generatorIn, Registry.BLOCK, modId, existingFileHelper);
++   }
+ 
+    protected void configure() {
+       this.getOrCreateTagBuilder(BlockTags.WOOL).add(Blocks.WHITE_WOOL, Blocks.ORANGE_WOOL, Blocks.MAGENTA_WOOL, Blocks.LIGHT_BLUE_WOOL, Blocks.YELLOW_WOOL, Blocks.LIME_WOOL, Blocks.PINK_WOOL, Blocks.GRAY_WOOL, Blocks.LIGHT_GRAY_WOOL, Blocks.CYAN_WOOL, Blocks.PURPLE_WOOL, Blocks.BLUE_WOOL, Blocks.BROWN_WOOL, Blocks.GREEN_WOOL, Blocks.RED_WOOL, Blocks.BLACK_WOOL);

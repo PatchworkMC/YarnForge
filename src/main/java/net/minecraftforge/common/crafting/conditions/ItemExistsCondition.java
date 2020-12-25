@@ -20,33 +20,32 @@
 package net.minecraftforge.common.crafting.conditions;
 
 import com.google.gson.JsonObject;
-
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class ItemExistsCondition implements ICondition
 {
-    private static final ResourceLocation NAME = new ResourceLocation("forge", "item_exists");
-    private final ResourceLocation item;
+    private static final Identifier NAME = new Identifier("forge", "item_exists");
+    private final Identifier item;
 
     public ItemExistsCondition(String location)
     {
-        this(new ResourceLocation(location));
+        this(new Identifier(location));
     }
 
     public ItemExistsCondition(String namespace, String path)
     {
-        this(new ResourceLocation(namespace, path));
+        this(new Identifier(namespace, path));
     }
 
-    public ItemExistsCondition(ResourceLocation item)
+    public ItemExistsCondition(Identifier item)
     {
         this.item = item;
     }
 
     @Override
-    public ResourceLocation getID()
+    public Identifier getID()
     {
         return NAME;
     }
@@ -76,11 +75,11 @@ public class ItemExistsCondition implements ICondition
         @Override
         public ItemExistsCondition read(JsonObject json)
         {
-            return new ItemExistsCondition(new ResourceLocation(JSONUtils.getString(json, "item")));
+            return new ItemExistsCondition(new Identifier(JsonHelper.getString(json, "item")));
         }
 
         @Override
-        public ResourceLocation getID()
+        public Identifier getID()
         {
             return ItemExistsCondition.NAME;
         }

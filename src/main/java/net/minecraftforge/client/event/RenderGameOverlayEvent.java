@@ -20,12 +20,11 @@
 package net.minecraftforge.client.event;
 
 import java.util.ArrayList;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.gui.hud.ClientBossBar;
+import net.minecraft.client.util.Window;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraft.client.MainWindow;
-import net.minecraft.client.gui.ClientBossInfo;
 
 @Cancelable
 public class RenderGameOverlayEvent extends Event
@@ -40,7 +39,7 @@ public class RenderGameOverlayEvent extends Event
         return partialTicks;
     }
     
-    public MainWindow getWindow()
+    public Window getWindow()
     {
         return window;
     }
@@ -78,10 +77,10 @@ public class RenderGameOverlayEvent extends Event
 
     private final MatrixStack mStack;
     private final float partialTicks;
-    private final MainWindow window;
+    private final Window window;
     private final ElementType type;
 
-    public RenderGameOverlayEvent(MatrixStack mStack, float partialTicks, MainWindow window)
+    public RenderGameOverlayEvent(MatrixStack mStack, float partialTicks, Window window)
     {
         this.mStack = mStack;
         this.partialTicks = partialTicks;
@@ -116,11 +115,11 @@ public class RenderGameOverlayEvent extends Event
 
     public static class BossInfo extends Pre
     {
-        private final ClientBossInfo bossInfo;
+        private final ClientBossBar bossInfo;
         private final int x;
         private final int y;
         private int increment;
-        public BossInfo(MatrixStack mStack, RenderGameOverlayEvent parent, ElementType type, ClientBossInfo bossInfo, int x, int y, int increment)
+        public BossInfo(MatrixStack mStack, RenderGameOverlayEvent parent, ElementType type, ClientBossBar bossInfo, int x, int y, int increment)
         {
             super(mStack, parent, type);
             this.bossInfo = bossInfo;
@@ -132,7 +131,7 @@ public class RenderGameOverlayEvent extends Event
         /**
          * @return The {@link BossInfoClient} currently being rendered
          */
-        public ClientBossInfo getBossInfo()
+        public ClientBossBar getBossInfo()
         {
             return bossInfo;
         }

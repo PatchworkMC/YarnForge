@@ -1,0 +1,54 @@
+--- a/net/minecraft/util/DyeColor.java
++++ b/net/minecraft/util/DyeColor.java
+@@ -6,6 +6,9 @@
+ import java.util.stream.Collectors;
+ import javax.annotation.Nullable;
+ import net.minecraft.block.MaterialColor;
++import net.minecraft.item.DyeItem;
++import net.minecraft.item.Item;
++import net.minecraft.item.ItemStack;
+ 
+ public enum DyeColor implements StringIdentifiable {
+    WHITE(0, "white", 16383998, MaterialColor.WHITE, 15790320, 16777215),
+@@ -40,6 +43,7 @@
+    private final int colorSwapped;
+    private final float[] colorComponents;
+    private final int fireworkColor;
++   private final net.minecraftforge.common.Tags.IOptionalNamedTag<Item> tag;
+    private final int signColor;
+ 
+    private DyeColor(int idIn, String translationKeyIn, int colorValueIn, MaterialColor mapColorIn, int fireworkColorIn, int textColorIn) {
+@@ -52,6 +56,7 @@
+       int j = (colorValueIn & '\uff00') >> 8;
+       int k = (colorValueIn & 255) >> 0;
+       this.colorSwapped = k << 16 | j << 8 | i << 0;
++      this.tag = net.minecraft.tag.ItemTags.createOptional(new net.minecraft.util.Identifier("forge", "dyes/" + translationKeyIn));
+       this.colorComponents = new float[]{(float)i / 255.0F, (float)j / 255.0F, (float)k / 255.0F};
+       this.fireworkColor = fireworkColorIn;
+    }
+@@ -110,4 +115,25 @@
+    public String asString() {
+       return this.name;
+    }
++
++   public int getColorValue() {
++      return color;
++   }
++
++   public net.minecraftforge.common.Tags.IOptionalNamedTag<Item> getTag() {
++      return tag;
++   }
++
++   @Nullable
++   public static DyeColor getColor(ItemStack stack) {
++      if (stack.getItem() instanceof DyeItem)
++         return ((DyeItem)stack.getItem()).getColor();
++
++      for (DyeColor color : VALUES) {
++         if (stack.getItem().isIn(color.getTag()))
++             return color;
++      }
++
++      return null;
++   }
+ }

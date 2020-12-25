@@ -1,0 +1,10 @@
+--- a/net/minecraft/particle/ParticleTypes.java
++++ b/net/minecraft/particle/ParticleTypes.java
+@@ -4,6 +4,7 @@
+ import java.util.function.Function;
+ import net.minecraft.util.registry.Registry;
+ 
++@net.minecraftforge.registries.ObjectHolder("minecraft")
+ public class ParticleTypes {
+    public static final DefaultParticleType AMBIENT_ENTITY_EFFECT = register("ambient_entity_effect", false);
+    public static final DefaultParticleType ANGRY_VILLAGER = register("angry_villager", false);

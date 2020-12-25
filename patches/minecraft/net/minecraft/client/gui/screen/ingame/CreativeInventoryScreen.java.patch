@@ -1,0 +1,278 @@
+--- a/net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen.java
++++ b/net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen.java
+@@ -66,6 +66,8 @@
+    private Slot deleteItemSlot;
+    private CreativeInventoryListener listener;
+    private boolean ignoreTypedCharacter;
++   private static int tabPage = 0;
++   private int maxPages = 0;
+    private boolean lastClickOutsideBounds;
+    private final Map<Identifier, Tag<Item>> searchResultTags = Maps.newTreeMap();
+ 
+@@ -235,6 +237,12 @@
+    protected void init() {
+       if (this.client.interactionManager.hasCreativeInventory()) {
+          super.init();
++         int tabCount = ItemGroup.GROUPS.length;
++         if (tabCount > 12) {
++            addButton(new net.minecraft.client.gui.widget.ButtonWidget(x,              y - 50, 20, 20, new LiteralText("<"), b -> tabPage = Math.max(tabPage - 1, 0       )));
++            addButton(new net.minecraft.client.gui.widget.ButtonWidget(x + backgroundWidth - 20, y - 50, 20, 20, new LiteralText(">"), b -> tabPage = Math.min(tabPage + 1, maxPages)));
++            maxPages = (int) Math.ceil((tabCount - 12) / 10D);
++         }
+          this.client.keyboard.setRepeatEvents(true);
+          this.searchBox = new TextFieldWidget(this.textRenderer, this.x + 82, this.y + 6, 80, 9, new TranslatableText("itemGroup.search"));
+          this.searchBox.setMaxLength(50);
+@@ -276,7 +284,7 @@
+    public boolean charTyped(char codePoint, int modifiers) {
+       if (this.ignoreTypedCharacter) {
+          return false;
+-      } else if (selectedTab != ItemGroup.SEARCH.getIndex()) {
++      } else if (!ItemGroup.GROUPS[selectedTab].hasSearchBar()) {
+          return false;
+       } else {
+          String s = this.searchBox.getText();
+@@ -294,7 +302,7 @@
+ 
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+       this.ignoreTypedCharacter = false;
+-      if (selectedTab != ItemGroup.SEARCH.getIndex()) {
++      if (!ItemGroup.GROUPS[selectedTab].hasSearchBar()) {
+          if (this.client.options.keyChat.matchesKey(keyCode, scanCode)) {
+             this.ignoreTypedCharacter = true;
+             this.setSelectedTab(ItemGroup.SEARCH);
+@@ -331,6 +339,32 @@
+    private void search() {
+       (this.handler).itemList.clear();
+       this.searchResultTags.clear();
++
++      ItemGroup tab = ItemGroup.GROUPS[selectedTab];
++      if (tab.hasSearchBar() && tab != ItemGroup.SEARCH) {
++         tab.appendStacks(handler.itemList);
++         if (!this.searchBox.getText().isEmpty()) {
++            //TODO: Make this a SearchTree not a manual search
++            String search = this.searchBox.getText().toLowerCase(Locale.ROOT);
++            java.util.Iterator<ItemStack> itr = handler.itemList.iterator();
++            while (itr.hasNext()) {
++               ItemStack stack = itr.next();
++               boolean matches = false;
++               for (Text line : stack.getTooltip(this.client.player, this.client.options.advancedItemTooltips ? TooltipContext.Default.ADVANCED : TooltipContext.Default.NORMAL)) {
++                  if (Formatting.strip(line.getString()).toLowerCase(Locale.ROOT).contains(search)) {
++                     matches = true;
++                     break;
++                  }
++               }
++               if (!matches)
++                  itr.remove();
++            }
++         }
++         this.scrollPosition = 0.0F;
++         handler.scrollItems(0.0F);
++         return;
++      }
++
+       String s = this.searchBox.getText();
+       if (s.isEmpty()) {
+          for(Item item : Registry.ITEM) {
+@@ -376,9 +410,9 @@
+ 
+    protected void drawForeground(MatrixStack matrixStack, int x, int y) {
+       ItemGroup itemgroup = ItemGroup.GROUPS[selectedTab];
+-      if (itemgroup.shouldRenderName()) {
++      if (itemgroup != null && itemgroup.shouldRenderName()) {
+          RenderSystem.disableBlend();
+-         this.textRenderer.draw(matrixStack, itemgroup.getTranslationKey(), 8.0F, 6.0F, 4210752);
++         this.textRenderer.draw(matrixStack, itemgroup.getTranslationKey(), 8.0F, 6.0F, itemgroup.getLabelColor());
+       }
+ 
+    }
+@@ -389,7 +423,7 @@
+          double d1 = mouseY - (double)this.y;
+ 
+          for(ItemGroup itemgroup : ItemGroup.GROUPS) {
+-            if (this.isClickInTab(itemgroup, d0, d1)) {
++            if (itemgroup != null && this.isClickInTab(itemgroup, d0, d1)) {
+                return true;
+             }
+          }
+@@ -410,7 +444,7 @@
+          this.scrolling = false;
+ 
+          for(ItemGroup itemgroup : ItemGroup.GROUPS) {
+-            if (this.isClickInTab(itemgroup, d0, d1)) {
++            if (itemgroup != null && this.isClickInTab(itemgroup, d0, d1)) {
+                this.setSelectedTab(itemgroup);
+                return true;
+             }
+@@ -421,12 +455,15 @@
+    }
+ 
+    private boolean hasScrollbar() {
++      if (ItemGroup.GROUPS[selectedTab] == null) return false;
+       return selectedTab != ItemGroup.INVENTORY.getIndex() && ItemGroup.GROUPS[selectedTab].hasScrollbar() && this.handler.shouldShowScrollbar();
+    }
+ 
+    private void setSelectedTab(ItemGroup tab) {
++      if (tab == null) return;
+       int i = selectedTab;
+       selectedTab = tab.getIndex();
++      slotColor = tab.getSlotColor();
+       this.cursorDragSlots.clear();
+       (this.handler).itemList.clear();
+       if (tab == ItemGroup.HOTBAR) {
+@@ -503,13 +540,15 @@
+       }
+ 
+       if (this.searchBox != null) {
+-         if (tab == ItemGroup.SEARCH) {
++         if (tab.hasSearchBar()) {
+             this.searchBox.setVisible(true);
+             this.searchBox.setFocusUnlocked(false);
+             this.searchBox.setSelected(true);
+             if (i != tab.getIndex()) {
+                this.searchBox.setText("");
+             }
++            this.searchBox.setWidth(tab.getSearchbarWidth());
++            this.searchBox.x = this.x + (82 /*default left*/ + 89 /*default width*/) - this.searchBox.getWidth();
+ 
+             this.search();
+          } else {
+@@ -569,16 +608,35 @@
+       this.renderBackground(matrixStack);
+       super.render(matrixStack, mouseX, mouseY, partialTicks);
+ 
+-      for(ItemGroup itemgroup : ItemGroup.GROUPS) {
+-         if (this.renderTabTooltipIfHovered(matrixStack, itemgroup, mouseX, mouseY)) {
++      int start = tabPage * 10;
++      int end = Math.min(ItemGroup.GROUPS.length, ((tabPage + 1) * 10) + 2);
++      if (tabPage != 0) start += 2;
++      boolean rendered = false;
++
++       for (int x = start; x < end; x++) {
++         ItemGroup itemgroup = ItemGroup.GROUPS[x];
++         if (itemgroup != null && this.renderTabTooltipIfHovered(matrixStack, itemgroup, mouseX, mouseY)) {
++            rendered = true;
+             break;
+          }
+       }
++      if (!rendered && !this.renderTabTooltipIfHovered(matrixStack, ItemGroup.SEARCH, mouseX, mouseY))
++         this.renderTabTooltipIfHovered(matrixStack, ItemGroup.INVENTORY, mouseX, mouseY);
+ 
+       if (this.deleteItemSlot != null && selectedTab == ItemGroup.INVENTORY.getIndex() && this.isPointWithinBounds(this.deleteItemSlot.x, this.deleteItemSlot.y, 16, 16, (double)mouseX, (double)mouseY)) {
+          this.renderTooltip(matrixStack, field_26563, mouseX, mouseY);
+       }
+ 
++      if (maxPages != 0) {
++          Text page = new LiteralText(String.format("%d / %d", tabPage + 1, maxPages + 1));
++          RenderSystem.disableLighting();
++          this.setZOffset(300);
++          this.itemRenderer.zOffset = 300.0F;
++          textRenderer.drawWithShadow(matrixStack, page.asOrderedText(), x + (backgroundWidth / 2) - (textRenderer.getWidth(page) / 2), y - 44, -1);
++          this.setZOffset(0);
++          this.itemRenderer.zOffset = 0.0F;
++      }
++
+       RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       this.drawMouseoverTooltip(matrixStack, mouseX, mouseY);
+    }
+@@ -613,7 +671,10 @@
+             list1.add(1, itemgroup.getTranslationKey().shallowCopy().formatted(Formatting.BLUE));
+          }
+ 
+-         this.renderTooltip(matrixStack, list1, mouseX, mouseY);
++         net.minecraft.client.font.TextRenderer font = itemStack.getItem().getFontRenderer(itemStack);
++         net.minecraftforge.fml.client.gui.GuiUtils.preItemToolTip(itemStack);
++         this.renderWrappedToolTip(matrixStack, list1, mouseX, mouseY, (font == null ? this.textRenderer : font));
++         net.minecraftforge.fml.client.gui.GuiUtils.postItemToolTip();
+       } else {
+          super.renderTooltip(matrixStack, itemStack, mouseX, mouseY);
+       }
+@@ -624,25 +685,44 @@
+       RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       ItemGroup itemgroup = ItemGroup.GROUPS[selectedTab];
+ 
+-      for(ItemGroup itemgroup1 : ItemGroup.GROUPS) {
+-         this.client.getTextureManager().bindTexture(TEXTURE);
+-         if (itemgroup1.getIndex() != selectedTab) {
++      int start = tabPage * 10;
++      int end = Math.min(ItemGroup.GROUPS.length, ((tabPage + 1) * 10 + 2));
++      if (tabPage != 0) start += 2;
++
++      for (int idx = start; idx < end; idx++) {
++         ItemGroup itemgroup1 = ItemGroup.GROUPS[idx];
++         if (itemgroup1 != null && itemgroup1.getIndex() != selectedTab) {
++            this.client.getTextureManager().bindTexture(itemgroup1.getTabsImage());
+             this.renderTabIcon(matrixStack, itemgroup1);
+          }
+       }
+ 
+-      this.client.getTextureManager().bindTexture(new Identifier("textures/gui/container/creative_inventory/tab_" + itemgroup.getTexture()));
++      if (tabPage != 0) {
++         if (itemgroup != ItemGroup.SEARCH) {
++            this.client.getTextureManager().bindTexture(ItemGroup.SEARCH.getTabsImage());
++            renderTabIcon(matrixStack, ItemGroup.SEARCH);
++         }
++         if (itemgroup != ItemGroup.INVENTORY) {
++            this.client.getTextureManager().bindTexture(ItemGroup.INVENTORY.getTabsImage());
++            renderTabIcon(matrixStack, ItemGroup.INVENTORY);
++         }
++      }
++
++      this.client.getTextureManager().bindTexture(itemgroup.getBackgroundImage());
+       this.drawTexture(matrixStack, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight);
+       this.searchBox.render(matrixStack, x, y, partialTicks);
+       RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+       int i = this.x + 175;
+       int j = this.y + 18;
+       int k = j + 112;
+-      this.client.getTextureManager().bindTexture(TEXTURE);
++      this.client.getTextureManager().bindTexture(itemgroup.getTabsImage());
+       if (itemgroup.hasScrollbar()) {
+          this.drawTexture(matrixStack, i, j + (int)((float)(k - j - 17) * this.scrollPosition), 232 + (this.hasScrollbar() ? 0 : 12), 0, 12, 15);
+       }
+ 
++      if ((itemgroup == null || itemgroup.getTabPage() != tabPage) && (itemgroup != ItemGroup.SEARCH && itemgroup != ItemGroup.INVENTORY))
++         return;
++
+       this.renderTabIcon(matrixStack, itemgroup);
+       if (itemgroup == ItemGroup.INVENTORY) {
+          InventoryScreen.drawEntity(this.x + 88, this.y + 45, 20, (float)(this.x + 88 - x), (float)(this.y + 45 - 30 - y), this.client.player);
+@@ -651,6 +731,7 @@
+    }
+ 
+    protected boolean isClickInTab(ItemGroup p_195375_1_, double p_195375_2_, double p_195375_4_) {
++      if (p_195375_1_.getTabPage() != tabPage && p_195375_1_ != ItemGroup.SEARCH && p_195375_1_ != ItemGroup.INVENTORY) return false;
+       int i = p_195375_1_.getColumn();
+       int j = 28 * i;
+       int k = 0;
+@@ -719,6 +800,8 @@
+          i1 = i1 + (this.backgroundHeight - 4);
+       }
+ 
++      RenderSystem.color3f(1F, 1F, 1F); //Forge: Reset color in case Items change it.
++      RenderSystem.enableBlend(); //Forge: Make sure blend is enabled else tabs show a white border.
+       this.drawTexture(p_238808_1_, l, i1, j, k, 28, 32);
+       this.itemRenderer.zOffset = 100.0F;
+       l = l + 6;
+@@ -885,6 +968,22 @@
+       public boolean canTakeItems(PlayerEntity playerIn) {
+          return this.slot.canTakeItems(playerIn);
+       }
++
++      @Override
++      public int getSlotIndex() {
++         return this.slot.getSlotIndex();
++      }
++
++      @Override
++      public boolean isSameInventory(Slot other) {
++         return this.slot.isSameInventory(other);
++      }
++
++      @Override
++      public Slot setBackground(Identifier atlas, Identifier sprite) {
++         this.slot.setBackground(atlas, sprite);
++         return this;
++      }
+    }
+ 
+    @Environment(EnvType.CLIENT)

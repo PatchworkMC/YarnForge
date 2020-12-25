@@ -1,0 +1,11 @@
+--- a/net/minecraft/command/argument/ArgumentTypes.java
++++ b/net/minecraft/command/argument/ArgumentTypes.java
+@@ -219,4 +219,8 @@
+          this.id = idIn;
+       }
+    }
++   @javax.annotation.Nullable public static Identifier getId(ArgumentType<?> type) {
++      Entry<?> entry = byClass(type);
++      return entry == null ? null : entry.id;
++   }
+ }

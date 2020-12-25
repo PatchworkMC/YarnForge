@@ -21,21 +21,19 @@ package net.minecraftforge.fml.network;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
 
 /**
  * Dispatcher for sending packets in response to a received packet. Abstracts out the difference between wrapped packets
  * and unwrapped packets.
  */
 public class PacketDispatcher {
-	BiConsumer<ResourceLocation, PacketBuffer> packetSink;
+	BiConsumer<Identifier, PacketByteBuf> packetSink;
 
-	PacketDispatcher(final BiConsumer<ResourceLocation, PacketBuffer> packetSink) {
+	PacketDispatcher(final BiConsumer<Identifier, PacketByteBuf> packetSink) {
 		this.packetSink = packetSink;
 	}
 
@@ -43,16 +41,16 @@ public class PacketDispatcher {
 
 	}
 
-	public void sendPacket(ResourceLocation resourceLocation, PacketBuffer buffer) {
+	public void sendPacket(Identifier resourceLocation, PacketByteBuf buffer) {
 		packetSink.accept(resourceLocation, buffer);
 	}
 
 	static class NetworkManagerDispatcher extends PacketDispatcher {
-		private final NetworkManager manager;
+		private final ClientConnection manager;
 		private final int packetIndex;
-		private final BiFunction<Pair<PacketBuffer, Integer>, ResourceLocation, ICustomPacket<?>> customPacketSupplier;
+		private final BiFunction<Pair<PacketByteBuf, Integer>, Identifier, ICustomPacket<?>> customPacketSupplier;
 
-		NetworkManagerDispatcher(NetworkManager manager, int packetIndex, BiFunction<Pair<PacketBuffer, Integer>, ResourceLocation, ICustomPacket<?>> customPacketSupplier) {
+		NetworkManagerDispatcher(ClientConnection manager, int packetIndex, BiFunction<Pair<PacketByteBuf, Integer>, Identifier, ICustomPacket<?>> customPacketSupplier) {
 			super();
 			this.packetSink = this::dispatchPacket;
 			this.manager = manager;
@@ -60,9 +58,9 @@ public class PacketDispatcher {
 			this.customPacketSupplier = customPacketSupplier;
 		}
 
-		private void dispatchPacket(final ResourceLocation resourceLocation, final PacketBuffer buffer) {
+		private void dispatchPacket(final Identifier resourceLocation, final PacketByteBuf buffer) {
 			final ICustomPacket<?> packet = this.customPacketSupplier.apply(Pair.of(buffer, packetIndex), resourceLocation);
-			this.manager.sendPacket(packet.getThis());
+			this.manager.send(packet.getThis());
 		}
 	}
 }

@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import cpw.mods.modlauncher.api.LamdbaExceptionUtils;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.fml.ModLoadingStage.ThreadSelector;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;

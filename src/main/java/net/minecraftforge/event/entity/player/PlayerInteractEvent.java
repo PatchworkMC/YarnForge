@@ -23,11 +23,11 @@ import com.google.common.base.Preconditions;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
@@ -51,7 +51,7 @@ public class PlayerInteractEvent extends PlayerEvent
     private final BlockPos pos;
     @Nullable
     private final Direction face;
-    private ActionResultType cancellationResult = ActionResultType.PASS;
+    private ActionResult cancellationResult = ActionResult.PASS;
 
     private PlayerInteractEvent(PlayerEntity player, Hand hand, BlockPos pos, @Nullable Direction face)
     {
@@ -73,12 +73,12 @@ public class PlayerInteractEvent extends PlayerEvent
     @Cancelable
     public static class EntityInteractSpecific extends PlayerInteractEvent
     {
-        private final Vector3d localPos;
+        private final Vec3d localPos;
         private final Entity target;
 
-        public EntityInteractSpecific(PlayerEntity player, Hand hand, Entity target, Vector3d localPos)
+        public EntityInteractSpecific(PlayerEntity player, Hand hand, Entity target, Vec3d localPos)
         {
-            super(player, hand, target.getPosition(), null);
+            super(player, hand, target.getBlockPos(), null);
             this.localPos = localPos;
             this.target = target;
         }
@@ -89,7 +89,7 @@ public class PlayerInteractEvent extends PlayerEvent
          * [-width / 2, width / 2] while Y values will be in the range [0, height]
          * @return The local position
          */
-        public Vector3d getLocalPos()
+        public Vec3d getLocalPos()
         {
             return localPos;
         }
@@ -118,7 +118,7 @@ public class PlayerInteractEvent extends PlayerEvent
 
         public EntityInteract(PlayerEntity player, Hand hand, Entity target)
         {
-            super(player, hand, target.getPosition(), null);
+            super(player, hand, target.getBlockPos(), null);
             this.target = target;
         }
 
@@ -210,7 +210,7 @@ public class PlayerInteractEvent extends PlayerEvent
     {
         public RightClickItem(PlayerEntity player, Hand hand)
         {
-            super(player, hand, player.getPosition(), null);
+            super(player, hand, player.getBlockPos(), null);
         }
     }
 
@@ -223,7 +223,7 @@ public class PlayerInteractEvent extends PlayerEvent
     {
         public RightClickEmpty(PlayerEntity player, Hand hand)
         {
-            super(player, hand, player.getPosition(), null);
+            super(player, hand, player.getBlockPos(), null);
         }
     }
 
@@ -297,7 +297,7 @@ public class PlayerInteractEvent extends PlayerEvent
     {
         public LeftClickEmpty(PlayerEntity player)
         {
-            super(player, Hand.MAIN_HAND, player.getPosition(), null);
+            super(player, Hand.MAIN_HAND, player.getBlockPos(), null);
         }
     }
 
@@ -316,7 +316,7 @@ public class PlayerInteractEvent extends PlayerEvent
     @Nonnull
     public ItemStack getItemStack()
     {
-        return getPlayer().getHeldItem(hand);
+        return getPlayer().getStackInHand(hand);
     }
 
     /**
@@ -354,7 +354,7 @@ public class PlayerInteractEvent extends PlayerEvent
      */
     public LogicalSide getSide()
     {
-        return getWorld().isRemote ? LogicalSide.CLIENT : LogicalSide.SERVER;
+        return getWorld().isClient ? LogicalSide.CLIENT : LogicalSide.SERVER;
     }
 
     /**
@@ -362,7 +362,7 @@ public class PlayerInteractEvent extends PlayerEvent
      * method of the event. By default, this is {@link EnumActionResult#PASS}, meaning cancelled events will cause
      * the client to keep trying more interactions until something works.
      */
-    public ActionResultType getCancellationResult()
+    public ActionResult getCancellationResult()
     {
         return cancellationResult;
     }
@@ -372,7 +372,7 @@ public class PlayerInteractEvent extends PlayerEvent
      * method of the event.
      * Note that this only has an effect on {@link RightClickBlock}, {@link RightClickItem}, {@link EntityInteract}, and {@link EntityInteractSpecific}.
      */
-    public void setCancellationResult(ActionResultType result)
+    public void setCancellationResult(ActionResult result)
     {
         this.cancellationResult = result;
     }

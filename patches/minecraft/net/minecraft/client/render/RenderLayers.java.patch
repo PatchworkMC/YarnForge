@@ -1,0 +1,105 @@
+--- a/net/minecraft/client/render/RenderLayers.java
++++ b/net/minecraft/client/render/RenderLayers.java
+@@ -21,6 +21,7 @@
+ 
+ @Environment(EnvType.CLIENT)
+ public class RenderLayers {
++   @Deprecated
+    private static final Map<Block, RenderLayer> BLOCKS = Util.make(Maps.newHashMap(), (p_228395_0_) -> {
+       RenderLayer rendertype = RenderLayer.getTripwire();
+       p_228395_0_.put(Blocks.TRIPWIRE, rendertype);
+@@ -265,6 +266,7 @@
+       p_228395_0_.put(Blocks.FROSTED_ICE, rendertype3);
+       p_228395_0_.put(Blocks.BUBBLE_COLUMN, rendertype3);
+    });
++   @Deprecated
+    private static final Map<Fluid, RenderLayer> FLUIDS = Util.make(Maps.newHashMap(), (p_228392_0_) -> {
+       RenderLayer rendertype = RenderLayer.getTranslucent();
+       p_228392_0_.put(Fluids.FLOWING_WATER, rendertype);
+@@ -272,6 +274,7 @@
+    });
+    private static boolean fancyGraphicsOrBetter;
+ 
++   @Deprecated // FORGE: Use canRenderInLayer
+    public static RenderLayer getBlockLayer(BlockState blockStateIn) {
+       Block block = blockStateIn.getBlock();
+       if (block instanceof LeavesBlock) {
+@@ -282,6 +285,7 @@
+       }
+    }
+ 
++   @Deprecated // FORGE: Use canRenderInLayer
+    public static RenderLayer getMovingBlockLayer(BlockState p_239221_0_) {
+       Block block = p_239221_0_.getBlock();
+       if (block instanceof LeavesBlock) {
+@@ -297,8 +301,7 @@
+    }
+ 
+    public static RenderLayer getEntityBlockLayer(BlockState p_239220_0_, boolean p_239220_1_) {
+-      RenderLayer rendertype = getBlockLayer(p_239220_0_);
+-      if (rendertype == RenderLayer.getTranslucent()) {
++      if (canRenderInLayer(p_239220_0_, RenderLayer.getTranslucent())) {
+          if (!MinecraftClient.isFabulousGraphicsOrBetter()) {
+             return TexturedRenderLayers.getEntityTranslucentCull();
+          } else {
+@@ -319,11 +322,60 @@
+       }
+    }
+ 
++   @Deprecated // FORGE: Use canRenderInLayer
+    public static RenderLayer getFluidLayer(FluidState fluidStateIn) {
+       RenderLayer rendertype = FLUIDS.get(fluidStateIn.getFluid());
+       return rendertype != null ? rendertype : RenderLayer.getSolid();
+    }
+ 
++   // FORGE START
++
++   private static final Map<net.minecraftforge.registries.IRegistryDelegate<Block>, java.util.function.Predicate<RenderLayer>> blockRenderChecks = Maps.newHashMap();
++   private static final Map<net.minecraftforge.registries.IRegistryDelegate<Fluid>, java.util.function.Predicate<RenderLayer>> fluidRenderChecks = Maps.newHashMap();
++   static {
++      BLOCKS.forEach(RenderLayers::setRenderLayer);
++      FLUIDS.forEach(RenderLayers::setRenderLayer);
++   }
++
++   public static boolean canRenderInLayer(BlockState state, RenderLayer type) {
++      Block block = state.getBlock();
++      if (block instanceof LeavesBlock) {
++         return fancyGraphicsOrBetter ? type == RenderLayer.getCutoutMipped() : type == RenderLayer.getSolid();
++      } else {
++         java.util.function.Predicate<RenderLayer> rendertype;
++         synchronized (RenderLayers.class) {
++            rendertype = blockRenderChecks.get(block.delegate);
++         }
++         return rendertype != null ? rendertype.test(type) : type == RenderLayer.getSolid();
++      }
++   }
++
++   public static boolean canRenderInLayer(FluidState fluid, RenderLayer type) {
++      java.util.function.Predicate<RenderLayer> rendertype;
++      synchronized (RenderLayers.class) {
++         rendertype = fluidRenderChecks.get(fluid.getFluid().delegate);
++      }
++      return rendertype != null ? rendertype.test(type) : type == RenderLayer.getSolid();
++   }
++
++   public static void setRenderLayer(Block block, RenderLayer type) {
++      java.util.Objects.requireNonNull(type);
++      setRenderLayer(block, type::equals);
++   }
++
++   public static synchronized void setRenderLayer(Block block, java.util.function.Predicate<RenderLayer> predicate) {
++      blockRenderChecks.put(block.delegate, predicate);
++   }
++
++   public static void setRenderLayer(Fluid fluid, RenderLayer type) {
++      java.util.Objects.requireNonNull(type);
++      setRenderLayer(fluid, type::equals);
++   }
++
++   public static synchronized void setRenderLayer(Fluid fluid, java.util.function.Predicate<RenderLayer> predicate) {
++      fluidRenderChecks.put(fluid.delegate, predicate);
++   }
++
+    public static void setFancyGraphicsOrBetter(boolean fancyIn) {
+       fancyGraphicsOrBetter = fancyIn;
+    }

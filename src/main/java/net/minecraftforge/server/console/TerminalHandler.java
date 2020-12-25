@@ -19,7 +19,7 @@
 
 package net.minecraftforge.server.console;
 
-import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecrell.terminalconsole.TerminalConsoleAppender;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -34,7 +34,7 @@ public final class TerminalHandler
     {
     }
 
-    public static boolean handleCommands(DedicatedServer server)
+    public static boolean handleCommands(MinecraftDedicatedServer server)
     {
         final Terminal terminal = TerminalConsoleAppender.getTerminal();
         if (terminal == null)
@@ -53,7 +53,7 @@ public final class TerminalHandler
         try
         {
             String line;
-            while (!server.isServerStopped() && server.isServerRunning())
+            while (!server.isStopped() && server.isRunning())
             {
                 try
                 {
@@ -71,13 +71,13 @@ public final class TerminalHandler
                 line = line.trim();
                 if (!line.isEmpty())
                 {
-                    server.handleConsoleInput(line, server.getCommandSource());
+                    server.enqueueCommand(line, server.getCommandSource());
                 }
             }
         }
         catch (UserInterruptException e)
         {
-            server.initiateShutdown(true);
+            server.stop(true);
         }
         finally
         {

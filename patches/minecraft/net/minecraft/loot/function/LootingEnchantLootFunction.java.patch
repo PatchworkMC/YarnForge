@@ -1,0 +1,11 @@
+--- a/net/minecraft/loot/function/LootingEnchantLootFunction.java
++++ b/net/minecraft/loot/function/LootingEnchantLootFunction.java
+@@ -41,7 +41,7 @@
+    public ItemStack process(ItemStack stack, LootContext context) {
+       Entity entity = context.get(LootContextParameters.KILLER_ENTITY);
+       if (entity instanceof LivingEntity) {
+-         int i = EnchantmentHelper.getLooting((LivingEntity)entity);
++         int i = context.getLootingModifier();
+          if (i == 0) {
+             return stack;
+          }

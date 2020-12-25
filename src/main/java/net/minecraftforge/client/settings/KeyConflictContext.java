@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.settings;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 
 public enum KeyConflictContext implements IKeyConflictContext
 {
@@ -48,7 +48,7 @@ public enum KeyConflictContext implements IKeyConflictContext
         @Override
         public boolean isActive()
         {
-            return Minecraft.getInstance().currentScreen != null;
+            return MinecraftClient.getInstance().currentScreen != null;
         }
 
         @Override

@@ -27,19 +27,18 @@ import javax.annotation.Nullable;
 
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.listener.PacketListener;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.thread.ThreadExecutor;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.LogicalSidedProvider;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.INetHandler;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.play.ServerPlayNetHandler;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.concurrent.ThreadTaskExecutor;
-
 public class NetworkEvent extends Event {
-	private final PacketBuffer payload;
+	private final PacketByteBuf payload;
 	private final Supplier<Context> source;
 	private final int loginIndex;
 
@@ -49,7 +48,7 @@ public class NetworkEvent extends Event {
 		this.loginIndex = payload.getIndex();
 	}
 
-	private NetworkEvent(final PacketBuffer payload, final Supplier<Context> source, final int loginIndex) {
+	private NetworkEvent(final PacketByteBuf payload, final Supplier<Context> source, final int loginIndex) {
 		this.payload = payload;
 		this.source = source;
 		this.loginIndex = loginIndex;
@@ -61,7 +60,7 @@ public class NetworkEvent extends Event {
 		this.loginIndex = -1;
 	}
 
-	public PacketBuffer getPayload() {
+	public PacketByteBuf getPayload() {
 		return payload;
 	}
 
@@ -106,7 +105,7 @@ public class NetworkEvent extends Event {
 			this.isLocal = isLocal;
 		}
 
-		public void add(PacketBuffer buffer, ResourceLocation channelName, String context) {
+		public void add(PacketByteBuf buffer, Identifier channelName, String context) {
 			collected.add(new NetworkRegistry.LoginPayload(buffer, channelName, context));
 		}
 
@@ -116,7 +115,7 @@ public class NetworkEvent extends Event {
 	}
 
 	public static class LoginPayloadEvent extends NetworkEvent {
-		LoginPayloadEvent(final PacketBuffer payload, final Supplier<Context> source, final int loginIndex) {
+		LoginPayloadEvent(final PacketByteBuf payload, final Supplier<Context> source, final int loginIndex) {
 			super(payload, source, loginIndex);
 		}
 	}
@@ -152,7 +151,7 @@ public class NetworkEvent extends Event {
 		/**
 		 * The {@link NetworkManager} for this message.
 		 */
-		private final NetworkManager networkManager;
+		private final ClientConnection networkManager;
 
 		/**
 		 * The {@link NetworkDirection} this message has been received on.
@@ -165,11 +164,11 @@ public class NetworkEvent extends Event {
 		private final PacketDispatcher packetDispatcher;
 		private boolean packetHandled;
 
-		Context(NetworkManager netHandler, NetworkDirection networkDirection, int index) {
+		Context(ClientConnection netHandler, NetworkDirection networkDirection, int index) {
 			this(netHandler, networkDirection, new PacketDispatcher.NetworkManagerDispatcher(netHandler, index, networkDirection.reply()::buildPacket));
 		}
 
-		Context(NetworkManager networkManager, NetworkDirection networkDirection, PacketDispatcher dispatcher) {
+		Context(ClientConnection networkManager, NetworkDirection networkDirection, PacketDispatcher dispatcher) {
 			this.networkManager = networkManager;
 			this.networkDirection = networkDirection;
 			this.packetDispatcher = dispatcher;
@@ -196,11 +195,11 @@ public class NetworkEvent extends Event {
 		}
 
 		public CompletableFuture<Void> enqueueWork(Runnable runnable) {
-			ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(getDirection().getReceptionSide());
+			ThreadExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(getDirection().getReceptionSide());
 			// Must check ourselves as Minecraft will sometimes delay tasks even when they are received on the client thread
 			// Same logic as ThreadTaskExecutor#runImmediately without the join
-			if (!executor.isOnExecutionThread()) {
-				return executor.deferTask(runnable); // Use the internal method so thread check isn't done twice
+			if (!executor.isOnThread()) {
+				return executor.submitAsync(runnable); // Use the internal method so thread check isn't done twice
 			} else {
 				runnable.run();
 				return CompletableFuture.completedFuture(null);
@@ -212,15 +211,15 @@ public class NetworkEvent extends Event {
 		 */
 		@Nullable
 		public ServerPlayerEntity getSender() {
-			INetHandler netHandler = networkManager.getNetHandler();
-			if (netHandler instanceof ServerPlayNetHandler) {
-				ServerPlayNetHandler netHandlerPlayServer = (ServerPlayNetHandler) netHandler;
+			PacketListener netHandler = networkManager.getPacketListener();
+			if (netHandler instanceof ServerPlayNetworkHandler) {
+				ServerPlayNetworkHandler netHandlerPlayServer = (ServerPlayNetworkHandler) netHandler;
 				return netHandlerPlayServer.player;
 			}
 			return null;
 		}
 
-		public NetworkManager getNetworkManager() {
+		public ClientConnection getNetworkManager() {
 			return networkManager;
 		}
 	}

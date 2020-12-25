@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.event.sound;
 
-import net.minecraft.client.audio.SoundEngine;
+import net.minecraft.client.sound.SoundSystem;
 import net.minecraftforge.fml.event.lifecycle.IModBusEvent;
 
 /**
@@ -28,7 +28,7 @@ import net.minecraftforge.fml.event.lifecycle.IModBusEvent;
  */
 public class SoundLoadEvent extends SoundEvent implements IModBusEvent
 {
-    public SoundLoadEvent(SoundEngine manager)
+    public SoundLoadEvent(SoundSystem manager)
     {
         super(manager);
     }

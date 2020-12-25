@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/decoration/painting/PaintingMotive.java
++++ b/net/minecraft/entity/decoration/painting/PaintingMotive.java
+@@ -2,7 +2,7 @@
+ 
+ import net.minecraft.util.registry.Registry;
+ 
+-public class PaintingMotive {
++public class PaintingMotive extends net.minecraftforge.registries.ForgeRegistryEntry<PaintingMotive> {
+    public static final PaintingMotive KEBAB = register("kebab", 16, 16);
+    public static final PaintingMotive AZTEC = register("aztec", 16, 16);
+    public static final PaintingMotive ALBAN = register("alban", 16, 16);

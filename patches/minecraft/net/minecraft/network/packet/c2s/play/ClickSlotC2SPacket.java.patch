@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/packet/c2s/play/ClickSlotC2SPacket.java
++++ b/net/minecraft/network/packet/c2s/play/ClickSlotC2SPacket.java
+@@ -51,7 +51,7 @@
+       buf.writeByte(this.clickData);
+       buf.writeShort(this.actionId);
+       buf.writeEnumConstant(this.actionType);
+-      buf.writeItemStack(this.stack);
++      buf.writeItemStack(this.stack, false); //Forge: Include full tag for C->S
+    }
+ 
+    public int getSyncId() {

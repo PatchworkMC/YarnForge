@@ -32,7 +32,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import net.minecraft.block.Block;
-import net.minecraft.state.Property;
+import net.minecraft.state.property.Property;
 
 public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
 
@@ -122,7 +122,7 @@ public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
                     for (Comparable<?> val : e.getValue()) {
                         if (activeString.length() > 0)
                             activeString.append("|");
-                        activeString.append(((Property) e.getKey()).getName(val));
+                        activeString.append(((Property) e.getKey()).name(val));
                     }
                     when.addProperty(e.getKey().getName(), activeString.toString());
                 }
@@ -138,7 +138,7 @@ public final class MultiPartBlockStateBuilder implements IGeneratedBlockstate {
         }
 
         public boolean canApplyTo(Block b) {
-            return b.getStateContainer().getProperties().containsAll(conditions.keySet());
+            return b.getStateManager().getProperties().containsAll(conditions.keySet());
         }
     }
 }

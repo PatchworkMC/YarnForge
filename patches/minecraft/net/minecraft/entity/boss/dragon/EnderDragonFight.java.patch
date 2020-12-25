@@ -1,0 +1,32 @@
+--- a/net/minecraft/entity/boss/dragon/EnderDragonFight.java
++++ b/net/minecraft/entity/boss/dragon/EnderDragonFight.java
+@@ -84,6 +84,7 @@
+ 
+          this.dragonKilled = dragonFightNBT.getBoolean("DragonKilled");
+          this.previouslyKilled = dragonFightNBT.getBoolean("PreviouslyKilled");
++         this.doLegacyCheck = !dragonFightNBT.getBoolean("LegacyScanPerformed"); // Forge: fix MC-105080
+          if (dragonFightNBT.getBoolean("IsRespawning")) {
+             this.dragonSpawnState = EnderDragonSpawnState.START;
+          }
+@@ -118,6 +119,7 @@
+ 
+       compoundnbt.putBoolean("DragonKilled", this.dragonKilled);
+       compoundnbt.putBoolean("PreviouslyKilled", this.previouslyKilled);
++      compoundnbt.putBoolean("LegacyScanPerformed", !this.doLegacyCheck); // Forge: fix MC-105080
+       if (this.exitPortalLocation != null) {
+          compoundnbt.put("ExitPortalLocation", NbtHelper.fromBlockPos(this.exitPortalLocation));
+       }
+@@ -490,6 +492,13 @@
+             endercrystalentity.setBeamTarget((BlockPos)null);
+          }
+       }
++   }
+ 
++   public void addPlayer(ServerPlayerEntity player) {
++      this.bossBar.addPlayer(player);
+    }
++
++   public void removePlayer(ServerPlayerEntity player) {
++      this.bossBar.removePlayer(player);
++   }
+ }

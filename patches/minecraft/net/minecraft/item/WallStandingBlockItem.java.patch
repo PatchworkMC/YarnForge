@@ -1,0 +1,12 @@
+--- a/net/minecraft/item/WallStandingBlockItem.java
++++ b/net/minecraft/item/WallStandingBlockItem.java
+@@ -41,4 +41,9 @@
+       super.appendBlocks(blockToItemMap, itemIn);
+       blockToItemMap.put(this.wallBlock, itemIn);
+    }
++
++   public void removeFromBlockToItemMap(Map<Block, Item> blockToItemMap, Item itemIn) {
++      super.removeFromBlockToItemMap(blockToItemMap, itemIn);
++      blockToItemMap.remove(this.wallBlock);
++   }
+ }

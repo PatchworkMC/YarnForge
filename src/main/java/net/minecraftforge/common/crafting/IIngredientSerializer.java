@@ -20,15 +20,14 @@
 package net.minecraftforge.common.crafting;
 
 import com.google.gson.JsonObject;
-
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.recipe.Ingredient;
 
 public interface IIngredientSerializer<T extends Ingredient>
 {
-    T parse(PacketBuffer buffer);
+    T parse(PacketByteBuf buffer);
 
     T parse(JsonObject json);
 
-    void write(PacketBuffer buffer, T ingredient);
+    void write(PacketByteBuf buffer, T ingredient);
 }

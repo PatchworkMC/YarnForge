@@ -21,8 +21,8 @@ package net.minecraftforge.client.model.generators.loaders;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourcePackType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.client.model.generators.CustomLoaderBuilder;
 import net.minecraftforge.client.model.generators.ModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -34,22 +34,22 @@ public class OBJLoaderBuilder<T extends ModelBuilder<T>> extends CustomLoaderBui
         return new OBJLoaderBuilder<>(parent, existingFileHelper);
     }
 
-    private ResourceLocation modelLocation;
+    private Identifier modelLocation;
     private Boolean detectCullableFaces;
     private Boolean diffuseLighting;
     private Boolean flipV;
     private Boolean ambientToFullbright;
-    private ResourceLocation materialLibraryOverrideLocation;
+    private Identifier materialLibraryOverrideLocation;
 
     protected OBJLoaderBuilder(T parent, ExistingFileHelper existingFileHelper)
     {
-        super(new ResourceLocation("forge:obj"), parent, existingFileHelper);
+        super(new Identifier("forge:obj"), parent, existingFileHelper);
     }
 
-    public OBJLoaderBuilder<T> modelLocation(ResourceLocation modelLocation)
+    public OBJLoaderBuilder<T> modelLocation(Identifier modelLocation)
     {
         Preconditions.checkNotNull(modelLocation, "modelLocation must not be null");
-        Preconditions.checkArgument(existingFileHelper.exists(modelLocation, ResourcePackType.CLIENT_RESOURCES),
+        Preconditions.checkArgument(existingFileHelper.exists(modelLocation, ResourceType.CLIENT_RESOURCES),
                 "OBJ Model %s does not exist in any known resource pack", modelLocation);
         this.modelLocation = modelLocation;
         return this;
@@ -79,10 +79,10 @@ public class OBJLoaderBuilder<T extends ModelBuilder<T>> extends CustomLoaderBui
         return this;
     }
 
-    public OBJLoaderBuilder<T> overrideMaterialLibrary(ResourceLocation materialLibraryOverrideLocation)
+    public OBJLoaderBuilder<T> overrideMaterialLibrary(Identifier materialLibraryOverrideLocation)
     {
         Preconditions.checkNotNull(materialLibraryOverrideLocation, "materialLibraryOverrideLocation must not be null");
-        Preconditions.checkArgument(existingFileHelper.exists(materialLibraryOverrideLocation, ResourcePackType.CLIENT_RESOURCES),
+        Preconditions.checkArgument(existingFileHelper.exists(materialLibraryOverrideLocation, ResourceType.CLIENT_RESOURCES),
                 "OBJ Model %s does not exist in any known resource pack", materialLibraryOverrideLocation);
         this.materialLibraryOverrideLocation = materialLibraryOverrideLocation;
         return this;

@@ -1,0 +1,85 @@
+--- a/net/minecraft/block/FluidBlock.java
++++ b/net/minecraft/block/FluidBlock.java
+@@ -30,10 +30,11 @@
+ 
+ public class FluidBlock extends Block implements FluidDrainable {
+    public static final IntProperty LEVEL = Properties.LEVEL_15;
+-   protected final FlowableFluid fluid;
++   private final FlowableFluid fluid;
+    private final List<FluidState> statesByLevel;
+    public static final VoxelShape COLLISION_SHAPE = Block.createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+ 
++   @Deprecated  // Forge: Use the constructor that takes a supplier
+    public FluidBlock(FlowableFluid fluidIn, AbstractBlock.Settings builder) {
+       super(builder);
+       this.fluid = fluidIn;
+@@ -46,8 +47,21 @@
+ 
+       this.statesByLevel.add(fluidIn.getFlowing(8, true));
+       this.setDefaultState(this.stateManager.getDefaultState().with(LEVEL, Integer.valueOf(0)));
++      fluidStateCacheInitialized = true;
++      supplier = fluidIn.delegate;
+    }
+ 
++   /**
++    * @param supplier A fluid supplier such as {@link net.minecraftforge.fml.RegistryObject<Fluid>}
++    */
++   public FluidBlock(java.util.function.Supplier<? extends FlowableFluid> supplier, AbstractBlock.Settings properties) {
++      super(properties);
++      this.fluid = null;
++      this.statesByLevel = Lists.newArrayList();
++      this.setDefaultState(this.stateManager.getDefaultState().with(LEVEL, Integer.valueOf(0)));
++      this.supplier = supplier;
++   }
++
+    public VoxelShape getCollisionShape(BlockState state, BlockView worldIn, BlockPos pos, ShapeContext context) {
+       return context.isAbove(COLLISION_SHAPE, pos, true) && state.get(LEVEL) == 0 && context.method_27866(worldIn.getFluidState(pos.up()), this.fluid) ? COLLISION_SHAPE : VoxelShapes.empty();
+    }
+@@ -70,6 +84,7 @@
+ 
+    public FluidState getFluidState(BlockState state) {
+       int i = state.get(LEVEL);
++      if (!fluidStateCacheInitialized) initFluidStateCache();
+       return this.statesByLevel.get(Math.min(i, 8));
+    }
+ 
+@@ -121,13 +136,13 @@
+                BlockPos blockpos = pos.offset(direction);
+                if (worldIn.getFluidState(blockpos).isIn(FluidTags.WATER)) {
+                   Block block = worldIn.getFluidState(pos).isStill() ? Blocks.OBSIDIAN : Blocks.COBBLESTONE;
+-                  worldIn.setBlockState(pos, block.getDefaultState());
++                  worldIn.setBlockState(pos, net.minecraftforge.event.ForgeEventFactory.fireFluidPlaceBlockEvent(worldIn, pos, pos, block.getDefaultState()));
+                   this.playExtinguishSound(worldIn, pos);
+                   return false;
+                }
+ 
+                if (flag && worldIn.getBlockState(blockpos).isOf(Blocks.BLUE_ICE)) {
+-                  worldIn.setBlockState(pos, Blocks.BASALT.getDefaultState());
++                  worldIn.setBlockState(pos, net.minecraftforge.event.ForgeEventFactory.fireFluidPlaceBlockEvent(worldIn, pos, pos, Blocks.BASALT.getDefaultState()));
+                   this.playExtinguishSound(worldIn, pos);
+                   return false;
+                }
+@@ -154,4 +169,23 @@
+          return Fluids.EMPTY;
+       }
+    }
++
++   // Forge start
++   private final java.util.function.Supplier<? extends Fluid> supplier;
++   public FlowableFluid getFluid() {
++      return (FlowableFluid)supplier.get();
++   }
++
++   private boolean fluidStateCacheInitialized = false;
++   protected synchronized void initFluidStateCache() {
++      if (fluidStateCacheInitialized == false) {
++         this.statesByLevel.add(getFluid().getStill(false));
++
++         for (int i = 1; i < 8; ++i)
++            this.statesByLevel.add(getFluid().getFlowing(8 - i, false));
++
++         this.statesByLevel.add(getFluid().getFlowing(8, true));
++         fluidStateCacheInitialized = true;
++      }
++   }
+ }

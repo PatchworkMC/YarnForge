@@ -1,0 +1,14 @@
+--- a/net/minecraft/block/dispenser/DispenserBehavior.java
++++ b/net/minecraft/block/dispenser/DispenserBehavior.java
+@@ -375,8 +375,9 @@
+                world.setBlockState(blockpos, AbstractFireBlock.getState(world, blockpos));
+             } else if (CampfireBlock.method_30035(blockstate)) {
+                world.setBlockState(blockpos, blockstate.with(Properties.LIT, Boolean.valueOf(true)));
+-            } else if (blockstate.getBlock() instanceof TntBlock) {
+-               TntBlock.primeTnt(world, blockpos);
++            } else if (blockstate.isFlammable(world, blockpos, source.getBlockState().get(DispenserBlock.FACING).getOpposite())) {
++               blockstate.catchFire(world, blockpos, source.getBlockState().get(DispenserBlock.FACING).getOpposite(), null);
++               if (blockstate.getBlock() instanceof TntBlock)
+                world.removeBlock(blockpos, false);
+             } else {
+                this.setSuccess(false);

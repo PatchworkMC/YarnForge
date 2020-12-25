@@ -20,12 +20,11 @@
 package net.minecraftforge.common;
 
 import net.minecraft.block.Block;
-import net.minecraft.item.DyeColor;
 import net.minecraft.item.Item;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.tags.ITag.INamedTag;
+import net.minecraft.tag.BlockTags;
+import net.minecraft.tag.ItemTags;
+import net.minecraft.util.DyeColor;
+import net.minecraft.util.Identifier;
 
 public class Tags
 {
@@ -125,7 +124,7 @@ public class Tags
 
         private static IOptionalNamedTag<Block> tag(String name)
         {
-            return BlockTags.createOptional(new ResourceLocation("forge", name));
+            return BlockTags.createOptional(new Identifier("forge", name));
         }
     }
 
@@ -283,11 +282,11 @@ public class Tags
 
         private static IOptionalNamedTag<Item> tag(String name)
         {
-            return ItemTags.createOptional(new ResourceLocation("forge", name));
+            return ItemTags.createOptional(new Identifier("forge", name));
         }
     }
 
-    public interface IOptionalNamedTag<T> extends INamedTag<T>
+    public interface IOptionalNamedTag<T> extends Identified<T>
     {
         /**
          * Returns true if the current state is defaulted. This means we have connected to a server that does not contain this tag.

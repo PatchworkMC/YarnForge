@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/network/PlayerListEntry.java
++++ b/net/minecraft/client/network/PlayerListEntry.java
+@@ -52,6 +52,7 @@
+    }
+ 
+    protected void setGameMode(GameMode gameMode) {
++      net.minecraftforge.client.ForgeHooksClient.onClientChangeGameMode(this, this.gameMode, gameMode);
+       this.gameMode = gameMode;
+    }
+ 

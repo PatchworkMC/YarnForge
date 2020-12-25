@@ -1,0 +1,19 @@
+--- a/net/minecraft/client/network/AbstractClientPlayerEntity.java
++++ b/net/minecraft/client/network/AbstractClientPlayerEntity.java
+@@ -115,7 +115,7 @@
+          f = 1.0F;
+       }
+ 
+-      if (this.isUsingItem() && this.getActiveItem().getItem() == Items.BOW) {
++      if (this.isUsingItem() && this.getActiveItem().getItem() instanceof net.minecraft.item.BowItem) {
+          int i = this.getItemUseTime();
+          float f1 = (float)i / 20.0F;
+          if (f1 > 1.0F) {
+@@ -127,6 +127,6 @@
+          f *= 1.0F - f1 * 0.15F;
+       }
+ 
+-      return MathHelper.lerp(MinecraftClient.getInstance().options.fovEffectScale, 1.0F, f);
++      return net.minecraftforge.client.ForgeHooksClient.getOffsetFOV(this, f);
+    }
+ }

@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/render/LightmapTextureManager.java
++++ b/net/minecraft/client/render/LightmapTextureManager.java
+@@ -171,7 +171,7 @@
+    }
+ 
+    public static int getBlockLightCoordinates(int packedLightIn) {
+-      return packedLightIn >> 4 & '\uffff';
++      return (packedLightIn & 0xFFFF) >> 4; // Forge: Fix fullbright quads showing dark artifacts. Reported as MC-169806
+    }
+ 
+    public static int getSkyLightCoordinates(int packedLightIn) {

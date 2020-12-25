@@ -1,0 +1,26 @@
+--- a/net/minecraft/tag/RequiredTagListRegistry.java
++++ b/net/minecraft/tag/RequiredTagListRegistry.java
+@@ -53,4 +53,23 @@
+          throw new IllegalStateException("Missing helper registrations");
+       }
+    }
++
++   @javax.annotation.Nullable
++   public static RequiredTagList<?> get(Identifier rl) {
++      return REQUIRED_TAG_LISTS.get(rl);
++   }
++
++   public static Multimap<Identifier, Identifier> validateVanillaTags(TagManager tagCollectionSupplier) {
++      Multimap<Identifier, Identifier> missingTags = HashMultimap.create();
++      for (java.util.Map.Entry<Identifier, RequiredTagList<?>> entry : REQUIRED_TAG_LISTS.entrySet()) {
++         if (!net.minecraftforge.common.ForgeTagHandler.getCustomTagTypeNames().contains(entry.getKey())) {
++            missingTags.putAll(entry.getKey(), entry.getValue().getMissingTags(tagCollectionSupplier));
++         }
++      }
++      return missingTags;
++   }
++
++   public static void fetchCustomTagTypes(TagManager tagCollectionSupplier) {
++      net.minecraftforge.common.ForgeTagHandler.getCustomTagTypeNames().forEach(tagRegistry -> REQUIRED_TAG_LISTS.get(tagRegistry).updateTagManager(tagCollectionSupplier));
++   }
+ }

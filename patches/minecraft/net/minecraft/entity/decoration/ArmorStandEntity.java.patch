@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/decoration/ArmorStandEntity.java
++++ b/net/minecraft/entity/decoration/ArmorStandEntity.java
+@@ -62,7 +62,7 @@
+    public static final TrackedData<EulerAngle> TRACKER_LEFT_LEG_ROTATION = DataTracker.registerData(ArmorStandEntity.class, TrackedDataHandlerRegistry.ROTATION);
+    public static final TrackedData<EulerAngle> TRACKER_RIGHT_LEG_ROTATION = DataTracker.registerData(ArmorStandEntity.class, TrackedDataHandlerRegistry.ROTATION);
+    private static final Predicate<Entity> RIDEABLE_MINECART_PREDICATE = (p_200617_0_) -> {
+-      return p_200617_0_ instanceof AbstractMinecartEntity && ((AbstractMinecartEntity)p_200617_0_).getMinecartType() == AbstractMinecartEntity.Type.RIDEABLE;
++      return p_200617_0_ instanceof AbstractMinecartEntity && ((AbstractMinecartEntity)p_200617_0_).canBeRidden();
+    };
+    private final DefaultedList<ItemStack> heldItems = DefaultedList.ofSize(2, ItemStack.EMPTY);
+    private final DefaultedList<ItemStack> armorItems = DefaultedList.ofSize(4, ItemStack.EMPTY);

@@ -25,11 +25,10 @@ import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.world.biome.Biomes;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.WeightedRandom;
+import net.minecraft.util.collection.WeightedPicker;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeKeys;
 
 public class BiomeManager
 {
@@ -41,39 +40,39 @@ public class BiomeManager
         TrackedList<BiomeEntry>[] currentBiomes = new TrackedList[BiomeType.values().length];
 
         currentBiomes[BiomeType.DESERT_LEGACY.ordinal()] = new TrackedList<>(
-            new BiomeEntry(Biomes.DESERT, 10),
-            new BiomeEntry(Biomes.FOREST, 10),
-            new BiomeEntry(Biomes.MOUNTAINS, 10),
-            new BiomeEntry(Biomes.SWAMP, 10),
-            new BiomeEntry(Biomes.PLAINS, 10),
-            new BiomeEntry(Biomes.TAIGA, 10)
+            new BiomeEntry(BiomeKeys.DESERT, 10),
+            new BiomeEntry(BiomeKeys.FOREST, 10),
+            new BiomeEntry(BiomeKeys.MOUNTAINS, 10),
+            new BiomeEntry(BiomeKeys.SWAMP, 10),
+            new BiomeEntry(BiomeKeys.PLAINS, 10),
+            new BiomeEntry(BiomeKeys.TAIGA, 10)
         );
 
         currentBiomes[BiomeType.DESERT.ordinal()] = new TrackedList<>(
-            new BiomeEntry(Biomes.DESERT, 30),
-            new BiomeEntry(Biomes.SAVANNA, 20),
-            new BiomeEntry(Biomes.PLAINS, 10)
+            new BiomeEntry(BiomeKeys.DESERT, 30),
+            new BiomeEntry(BiomeKeys.SAVANNA, 20),
+            new BiomeEntry(BiomeKeys.PLAINS, 10)
         );
 
         currentBiomes[BiomeType.WARM.ordinal()] = new TrackedList<>(
-            new BiomeEntry(Biomes.FOREST, 10),
-            new BiomeEntry(Biomes.DARK_FOREST, 10),
-            new BiomeEntry(Biomes.MOUNTAINS, 10),
-            new BiomeEntry(Biomes.PLAINS, 10),
-            new BiomeEntry(Biomes.BIRCH_FOREST, 10),
-            new BiomeEntry(Biomes.SWAMP, 10)
+            new BiomeEntry(BiomeKeys.FOREST, 10),
+            new BiomeEntry(BiomeKeys.DARK_FOREST, 10),
+            new BiomeEntry(BiomeKeys.MOUNTAINS, 10),
+            new BiomeEntry(BiomeKeys.PLAINS, 10),
+            new BiomeEntry(BiomeKeys.BIRCH_FOREST, 10),
+            new BiomeEntry(BiomeKeys.SWAMP, 10)
         );
 
         currentBiomes[BiomeType.COOL.ordinal()] = new TrackedList<>(
-            new BiomeEntry(Biomes.FOREST, 10),
-            new BiomeEntry(Biomes.MOUNTAINS, 10),
-            new BiomeEntry(Biomes.TAIGA, 10),
-            new BiomeEntry(Biomes.PLAINS, 10)
+            new BiomeEntry(BiomeKeys.FOREST, 10),
+            new BiomeEntry(BiomeKeys.MOUNTAINS, 10),
+            new BiomeEntry(BiomeKeys.TAIGA, 10),
+            new BiomeEntry(BiomeKeys.PLAINS, 10)
         );
 
         currentBiomes[BiomeType.ICY.ordinal()] = new TrackedList<>(
-            new BiomeEntry(Biomes.SNOWY_TUNDRA, 30),
-            new BiomeEntry(Biomes.SNOWY_TAIGA, 10)
+            new BiomeEntry(BiomeKeys.SNOWY_TUNDRA, 30),
+            new BiomeEntry(BiomeKeys.SNOWY_TAIGA, 10)
         );
 
         return currentBiomes;
@@ -130,7 +129,7 @@ public class BiomeManager
         DESERT, DESERT_LEGACY, WARM, COOL, ICY;
     }
 
-    public static class BiomeEntry extends WeightedRandom.Item
+    public static class BiomeEntry extends WeightedPicker.Entry
     {
         private final RegistryKey<Biome> key;
 

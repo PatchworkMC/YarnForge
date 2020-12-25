@@ -1,0 +1,20 @@
+--- a/net/minecraft/fluid/FlowableFluid.java
++++ b/net/minecraft/fluid/FlowableFluid.java
+@@ -159,7 +159,7 @@
+          BlockState blockstate = worldIn.getBlockState(blockpos);
+          FluidState fluidstate = blockstate.getFluidState();
+          if (fluidstate.getFluid().matchesType(this) && this.receivesFlow(direction, worldIn, pos, blockStateIn, blockpos, blockstate)) {
+-            if (fluidstate.isStill()) {
++            if (fluidstate.isStill() && net.minecraftforge.event.ForgeEventFactory.canCreateFluidSource(worldIn, blockpos, blockstate, this.isInfinite())) {
+                ++j;
+             }
+ 
+@@ -167,7 +167,7 @@
+          }
+       }
+ 
+-      if (this.isInfinite() && j >= 2) {
++      if (j >= 2) {
+          BlockState blockstate1 = worldIn.getBlockState(pos.down());
+          FluidState fluidstate1 = blockstate1.getFluidState();
+          if (blockstate1.getMaterial().isSolid() || this.isMatchingAndStill(fluidstate1)) {

@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/entity/PistonBlockEntity.java
++++ b/net/minecraft/block/entity/PistonBlockEntity.java
+@@ -111,7 +111,7 @@
+          List<Entity> list = this.world.getOtherEntities((Entity)null, Boxes.stretch(axisalignedbb, direction, d0).union(axisalignedbb));
+          if (!list.isEmpty()) {
+             List<Box> list1 = voxelshape.getBoundingBoxes();
+-            boolean flag = this.pushedBlock.isOf(Blocks.SLIME_BLOCK);
++            boolean flag = this.pushedBlock.isSlimeBlock(); //TODO: is this patch really needed the logic of the original seems sound revisit later
+             Iterator iterator = list.iterator();
+ 
+             while(true) {

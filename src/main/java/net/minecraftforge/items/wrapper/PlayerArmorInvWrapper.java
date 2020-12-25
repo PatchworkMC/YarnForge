@@ -19,8 +19,8 @@
 
 package net.minecraftforge.items.wrapper;
 
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 
 import javax.annotation.Nonnull;
@@ -31,7 +31,7 @@ public class PlayerArmorInvWrapper extends RangedWrapper
 
     public PlayerArmorInvWrapper(PlayerInventory inv)
     {
-        super(new InvWrapper(inv), inv.mainInventory.size(), inv.mainInventory.size() + inv.armorInventory.size());
+        super(new InvWrapper(inv), inv.main.size(), inv.main.size() + inv.armor.size());
         inventoryPlayer = inv;
     }
 
@@ -39,10 +39,10 @@ public class PlayerArmorInvWrapper extends RangedWrapper
     @Nonnull
     public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate)
     {
-        EquipmentSlotType equ = null;
-        for (EquipmentSlotType s : EquipmentSlotType.values())
+        EquipmentSlot equ = null;
+        for (EquipmentSlot s : EquipmentSlot.values())
         {
-            if (s.getSlotType() == EquipmentSlotType.Group.ARMOR && s.getIndex() == slot)
+            if (s.getType() == EquipmentSlot.Type.ARMOR && s.getEntitySlotId() == slot)
             {
                 equ = s;
                 break;

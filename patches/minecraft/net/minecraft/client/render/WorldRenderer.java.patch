@@ -1,0 +1,203 @@
+--- a/net/minecraft/client/render/WorldRenderer.java
++++ b/net/minecraft/client/render/WorldRenderer.java
+@@ -217,6 +217,11 @@
+    }
+ 
+    private void renderWeather(LightmapTextureManager lightmapIn, float partialTicks, double xIn, double yIn, double zIn) {
++      net.minecraftforge.client.IWeatherRenderHandler renderHandler = world.getSkyProperties().getWeatherRenderHandler();
++      if (renderHandler != null) {
++         renderHandler.render(ticks, partialTicks, world, client, lightmapIn, xIn, yIn, zIn);
++         return;
++      }
+       float f = this.client.world.getRainGradient(partialTicks);
+       if (!(f <= 0.0F)) {
+          lightmapIn.enable();
+@@ -825,7 +830,7 @@
+             this.needsTerrainUpdate = true;
+             BlockPos blockpos2 = chunkrenderdispatcher$chunkrender4.getOrigin().add(8, 8, 8);
+             boolean flag1 = blockpos2.getSquaredDistance(blockpos) < 768.0D;
+-            if (!chunkrenderdispatcher$chunkrender4.needsImportantRebuild() && !flag1) {
++            if (net.minecraftforge.common.ForgeConfig.CLIENT.alwaysSetupTerrainOffThread.get() || !chunkrenderdispatcher$chunkrender4.needsImportantRebuild() && !flag1) {
+                this.chunksToRebuild.add(chunkrenderdispatcher$chunkrender4);
+             } else {
+                this.client.getProfiler().push("build near");
+@@ -910,13 +915,13 @@
+       float f = gameRendererIn.getViewDistance();
+       boolean flag1 = this.client.world.getSkyProperties().useThickFog(MathHelper.floor(d0), MathHelper.floor(d1)) || this.client.inGameHud.getBossBarHud().shouldThickenFog();
+       if (this.client.options.viewDistance >= 4) {
+-         BackgroundRenderer.applyFog(activeRenderInfoIn, BackgroundRenderer.FogType.FOG_SKY, f, flag1);
++         BackgroundRenderer.setupFog(activeRenderInfoIn, BackgroundRenderer.FogType.FOG_SKY, f, flag1, partialTicks);
+          iprofiler.swap("sky");
+          this.renderSky(matrixStackIn, partialTicks);
+       }
+ 
+       iprofiler.swap("fog");
+-      BackgroundRenderer.applyFog(activeRenderInfoIn, BackgroundRenderer.FogType.FOG_TERRAIN, Math.max(f - 16.0F, 32.0F), flag1);
++      BackgroundRenderer.setupFog(activeRenderInfoIn, BackgroundRenderer.FogType.FOG_TERRAIN, Math.max(f - 16.0F, 32.0F), flag1, partialTicks);
+       iprofiler.swap("terrain_setup");
+       this.setupTerrain(activeRenderInfoIn, clippinghelper, flag, this.frame++, this.client.player.isSpectator());
+       iprofiler.swap("updatechunks");
+@@ -937,7 +942,9 @@
+       this.updateChunks(finishTimeNano + l1);
+       iprofiler.swap("terrain");
+       this.renderLayer(RenderLayer.getSolid(), matrixStackIn, d0, d1, d2);
++      this.client.getBakedModelManager().method_24153(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).setBlurMipmap(false, this.client.options.mipmapLevels > 0); // FORGE: fix flickering leaves when mods mess up the blurMipmap settings
+       this.renderLayer(RenderLayer.getCutoutMipped(), matrixStackIn, d0, d1, d2);
++      this.client.getBakedModelManager().method_24153(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).restoreLastBlurMipmap();
+       this.renderLayer(RenderLayer.getCutout(), matrixStackIn, d0, d1, d2);
+       if (this.world.getSkyProperties().isDarkened()) {
+          DiffuseLighting.enableForLevel(matrixStackIn.peek().getModel());
+@@ -967,7 +974,7 @@
+       VertexConsumerProvider.Immediate irendertypebuffer$impl = this.bufferBuilders.getEntityVertexConsumers();
+ 
+       for(Entity entity : this.world.getEntities()) {
+-         if ((this.entityRenderDispatcher.shouldRender(entity, clippinghelper, d0, d1, d2) || entity.hasPassengerDeep(this.client.player)) && (entity != activeRenderInfoIn.getFocusedEntity() || activeRenderInfoIn.isThirdPerson() || activeRenderInfoIn.getFocusedEntity() instanceof LivingEntity && ((LivingEntity)activeRenderInfoIn.getFocusedEntity()).isSleeping()) && (!(entity instanceof ClientPlayerEntity) || activeRenderInfoIn.getFocusedEntity() == entity)) {
++         if ((this.entityRenderDispatcher.shouldRender(entity, clippinghelper, d0, d1, d2) || entity.hasPassengerDeep(this.client.player)) && (entity != activeRenderInfoIn.getFocusedEntity() || activeRenderInfoIn.isThirdPerson() || activeRenderInfoIn.getFocusedEntity() instanceof LivingEntity && ((LivingEntity)activeRenderInfoIn.getFocusedEntity()).isSleeping()) && (!(entity instanceof ClientPlayerEntity) || activeRenderInfoIn.getFocusedEntity() == entity || (entity == client.player && !client.player.isSpectator()))) { //FORGE: render local player entity when it is not the renderViewEntity
+             ++this.regularEntityCount;
+             if (entity.age == 0) {
+                entity.lastRenderX = entity.getX();
+@@ -1005,6 +1012,7 @@
+          List<BlockEntity> list = worldrenderer$localrenderinformationcontainer.chunk.getData().getBlockEntities();
+          if (!list.isEmpty()) {
+             for(BlockEntity tileentity1 : list) {
++               if(!clippinghelper.isVisible(tileentity1.getRenderBoundingBox())) continue;
+                BlockPos blockpos3 = tileentity1.getPos();
+                VertexConsumerProvider irendertypebuffer1 = irendertypebuffer$impl;
+                matrixStackIn.push();
+@@ -1030,6 +1038,7 @@
+ 
+       synchronized(this.noCullingBlockEntities) {
+          for(BlockEntity tileentity : this.noCullingBlockEntities) {
++            if(!clippinghelper.isVisible(tileentity.getRenderBoundingBox())) continue;
+             BlockPos blockpos2 = tileentity.getPos();
+             matrixStackIn.push();
+             matrixStackIn.translate((double)blockpos2.getX() - d0, (double)blockpos2.getY() - d1, (double)blockpos2.getZ() - d2);
+@@ -1079,10 +1088,13 @@
+          iprofiler.swap("outline");
+          BlockPos blockpos = ((BlockHitResult)raytraceresult).getBlockPos();
+          BlockState blockstate = this.world.getBlockState(blockpos);
+-         if (!blockstate.isAir() && this.world.getWorldBorder().contains(blockpos)) {
++         if (!net.minecraftforge.client.ForgeHooksClient.onDrawBlockHighlight(this, activeRenderInfoIn, raytraceresult, partialTicks, matrixStackIn, irendertypebuffer$impl))
++         if (!blockstate.isAir(this.world, blockpos) && this.world.getWorldBorder().contains(blockpos)) {
+             VertexConsumer ivertexbuilder2 = irendertypebuffer$impl.getBuffer(RenderLayer.getLines());
+             this.drawBlockOutline(matrixStackIn, ivertexbuilder2, activeRenderInfoIn.getFocusedEntity(), d0, d1, d2, blockpos, blockstate);
+          }
++      } else if (raytraceresult != null && raytraceresult.getType() == HitResult.Type.ENTITY) {
++         net.minecraftforge.client.ForgeHooksClient.onDrawBlockHighlight(this, activeRenderInfoIn, raytraceresult, partialTicks, matrixStackIn, irendertypebuffer$impl);
+       }
+ 
+       RenderSystem.pushMatrix();
+@@ -1114,7 +1126,7 @@
+          this.particlesFramebuffer.copyDepthFrom(this.client.getFramebuffer());
+          RenderPhase.PARTICLES_TARGET.startDrawing();
+          iprofiler.swap("particles");
+-         this.client.particleManager.renderParticles(matrixStackIn, irendertypebuffer$impl, lightmapIn, activeRenderInfoIn, partialTicks);
++         this.client.particleManager.renderParticles(matrixStackIn, irendertypebuffer$impl, lightmapIn, activeRenderInfoIn, partialTicks, clippinghelper);
+          RenderPhase.PARTICLES_TARGET.endDrawing();
+       } else {
+          iprofiler.swap("translucent");
+@@ -1124,7 +1136,7 @@
+          iprofiler.swap("string");
+          this.renderLayer(RenderLayer.getTripwire(), matrixStackIn, d0, d1, d2);
+          iprofiler.swap("particles");
+-         this.client.particleManager.renderParticles(matrixStackIn, irendertypebuffer$impl, lightmapIn, activeRenderInfoIn, partialTicks);
++         this.client.particleManager.renderParticles(matrixStackIn, irendertypebuffer$impl, lightmapIn, activeRenderInfoIn, partialTicks, clippinghelper);
+       }
+ 
+       RenderSystem.pushMatrix();
+@@ -1476,6 +1488,11 @@
+    }
+ 
+    public void renderSky(MatrixStack matrixStackIn, float partialTicks) {
++      net.minecraftforge.client.ISkyRenderHandler renderHandler = world.getSkyProperties().getSkyRenderHandler();
++      if (renderHandler != null) {
++         renderHandler.render(ticks, partialTicks, matrixStackIn, world, client);
++         return;
++      }
+       if (this.client.world.getSkyProperties().getSkyType() == SkyProperties.SkyType.END) {
+          this.renderEndSky(matrixStackIn);
+       } else if (this.client.world.getSkyProperties().getSkyType() == SkyProperties.SkyType.NORMAL) {
+@@ -1604,6 +1621,11 @@
+    }
+ 
+    public void renderClouds(MatrixStack matrixStackIn, float partialTicks, double viewEntityX, double viewEntityY, double viewEntityZ) {
++      net.minecraftforge.client.ICloudRenderHandler renderHandler = world.getSkyProperties().getCloudRenderHandler();
++      if (renderHandler != null) {
++         renderHandler.render(ticks, partialTicks, matrixStackIn, world, client, viewEntityX, viewEntityY, viewEntityZ);
++         return;
++      }
+       float f = this.world.getSkyProperties().getCloudsHeight();
+       if (!Float.isNaN(f)) {
+          RenderSystem.disableCull();
+@@ -1787,7 +1809,7 @@
+ 
+          while(iterator.hasNext()) {
+             ChunkBuilder.BuiltChunk chunkrenderdispatcher$chunkrender = iterator.next();
+-            if (chunkrenderdispatcher$chunkrender.needsImportantRebuild()) {
++            if (!net.minecraftforge.common.ForgeConfig.CLIENT.alwaysSetupTerrainOffThread.get() && chunkrenderdispatcher$chunkrender.needsImportantRebuild()) {
+                this.chunkBuilder.rebuild(chunkrenderdispatcher$chunkrender);
+             } else {
+                chunkrenderdispatcher$chunkrender.scheduleRebuild(this.chunkBuilder);
+@@ -2071,7 +2093,12 @@
+       this.chunks.scheduleRebuild(sectionX, sectionY, sectionZ, rerenderOnMainThread);
+    }
+ 
++   @Deprecated // Forge: use item aware function below
+    public void playSong(@Nullable SoundEvent soundIn, BlockPos pos) {
++      this.playRecord(soundIn, pos, soundIn == null? null : MusicDiscItem.bySound(soundIn));
++   }
++
++   public void playRecord(@Nullable SoundEvent soundIn, BlockPos pos, @Nullable MusicDiscItem musicDiscItem) {
+       SoundInstance isound = this.playingSongs.get(pos);
+       if (isound != null) {
+          this.client.getSoundManager().stop(isound);
+@@ -2079,7 +2106,7 @@
+       }
+ 
+       if (soundIn != null) {
+-         MusicDiscItem musicdiscitem = MusicDiscItem.bySound(soundIn);
++         MusicDiscItem musicdiscitem = musicDiscItem;
+          if (musicdiscitem != null) {
+             this.client.inGameHud.setRecordPlayingOverlay(musicdiscitem.getDescription());
+          }
+@@ -2227,7 +2254,7 @@
+          break;
+       case 1010:
+          if (Item.byRawId(data) instanceof MusicDiscItem) {
+-            this.playSong(((MusicDiscItem)Item.byRawId(data)).getSound(), blockPosIn);
++            this.playRecord(((MusicDiscItem)Item.byRawId(data)).getSound(), blockPosIn, (MusicDiscItem) Item.byRawId(data));
+          } else {
+             this.playSong((SoundEvent)null, blockPosIn);
+          }
+@@ -2377,8 +2404,8 @@
+          break;
+       case 2001:
+          BlockState blockstate = Block.getStateFromRawId(data);
+-         if (!blockstate.isAir()) {
+-            BlockSoundGroup soundtype = blockstate.getSoundGroup();
++         if (!blockstate.isAir(this.world, blockPosIn)) {
++            BlockSoundGroup soundtype = blockstate.getSoundType(this.world, blockPosIn, null);
+             this.world.playSound(blockPosIn, soundtype.getBreakSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F, false);
+          }
+ 
+@@ -2526,7 +2553,7 @@
+       } else {
+          int i = lightReaderIn.getLightLevel(LightType.SKY, blockPosIn);
+          int j = lightReaderIn.getLightLevel(LightType.BLOCK, blockPosIn);
+-         int k = blockStateIn.getLuminance();
++         int k = blockStateIn.getLightValue(lightReaderIn, blockPosIn);
+          if (j < k) {
+             j = k;
+          }
+@@ -2565,6 +2592,11 @@
+       return this.cloudsFramebuffer;
+    }
+ 
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.MODELS;
++   }
++
+    @Environment(EnvType.CLIENT)
+    class ChunkInfo {
+       private final ChunkBuilder.BuiltChunk chunk;

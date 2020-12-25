@@ -1,0 +1,66 @@
+--- a/net/minecraft/server/network/ServerLoginNetworkHandler.java
++++ b/net/minecraft/server/network/ServerLoginNetworkHandler.java
+@@ -55,7 +55,13 @@
+    }
+ 
+    public void tick() {
+-      if (this.state == ServerLoginNetworkHandler.State.READY_TO_ACCEPT) {
++      if (this.state == State.NEGOTIATING) {
++         // We force the state into "NEGOTIATING" which is otherwise unused. Once we're completed we move the negotiation onto "READY_TO_ACCEPT"
++         // Might want to promote player object creation to here as well..
++         boolean negotiationComplete = net.minecraftforge.fml.network.NetworkHooks.tickNegotiation(this, this.connection, this.player);
++         if (negotiationComplete)
++            this.state = State.READY_TO_ACCEPT;
++      } else if (this.state == ServerLoginNetworkHandler.State.READY_TO_ACCEPT) {
+          this.acceptPlayer();
+       } else if (this.state == ServerLoginNetworkHandler.State.DELAY_ACCEPT) {
+          ServerPlayerEntity serverplayerentity = this.server.getPlayerManager().getPlayer(this.profile.getId());
+@@ -130,7 +136,7 @@
+          this.state = ServerLoginNetworkHandler.State.KEY;
+          this.connection.send(new LoginHelloS2CPacket("", this.server.getKeyPair().getPublic().getEncoded(), this.nonce));
+       } else {
+-         this.state = ServerLoginNetworkHandler.State.READY_TO_ACCEPT;
++         this.state = ServerLoginNetworkHandler.State.NEGOTIATING;
+       }
+ 
+    }
+@@ -155,7 +161,7 @@
+          throw new IllegalStateException("Protocol error", cryptexception);
+       }
+ 
+-      Thread thread = new Thread("User Authenticator #" + authenticatorThreadId.incrementAndGet()) {
++         Thread thread = new Thread(net.minecraftforge.fml.common.thread.SidedThreadGroups.SERVER, "User Authenticator #" + authenticatorThreadId.incrementAndGet()) {
+          public void run() {
+             GameProfile gameprofile = ServerLoginNetworkHandler.this.profile;
+ 
+@@ -163,11 +169,11 @@
+                ServerLoginNetworkHandler.this.profile = ServerLoginNetworkHandler.this.server.getSessionService().hasJoinedServer(new GameProfile((UUID)null, gameprofile.getName()), s, this.getClientAddress());
+                if (ServerLoginNetworkHandler.this.profile != null) {
+                   ServerLoginNetworkHandler.LOGGER.info("UUID of player {} is {}", ServerLoginNetworkHandler.this.profile.getName(), ServerLoginNetworkHandler.this.profile.getId());
+-                  ServerLoginNetworkHandler.this.state = ServerLoginNetworkHandler.State.READY_TO_ACCEPT;
++                     ServerLoginNetworkHandler.this.state = ServerLoginNetworkHandler.State.NEGOTIATING;
+                } else if (ServerLoginNetworkHandler.this.server.isSinglePlayer()) {
+                   ServerLoginNetworkHandler.LOGGER.warn("Failed to verify username but will let them in anyway!");
+                   ServerLoginNetworkHandler.this.profile = ServerLoginNetworkHandler.this.toOfflineProfile(gameprofile);
+-                  ServerLoginNetworkHandler.this.state = ServerLoginNetworkHandler.State.READY_TO_ACCEPT;
++                     ServerLoginNetworkHandler.this.state = ServerLoginNetworkHandler.State.NEGOTIATING;
+                } else {
+                   ServerLoginNetworkHandler.this.disconnect(new TranslatableText("multiplayer.disconnect.unverified_username"));
+                   ServerLoginNetworkHandler.LOGGER.error("Username '{}' tried to join with an invalid session", (Object)gameprofile.getName());
+@@ -176,7 +182,7 @@
+                if (ServerLoginNetworkHandler.this.server.isSinglePlayer()) {
+                   ServerLoginNetworkHandler.LOGGER.warn("Authentication servers are down but will let them in anyway!");
+                   ServerLoginNetworkHandler.this.profile = ServerLoginNetworkHandler.this.toOfflineProfile(gameprofile);
+-                  ServerLoginNetworkHandler.this.state = ServerLoginNetworkHandler.State.READY_TO_ACCEPT;
++                     ServerLoginNetworkHandler.this.state = ServerLoginNetworkHandler.State.NEGOTIATING;
+                } else {
+                   ServerLoginNetworkHandler.this.disconnect(new TranslatableText("multiplayer.disconnect.authservers_down"));
+                   ServerLoginNetworkHandler.LOGGER.error("Couldn't verify username because servers are unavailable");
+@@ -196,6 +202,7 @@
+    }
+ 
+    public void onQueryResponse(LoginQueryResponseC2SPacket p_209526_1_) {
++      if (!net.minecraftforge.fml.network.NetworkHooks.onCustomPayload(p_209526_1_, this.connection))
+       this.disconnect(new TranslatableText("multiplayer.disconnect.unexpected_query_response"));
+    }
+ 

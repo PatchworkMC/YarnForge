@@ -1,0 +1,196 @@
+--- a/net/minecraft/client/options/KeyBinding.java
++++ b/net/minecraft/client/options/KeyBinding.java
+@@ -17,9 +17,9 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @Environment(EnvType.CLIENT)
+-public class KeyBinding implements Comparable<KeyBinding> {
++public class KeyBinding implements Comparable<KeyBinding>, net.minecraftforge.client.extensions.IForgeKeybinding {
+    private static final Map<String, KeyBinding> keysById = Maps.newHashMap();
+-   private static final Map<InputUtil.Key, KeyBinding> keyToBindings = Maps.newHashMap();
++   private static final net.minecraftforge.client.settings.KeyBindingMap keyToBindings = new net.minecraftforge.client.settings.KeyBindingMap();
+    private static final Set<String> keyCategories = Sets.newHashSet();
+    private static final Map<String, Integer> categoryOrderMap = Util.make(Maps.newHashMap(), (p_205215_0_) -> {
+       p_205215_0_.put("key.categories.movement", 1);
+@@ -38,7 +38,7 @@
+    private int timesPressed;
+ 
+    public static void onKeyPressed(InputUtil.Key key) {
+-      KeyBinding keybinding = keyToBindings.get(key);
++      KeyBinding keybinding = keyToBindings.lookupActive(key);
+       if (keybinding != null) {
+          ++keybinding.timesPressed;
+       }
+@@ -46,7 +46,7 @@
+    }
+ 
+    public static void setKeyPressed(InputUtil.Key key, boolean held) {
+-      KeyBinding keybinding = keyToBindings.get(key);
++      for (KeyBinding keybinding : keyToBindings.lookupAll(key))
+       if (keybinding != null) {
+          keybinding.setPressed(held);
+       }
+@@ -70,10 +70,10 @@
+    }
+ 
+    public static void updateKeysByCode() {
+-      keyToBindings.clear();
++      keyToBindings.clearMap();
+ 
+       for(KeyBinding keybinding : keysById.values()) {
+-         keyToBindings.put(keybinding.boundKey, keybinding);
++         keyToBindings.addKey(keybinding.boundKey, keybinding);
+       }
+ 
+    }
+@@ -88,12 +88,12 @@
+       this.defaultKey = this.boundKey;
+       this.category = category;
+       keysById.put(description, this);
+-      keyToBindings.put(this.boundKey, this);
++      keyToBindings.addKey(this.boundKey, this);
+       keyCategories.add(category);
+    }
+ 
+    public boolean isPressed() {
+-      return this.pressed;
++      return this.pressed && isConflictContextAndModifierActive();
+    }
+ 
+    public String getCategory() {
+@@ -127,7 +127,13 @@
+    }
+ 
+    public int compareTo(KeyBinding p_compareTo_1_) {
+-      return this.category.equals(p_compareTo_1_.category) ? I18n.translate(this.translationKey).compareTo(I18n.translate(p_compareTo_1_.translationKey)) : categoryOrderMap.get(this.category).compareTo(categoryOrderMap.get(p_compareTo_1_.category));
++      if (this.category.equals(p_compareTo_1_.category)) return I18n.translate(this.translationKey).compareTo(I18n.translate(p_compareTo_1_.translationKey));
++      Integer tCat = categoryOrderMap.get(this.category);
++      Integer oCat = categoryOrderMap.get(p_compareTo_1_.category);
++      if (tCat == null && oCat != null) return 1;
++      if (tCat != null && oCat == null) return -1;
++      if (tCat == null && oCat == null) return I18n.translate(this.category).compareTo(I18n.translate(p_compareTo_1_.category));
++      return  tCat.compareTo(oCat);
+    }
+ 
+    public static Supplier<Text> getLocalizedName(String key) {
+@@ -138,6 +144,20 @@
+    }
+ 
+    public boolean equals(KeyBinding binding) {
++      if (getKeyConflictContext().conflicts(binding.getKeyConflictContext()) || binding.getKeyConflictContext().conflicts(getKeyConflictContext())) {
++         net.minecraftforge.client.settings.KeyModifier keyModifier = getKeyModifier();
++         net.minecraftforge.client.settings.KeyModifier otherKeyModifier = binding.getKeyModifier();
++         if (keyModifier.matches(binding.getKey()) || otherKeyModifier.matches(getKey())) {
++            return true;
++         } else if (getKey().equals(binding.getKey())) {
++            // IN_GAME key contexts have a conflict when at least one modifier is NONE.
++            // For example: If you hold shift to crouch, you can still press E to open your inventory. This means that a Shift+E hotkey is in conflict with E.
++            // GUI and other key contexts do not have this limitation.
++            return keyModifier == otherKeyModifier ||
++               (getKeyConflictContext().conflicts(net.minecraftforge.client.settings.KeyConflictContext.IN_GAME) &&
++               (keyModifier == net.minecraftforge.client.settings.KeyModifier.NONE || otherKeyModifier == net.minecraftforge.client.settings.KeyModifier.NONE));
++         }
++      }
+       return this.boundKey.equals(binding.boundKey);
+    }
+ 
+@@ -158,11 +178,13 @@
+    }
+ 
+    public Text getBoundKeyLocalizedText() {
++      return getKeyModifier().getCombinedName(boundKey, () -> {
+       return this.boundKey.getLocalizedText();
++      });
+    }
+ 
+    public boolean isDefault() {
+-      return this.boundKey.equals(this.defaultKey);
++      return this.boundKey.equals(this.defaultKey) && getKeyModifier() == getKeyModifierDefault();
+    }
+ 
+    public String getBoundKeyTranslationKey() {
+@@ -172,4 +194,84 @@
+    public void setPressed(boolean valueIn) {
+       this.pressed = valueIn;
+    }
++
++   /****************** Forge Start *****************************/
++   private net.minecraftforge.client.settings.KeyModifier keyModifierDefault = net.minecraftforge.client.settings.KeyModifier.NONE;
++   private net.minecraftforge.client.settings.KeyModifier keyModifier = net.minecraftforge.client.settings.KeyModifier.NONE;
++   private net.minecraftforge.client.settings.IKeyConflictContext keyConflictContext = net.minecraftforge.client.settings.KeyConflictContext.UNIVERSAL;
++
++   /**
++    * Convenience constructor for creating KeyBindings with keyConflictContext set.
++    */
++   public KeyBinding(String description, net.minecraftforge.client.settings.IKeyConflictContext keyConflictContext, final InputUtil.Type inputType, final int keyCode, String category) {
++       this(description, keyConflictContext, inputType.createFromCode(keyCode), category);
++   }
++
++   /**
++    * Convenience constructor for creating KeyBindings with keyConflictContext set.
++    */
++   public KeyBinding(String description, net.minecraftforge.client.settings.IKeyConflictContext keyConflictContext, InputUtil.Key keyCode, String category) {
++       this(description, keyConflictContext, net.minecraftforge.client.settings.KeyModifier.NONE, keyCode, category);
++   }
++
++   /**
++    * Convenience constructor for creating KeyBindings with keyConflictContext and keyModifier set.
++    */
++   public KeyBinding(String description, net.minecraftforge.client.settings.IKeyConflictContext keyConflictContext, net.minecraftforge.client.settings.KeyModifier keyModifier, final InputUtil.Type inputType, final int keyCode, String category) {
++       this(description, keyConflictContext, keyModifier, inputType.createFromCode(keyCode), category);
++   }
++
++   /**
++    * Convenience constructor for creating KeyBindings with keyConflictContext and keyModifier set.
++    */
++   public KeyBinding(String description, net.minecraftforge.client.settings.IKeyConflictContext keyConflictContext, net.minecraftforge.client.settings.KeyModifier keyModifier, InputUtil.Key keyCode, String category) {
++      this.translationKey = description;
++      this.boundKey = keyCode;
++      this.defaultKey = keyCode;
++      this.category = category;
++      this.keyConflictContext = keyConflictContext;
++      this.keyModifier = keyModifier;
++      this.keyModifierDefault = keyModifier;
++      if (this.keyModifier.matches(keyCode))
++         this.keyModifier = net.minecraftforge.client.settings.KeyModifier.NONE;
++      keysById.put(description, this);
++      keyToBindings.addKey(keyCode, this);
++      keyCategories.add(category);
++   }
++
++   @Override
++   public InputUtil.Key getKey() {
++       return this.boundKey;
++   }
++
++   @Override
++   public void setKeyConflictContext(net.minecraftforge.client.settings.IKeyConflictContext keyConflictContext) {
++       this.keyConflictContext = keyConflictContext;
++   }
++
++   @Override
++   public net.minecraftforge.client.settings.IKeyConflictContext getKeyConflictContext() {
++       return keyConflictContext;
++   }
++
++   @Override
++   public net.minecraftforge.client.settings.KeyModifier getKeyModifierDefault() {
++       return keyModifierDefault;
++   }
++
++   @Override
++   public net.minecraftforge.client.settings.KeyModifier getKeyModifier() {
++       return keyModifier;
++   }
++
++   @Override
++   public void setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier keyModifier, InputUtil.Key keyCode) {
++       this.boundKey = keyCode;
++       if (keyModifier.matches(keyCode))
++           keyModifier = net.minecraftforge.client.settings.KeyModifier.NONE;
++       keyToBindings.removeKey(this);
++       this.keyModifier = keyModifier;
++       keyToBindings.addKey(keyCode, this);
++   }
++   /****************** Forge End *****************************/
+ }

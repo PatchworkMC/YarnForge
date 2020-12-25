@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/packet/s2c/play/CustomPayloadS2CPacket.java
++++ b/net/minecraft/network/packet/s2c/play/CustomPayloadS2CPacket.java
+@@ -10,7 +10,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class CustomPayloadS2CPacket implements Packet<ClientPlayPacketListener> {
++public class CustomPayloadS2CPacket implements Packet<ClientPlayPacketListener>, net.minecraftforge.fml.network.ICustomPacket<CustomPayloadS2CPacket> {
+    public static final Identifier BRAND = new Identifier("brand");
+    public static final Identifier DEBUG_PATH = new Identifier("debug/path");
+    public static final Identifier DEBUG_NEIGHBORS_UPDATE = new Identifier("debug/neighbors_update");

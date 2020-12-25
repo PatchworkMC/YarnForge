@@ -26,26 +26,24 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.Packet;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
 import io.netty.buffer.Unpooled;
 import io.netty.util.Attribute;
 import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.network.IPacket;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
 
 public class FMLMCRegisterPacketHandler {
 	public static final FMLMCRegisterPacketHandler INSTANCE = new FMLMCRegisterPacketHandler();
 
 	public static class ChannelList {
-		private Set<ResourceLocation> locations = new HashSet<>();
+		private Set<Identifier> locations = new HashSet<>();
 
-		public void updateFrom(final Supplier<NetworkEvent.Context> source, PacketBuffer buffer, final NetworkEvent.RegistrationChangeType changeType) {
+		public void updateFrom(final Supplier<NetworkEvent.Context> source, PacketByteBuf buffer, final NetworkEvent.RegistrationChangeType changeType) {
 			byte[] data = new byte[Math.max(buffer.readableBytes(), 0)];
 			buffer.readBytes(data);
-			Set<ResourceLocation> oldLocations = this.locations;
+			Set<Identifier> oldLocations = this.locations;
 			this.locations = bytesToResLocation(data);
 			// ensure all locations receive updates, old and new.
 			oldLocations.addAll(this.locations);
@@ -58,7 +56,7 @@ public class FMLMCRegisterPacketHandler {
 
 		byte[] toByteArray() {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			for (ResourceLocation rl : locations) {
+			for (Identifier rl : locations) {
 				try {
 					bos.write(rl.toString().getBytes(StandardCharsets.UTF_8));
 					bos.write(0);
@@ -69,13 +67,13 @@ public class FMLMCRegisterPacketHandler {
 			return bos.toByteArray();
 		}
 
-		private Set<ResourceLocation> bytesToResLocation(byte[] all) {
-			HashSet<ResourceLocation> rl = new HashSet<>();
+		private Set<Identifier> bytesToResLocation(byte[] all) {
+			HashSet<Identifier> rl = new HashSet<>();
 			int last = 0;
 			for (int cur = 0; cur < all.length; cur++) {
 				if (all[cur] == '\0') {
 					String s = new String(all, last, cur - last, StandardCharsets.UTF_8);
-					rl.add(new ResourceLocation(s));
+					rl.add(new Identifier(s));
 					last = cur + 1;
 				}
 			}
@@ -83,7 +81,7 @@ public class FMLMCRegisterPacketHandler {
 		}
 	}
 
-	public void addChannels(Set<ResourceLocation> locations, NetworkManager manager) {
+	public void addChannels(Set<Identifier> locations, ClientConnection manager) {
 		getFrom(manager).locations.addAll(locations);
 	}
 
@@ -99,7 +97,7 @@ public class FMLMCRegisterPacketHandler {
 		evt.getSource().get().setPacketHandled(true);
 	}
 
-	private static ChannelList getFrom(NetworkManager manager) {
+	private static ChannelList getFrom(ClientConnection manager) {
 		return fromAttr(manager.channel().attr(FMLNetworkConstants.FML_MC_REGISTRY));
 	}
 
@@ -112,10 +110,10 @@ public class FMLMCRegisterPacketHandler {
 		return attr.get();
 	}
 
-	public void sendRegistry(NetworkManager manager, final NetworkDirection dir) {
-		PacketBuffer pb = new PacketBuffer(Unpooled.buffer());
+	public void sendRegistry(ClientConnection manager, final NetworkDirection dir) {
+		PacketByteBuf pb = new PacketByteBuf(Unpooled.buffer());
 		pb.writeBytes(getFrom(manager).toByteArray());
-		final ICustomPacket<IPacket<?>> iPacketICustomPacket = dir.buildPacket(Pair.of(pb, 0), FMLNetworkConstants.MC_REGISTER_RESOURCE);
-		manager.sendPacket(iPacketICustomPacket.getThis());
+		final ICustomPacket<Packet<?>> iPacketICustomPacket = dir.buildPacket(Pair.of(pb, 0), FMLNetworkConstants.MC_REGISTER_RESOURCE);
+		manager.send(iPacketICustomPacket.getThis());
 	}
 }

@@ -1,0 +1,18 @@
+--- a/net/minecraft/resource/ServerResourceManager.java
++++ b/net/minecraft/resource/ServerResourceManager.java
+@@ -33,6 +33,7 @@
+       this.resourceManager.registerListener(this.lootManager);
+       this.resourceManager.registerListener(this.functionLoader);
+       this.resourceManager.registerListener(this.serverAdvancementLoader);
++      net.minecraftforge.event.ForgeEventFactory.onResourceReload(this).forEach(resourceManager::registerListener);
+    }
+ 
+    public FunctionLoader getFunctionLoader() {
+@@ -82,6 +83,7 @@
+ 
+    public void loadRegistryTags() {
+       this.registryTagManager.getTagManager().apply();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.TagsUpdatedEvent.CustomTagTypes(registryTagManager.getTagManager()));
+    }
+ 
+    public void close() {

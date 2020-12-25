@@ -23,8 +23,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.math.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
@@ -68,7 +68,7 @@ public class FluidHandlerItemStackSimple implements IFluidHandlerItem, ICapabili
     @Nonnull
     public FluidStack getFluid()
     {
-        CompoundNBT tagCompound = container.getTag();
+        CompoundTag tagCompound = container.getTag();
         if (tagCompound == null || !tagCompound.contains(FLUID_NBT_KEY))
         {
             return FluidStack.EMPTY;
@@ -80,10 +80,10 @@ public class FluidHandlerItemStackSimple implements IFluidHandlerItem, ICapabili
     {
         if (!container.hasTag())
         {
-            container.setTag(new CompoundNBT());
+            container.setTag(new CompoundTag());
         }
 
-        CompoundNBT fluidTag = new CompoundNBT();
+        CompoundTag fluidTag = new CompoundTag();
         fluid.writeToNBT(fluidTag);
         container.getTag().put(FLUID_NBT_KEY, fluidTag);
     }
@@ -196,7 +196,7 @@ public class FluidHandlerItemStackSimple implements IFluidHandlerItem, ICapabili
      */
     protected void setContainerToEmpty()
     {
-        container.removeChildTag(FLUID_NBT_KEY);
+        container.removeSubTag(FLUID_NBT_KEY);
     }
 
     @Override
@@ -220,7 +220,7 @@ public class FluidHandlerItemStackSimple implements IFluidHandlerItem, ICapabili
         protected void setContainerToEmpty()
         {
             super.setContainerToEmpty();
-            container.shrink(1);
+            container.decrement(1);
         }
     }
 

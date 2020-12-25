@@ -1,0 +1,23 @@
+--- a/net/minecraft/entity/ai/brain/task/FarmerVillagerTask.java
++++ b/net/minecraft/entity/ai/brain/task/FarmerVillagerTask.java
+@@ -37,7 +37,7 @@
+    }
+ 
+    protected boolean shouldRun(ServerWorld worldIn, VillagerEntity owner) {
+-      if (!worldIn.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
++      if (!net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(worldIn, owner)) {
+          return false;
+       } else if (owner.getVillagerData().getProfession() != VillagerProfession.FARMER) {
+          return false;
+@@ -117,6 +117,11 @@
+                      } else if (itemstack.getItem() == Items.BEETROOT_SEEDS) {
+                         worldIn.setBlockState(this.currentTarget, Blocks.BEETROOTS.getDefaultState(), 3);
+                         flag = true;
++                     } else if (itemstack.getItem() instanceof net.minecraftforge.common.IPlantable) {
++                        if (((net.minecraftforge.common.IPlantable)itemstack.getItem()).getPlantType(worldIn, currentTarget) == net.minecraftforge.common.PlantType.CROP) {
++                           worldIn.setBlockState(currentTarget, ((net.minecraftforge.common.IPlantable)itemstack.getItem()).getPlant(worldIn, currentTarget), 3);
++                           flag = true;
++                        }
+                      }
+                   }
+ 

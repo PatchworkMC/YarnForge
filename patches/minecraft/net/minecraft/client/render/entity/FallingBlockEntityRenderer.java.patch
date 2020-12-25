@@ -1,0 +1,17 @@
+--- a/net/minecraft/client/render/entity/FallingBlockEntityRenderer.java
++++ b/net/minecraft/client/render/entity/FallingBlockEntityRenderer.java
+@@ -35,7 +35,13 @@
+             BlockPos blockpos = new BlockPos(entityIn.getX(), entityIn.getBoundingBox().maxY, entityIn.getZ());
+             matrixStackIn.translate(-0.5D, 0.0D, -0.5D);
+             BlockRenderManager blockrendererdispatcher = MinecraftClient.getInstance().getBlockRenderManager();
+-            blockrendererdispatcher.getModelRenderer().render(world, blockrendererdispatcher.getModel(blockstate), blockstate, blockpos, matrixStackIn, bufferIn.getBuffer(RenderLayers.getMovingBlockLayer(blockstate)), false, new Random(), blockstate.getRenderingSeed(entityIn.getFallingBlockPos()), OverlayTexture.DEFAULT_UV);
++            for (net.minecraft.client.render.RenderLayer type : net.minecraft.client.render.RenderLayer.getBlockLayers()) {
++               if (RenderLayers.canRenderInLayer(blockstate, type)) {
++                  net.minecraftforge.client.ForgeHooksClient.setRenderLayer(type);
++                  blockrendererdispatcher.getModelRenderer().render(world, blockrendererdispatcher.getModel(blockstate), blockstate, blockpos, matrixStackIn, bufferIn.getBuffer(type), false, new Random(), blockstate.getRenderingSeed(entityIn.getFallingBlockPos()), OverlayTexture.DEFAULT_UV);
++               }
++            }
++            net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+             matrixStackIn.pop();
+             super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+          }

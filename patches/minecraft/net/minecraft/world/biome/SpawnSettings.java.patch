@@ -1,0 +1,38 @@
+--- a/net/minecraft/world/biome/SpawnSettings.java
++++ b/net/minecraft/world/biome/SpawnSettings.java
+@@ -42,23 +42,35 @@
+    private final Map<SpawnGroup, List<SpawnSettings.SpawnEntry>> spawners;
+    private final Map<EntityType<?>, SpawnSettings.SpawnDensity> spawnCosts;
+    private final boolean playerSpawnFriendly;
++   private final java.util.Set<SpawnGroup> typesView;
++   private final java.util.Set<EntityType<?>> costView;
+ 
+    private SpawnSettings(float creatureSpawnProbability, Map<SpawnGroup, List<SpawnSettings.SpawnEntry>> spawners, Map<EntityType<?>, SpawnSettings.SpawnDensity> spawnCosts, boolean isValidSpawnBiomeForPlayer) {
+       this.creatureSpawnProbability = creatureSpawnProbability;
+       this.spawners = spawners;
+       this.spawnCosts = spawnCosts;
+       this.playerSpawnFriendly = isValidSpawnBiomeForPlayer;
++      this.typesView = java.util.Collections.unmodifiableSet(this.spawners.keySet());
++      this.costView = java.util.Collections.unmodifiableSet(this.spawnCosts.keySet());
+    }
+ 
+    public List<SpawnSettings.SpawnEntry> getSpawnEntry(SpawnGroup classification) {
+       return this.spawners.getOrDefault(classification, ImmutableList.of());
+    }
+ 
++   public java.util.Set<SpawnGroup> getSpawnerTypes() {
++       return this.typesView;
++   }
++
+    @Nullable
+    public SpawnSettings.SpawnDensity getSpawnDensity(EntityType<?> entityType) {
+       return this.spawnCosts.get(entityType);
+    }
+ 
++   public java.util.Set<EntityType<?>> getEntityTypes() {
++       return this.costView;
++   }
++
+    public float getCreatureSpawnProbability() {
+       return this.creatureSpawnProbability;
+    }

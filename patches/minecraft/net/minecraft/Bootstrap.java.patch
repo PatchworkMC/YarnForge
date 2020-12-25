@@ -1,0 +1,27 @@
+--- a/net/minecraft/Bootstrap.java
++++ b/net/minecraft/Bootstrap.java
+@@ -12,7 +12,6 @@
+ import net.minecraft.command.argument.ArgumentTypes;
+ import net.minecraft.enchantment.Enchantment;
+ import net.minecraft.entity.EntityType;
+-import net.minecraft.entity.attribute.DefaultAttributeRegistry;
+ import net.minecraft.entity.attribute.EntityAttribute;
+ import net.minecraft.entity.effect.StatusEffect;
+ import net.minecraft.item.Item;
+@@ -48,6 +47,8 @@
+                DispenserBehavior.registerDefaults();
+                ArgumentTypes.register();
+                RequiredTagListRegistry.validateRegistrations();
++               net.minecraftforge.registries.GameData.vanillaSnapshot();
++               if (false) // skip redirectOutputToLog, Forge already redirects stdout and stderr output to log so that they print with more context
+                setOutputStreams();
+             }
+          }
+@@ -103,7 +104,6 @@
+             CommandManager.checkMissing();
+          }
+ 
+-         DefaultAttributeRegistry.checkMissing();
+       }
+    }
+ 

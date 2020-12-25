@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/projectile/thrown/ThrownEntity.java
++++ b/net/minecraft/entity/projectile/thrown/ThrownEntity.java
+@@ -67,7 +67,7 @@
+          }
+       }
+ 
+-      if (raytraceresult.getType() != HitResult.Type.MISS && !flag) {
++      if (raytraceresult.getType() != HitResult.Type.MISS && !flag && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
+          this.onCollision(raytraceresult);
+       }
+ 

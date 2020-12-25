@@ -20,8 +20,7 @@
 package net.minecraftforge.event.entity.item;
 
 import net.minecraftforge.eventbus.api.Cancelable;
-
-import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
 /**

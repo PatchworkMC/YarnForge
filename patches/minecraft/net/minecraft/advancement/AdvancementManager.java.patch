@@ -1,0 +1,10 @@
+--- a/net/minecraft/advancement/AdvancementManager.java
++++ b/net/minecraft/advancement/AdvancementManager.java
+@@ -98,6 +98,7 @@
+          }
+       }
+ 
++      net.minecraftforge.common.AdvancementLoadFix.buildSortedTrees(this.roots);
+       LOGGER.info("Loaded {} advancements", (int)this.advancements.size());
+    }
+ 

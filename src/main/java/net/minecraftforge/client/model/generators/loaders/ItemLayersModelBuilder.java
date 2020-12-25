@@ -22,7 +22,7 @@ package net.minecraftforge.client.model.generators.loaders;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.client.model.generators.CustomLoaderBuilder;
 import net.minecraftforge.client.model.generators.ModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -41,7 +41,7 @@ public class ItemLayersModelBuilder<T extends ModelBuilder<T>> extends CustomLoa
 
     protected ItemLayersModelBuilder(T parent, ExistingFileHelper existingFileHelper)
     {
-        super(new ResourceLocation("forge:item-layers"), parent, existingFileHelper);
+        super(new Identifier("forge:item-layers"), parent, existingFileHelper);
     }
 
     public ItemLayersModelBuilder<T> fullbright(int layer)

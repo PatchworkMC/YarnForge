@@ -1,0 +1,10 @@
+--- a/net/minecraft/block/TallPlantBlock.java
++++ b/net/minecraft/block/TallPlantBlock.java
+@@ -53,6 +53,7 @@
+          return super.canPlaceAt(state, worldIn, pos);
+       } else {
+          BlockState blockstate = worldIn.getBlockState(pos.down());
++         if (state.getBlock() != this) return super.canPlaceAt(state, worldIn, pos); //Forge: This function is called during world gen and placement, before this block is set, so if we are not 'here' then assume it's the pre-check.
+          return blockstate.isOf(this) && blockstate.get(HALF) == DoubleBlockHalf.LOWER;
+       }
+    }

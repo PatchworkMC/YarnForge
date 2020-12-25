@@ -1,11 +1,11 @@
 --- a/net/minecraft/entity/projectile/ShulkerBulletEntity.java
 +++ b/net/minecraft/entity/projectile/ShulkerBulletEntity.java
-@@ -213,7 +213,7 @@
+@@ -215,7 +215,7 @@
           }
  
-          RayTraceResult raytraceresult = ProjectileHelper.func_234618_a_(this, this::func_230298_a_);
--         if (raytraceresult.func_216346_c() != RayTraceResult.Type.MISS) {
-+            if (raytraceresult.func_216346_c() != RayTraceResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
-             this.func_70227_a(raytraceresult);
+          HitResult raytraceresult = ProjectileUtil.getCollision(this, this::method_26823);
+-         if (raytraceresult.getType() != HitResult.Type.MISS) {
++            if (raytraceresult.getType() != HitResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
+             this.onCollision(raytraceresult);
           }
        }

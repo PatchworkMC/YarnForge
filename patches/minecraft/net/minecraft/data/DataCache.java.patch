@@ -1,0 +1,13 @@
+--- a/net/minecraft/data/DataCache.java
++++ b/net/minecraft/data/DataCache.java
+@@ -55,8 +55,8 @@
+       }
+ 
+       IOUtils.writeLines(this.newSha1.entrySet().stream().map((p_208319_1_) -> {
+-         return (String)p_208319_1_.getValue() + ' ' + this.root.relativize(p_208319_1_.getKey());
+-      }).collect(Collectors.toList()), System.lineSeparator(), writer);
++         return (String)p_208319_1_.getValue() + ' ' + this.root.relativize(p_208319_1_.getKey()).toString().replace('\\', '/'); //Forge: Standardize file paths.
++      }).sorted(java.util.Comparator.comparing(a -> a.split(" ")[1])).collect(Collectors.toList()), System.lineSeparator(), writer);
+       writer.close();
+       LOGGER.debug("Caching: cache hits: {}, created: {} removed: {}", this.unchanged, this.newSha1.size() - this.unchanged, this.oldSha1.size());
+    }

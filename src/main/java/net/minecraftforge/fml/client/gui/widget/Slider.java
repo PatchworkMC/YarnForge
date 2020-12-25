@@ -20,13 +20,11 @@
 package net.minecraftforge.fml.client.gui.widget;
 
 import javax.annotation.Nullable;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraftforge.fml.client.gui.GuiUtils;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
 
 /**
  * This class is blatantly stolen from iChunUtils with permission.
@@ -37,7 +35,7 @@ public class Slider extends ExtendedButton {
 	/** The value of this slider control. */
 	public double sliderValue = 1.0F;
 
-	public ITextComponent dispString;
+	public Text dispString;
 
 	/** Is this slider control being dragged. */
 	public boolean dragging = false;
@@ -50,15 +48,15 @@ public class Slider extends ExtendedButton {
 	@Nullable
 	public ISlider parent = null;
 
-	public ITextComponent suffix;
+	public Text suffix;
 
 	public boolean drawString = true;
 
-	public Slider(int xPos, int yPos, int width, int height, ITextComponent prefix, ITextComponent suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, IPressable handler) {
+	public Slider(int xPos, int yPos, int width, int height, Text prefix, Text suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, PressAction handler) {
 		this(xPos, yPos, width, height, prefix, suf, minVal, maxVal, currentVal, showDec, drawStr, handler, null);
 	}
 
-	public Slider(int xPos, int yPos, int width, int height, ITextComponent prefix, ITextComponent suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, IPressable handler,
+	public Slider(int xPos, int yPos, int width, int height, Text prefix, Text suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, PressAction handler,
 	              @Nullable
 		              ISlider par) {
 		super(xPos, yPos, width, height, prefix, handler);
@@ -79,16 +77,16 @@ public class Slider extends ExtendedButton {
 			precision = 0;
 		}
 
-		setMessage(new StringTextComponent("").append(dispString).appendString(val).append(suffix));
+		setMessage(new LiteralText("").append(dispString).append(val).append(suffix));
 
 		drawString = drawStr;
 		if (!drawString) {
-			setMessage(new StringTextComponent(""));
+			setMessage(new LiteralText(""));
 		}
 	}
 
-	public Slider(int xPos, int yPos, ITextComponent displayStr, double minVal, double maxVal, double currentVal, IPressable handler, ISlider par) {
-		this(xPos, yPos, 150, 20, displayStr, new StringTextComponent(""), minVal, maxVal, currentVal, true, true, handler, par);
+	public Slider(int xPos, int yPos, Text displayStr, double minVal, double maxVal, double currentVal, PressAction handler, ISlider par) {
+		this(xPos, yPos, 150, 20, displayStr, new LiteralText(""), minVal, maxVal, currentVal, true, true, handler, par);
 	}
 
 	/**
@@ -104,14 +102,14 @@ public class Slider extends ExtendedButton {
 	 * Fired when the mouse button is dragged. Equivalent of MouseListener.mouseDragged(MouseEvent e).
 	 */
 	@Override
-	protected void renderBg(MatrixStack mStack, Minecraft par1Minecraft, int par2, int par3) {
+	protected void renderBg(MatrixStack mStack, MinecraftClient par1Minecraft, int par2, int par3) {
 		if (this.visible) {
 			if (this.dragging) {
 				this.sliderValue = (par2 - (this.x + 4)) / (float) (this.width - 8);
 				updateSlider();
 			}
 
-			GuiUtils.drawContinuousTexturedBox(mStack, WIDGETS_LOCATION, this.x + (int) (this.sliderValue * (float) (this.width - 8)), this.y, 0, 66, 8, this.height, 200, 20, 2, 3, 2, 2, this.getBlitOffset());
+			GuiUtils.drawContinuousTexturedBox(mStack, WIDGETS_LOCATION, this.x + (int) (this.sliderValue * (float) (this.width - 8)), this.y, 0, 66, 8, this.height, 200, 20, 2, 3, 2, 2, this.getZOffset());
 		}
 	}
 
@@ -156,7 +154,7 @@ public class Slider extends ExtendedButton {
 		}
 
 		if (drawString) {
-			setMessage(new StringTextComponent("").append(dispString).appendString(val).append(suffix));
+			setMessage(new LiteralText("").append(dispString).append(val).append(suffix));
 		}
 
 		if (parent != null) {

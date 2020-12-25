@@ -19,15 +19,15 @@
 
 package net.minecraftforge.server.command;
 
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.BlockPosArgument;
-import net.minecraft.command.arguments.DimensionArgument;
-import net.minecraft.command.arguments.EntityArgument;
+import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.DimensionArgumentType;
+import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.entity.Entity;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.ITeleporter;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -40,23 +40,23 @@ import java.util.function.Function;
 
 public class CommandSetDimension
 {
-    private static final SimpleCommandExceptionType NO_ENTITIES = new SimpleCommandExceptionType(new TranslationTextComponent("commands.forge.setdim.invalid.entity"));
-    private static final DynamicCommandExceptionType INVALID_DIMENSION = new DynamicCommandExceptionType(dim -> new TranslationTextComponent("commands.forge.setdim.invalid.dim", dim));
-    static ArgumentBuilder<CommandSource, ?> register()
+    private static final SimpleCommandExceptionType NO_ENTITIES = new SimpleCommandExceptionType(new TranslatableText("commands.forge.setdim.invalid.entity"));
+    private static final DynamicCommandExceptionType INVALID_DIMENSION = new DynamicCommandExceptionType(dim -> new TranslatableText("commands.forge.setdim.invalid.dim", dim));
+    static ArgumentBuilder<ServerCommandSource, ?> register()
     {
-        return Commands.literal("setdimension")
+        return CommandManager.literal("setdimension")
             .requires(cs->cs.hasPermissionLevel(2)) //permission
-            .then(Commands.argument("targets", EntityArgument.entities())
-                .then(Commands.argument("dim", DimensionArgument.getDimension())
-                    .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                        .executes(ctx -> execute(ctx.getSource(), EntityArgument.getEntitiesAllowingNone(ctx, "targets"), DimensionArgument.getDimensionArgument(ctx, "dim"), BlockPosArgument.getBlockPos(ctx, "pos")))
+            .then(CommandManager.argument("targets", EntityArgumentType.entities())
+                .then(CommandManager.argument("dim", DimensionArgumentType.dimension())
+                    .then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
+                        .executes(ctx -> execute(ctx.getSource(), EntityArgumentType.getOptionalEntities(ctx, "targets"), DimensionArgumentType.getDimensionArgument(ctx, "dim"), BlockPosArgumentType.getBlockPos(ctx, "pos")))
                     )
-                    .executes(ctx -> execute(ctx.getSource(), EntityArgument.getEntitiesAllowingNone(ctx, "targets"), DimensionArgument.getDimensionArgument(ctx, "dim"), new BlockPos(ctx.getSource().getPos())))
+                    .executes(ctx -> execute(ctx.getSource(), EntityArgumentType.getOptionalEntities(ctx, "targets"), DimensionArgumentType.getDimensionArgument(ctx, "dim"), new BlockPos(ctx.getSource().getPosition())))
                 )
             );
     }
 
-    private static int execute(CommandSource sender, Collection<? extends Entity> entities, ServerWorld dim, BlockPos pos) throws CommandSyntaxException
+    private static int execute(ServerCommandSource sender, Collection<? extends Entity> entities, ServerWorld dim, BlockPos pos) throws CommandSyntaxException
     {
         entities.removeIf(e -> !canEntityTeleport(e));
         if (entities.isEmpty())
@@ -65,14 +65,14 @@ public class CommandSetDimension
         //if (!DimensionManager.isDimensionRegistered(dim))
         //    throw INVALID_DIMENSION.create(dim);
 
-        entities.stream().filter(e -> e.world == dim).forEach(e -> sender.sendFeedback(new TranslationTextComponent("commands.forge.setdim.invalid.nochange", e.getDisplayName().getString(), dim), true));
+        entities.stream().filter(e -> e.world == dim).forEach(e -> sender.sendFeedback(new TranslatableText("commands.forge.setdim.invalid.nochange", e.getDisplayName().getString(), dim), true));
         entities.stream().filter(e -> e.world != dim).forEach(e ->  e.changeDimension(dim , new ITeleporter()
         {
             @Override
             public Entity placeEntity(Entity entity, ServerWorld currentWorld, ServerWorld destWorld, float yaw, Function<Boolean, Entity> repositionEntity)
             {
                 Entity repositionedEntity = repositionEntity.apply(false);
-                repositionedEntity.setPositionAndUpdate(pos.getX(), pos.getY(), pos.getZ());
+                repositionedEntity.requestTeleport(pos.getX(), pos.getY(), pos.getZ());
                 return repositionedEntity;
             }
         }));
@@ -84,6 +84,6 @@ public class CommandSetDimension
     private static boolean canEntityTeleport(Entity entity)
     {
         // use vanilla portal logic from BlockPortal#onEntityCollision
-        return !entity.isPassenger() && !entity.isBeingRidden() && entity.isNonBoss();
+        return !entity.hasVehicle() && !entity.hasPassengers() && entity.canUsePortals();
     }
 }

@@ -22,11 +22,10 @@ package net.minecraftforge.common.command;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.arguments.EntitySelector;
-import net.minecraft.command.arguments.EntitySelectorParser;
-
 import java.util.Arrays;
 import java.util.HashMap;
+import net.minecraft.command.EntitySelector;
+import net.minecraft.command.EntitySelectorReader;
 
 /**
  * Allows modders to register custom entity selectors by assigning an {@link IEntitySelectorType} to a String token. <br>
@@ -69,7 +68,7 @@ public class EntitySelectorManager
      * If the REGISTRY does not contain a custom selector for the command being parsed,
      * this method returns {@code null} and the vanilla logic in {@link EntitySelectorParser#parseSelector} is used.
      */
-    public static EntitySelector parseSelector(EntitySelectorParser parser) throws CommandSyntaxException
+    public static EntitySelector parseSelector(EntitySelectorReader parser) throws CommandSyntaxException
     {
         if (parser.getReader().canRead())
         {

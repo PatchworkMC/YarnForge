@@ -23,35 +23,40 @@ import java.util.List;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
-
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelOverride;
+import net.minecraft.client.render.model.json.ModelOverrideList;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelTransformComposition;
 import net.minecraftforge.common.model.animation.CapabilityAnimation;
 
-public final class AnimationItemOverrideList extends ItemOverrideList
+public final class AnimationItemOverrideList extends ModelOverrideList
 {
-    private final ModelBakery bakery;
-    private final IUnbakedModel model;
-    private final ResourceLocation modelLoc;
-    private final IModelTransform state;
+    private final net.minecraft.client.render.model.ModelLoader bakery;
+    private final UnbakedModel model;
+    private final Identifier modelLoc;
+    private final ModelBakeSettings state;
 
 
-    private final Function<RenderMaterial, TextureAtlasSprite> bakedTextureGetter;
+    private final Function<SpriteIdentifier, Sprite> bakedTextureGetter;
 
-    public AnimationItemOverrideList(ModelBakery bakery, IUnbakedModel model, ResourceLocation modelLoc, IModelTransform state, Function<RenderMaterial, TextureAtlasSprite> bakedTextureGetter, ItemOverrideList overrides)
+    public AnimationItemOverrideList(net.minecraft.client.render.model.ModelLoader bakery, UnbakedModel model, Identifier modelLoc, ModelBakeSettings state, Function<SpriteIdentifier, Sprite> bakedTextureGetter, ModelOverrideList overrides)
     {
         this(bakery, model, modelLoc, state, bakedTextureGetter, overrides.getOverrides().reverse());
     }
 
-    public AnimationItemOverrideList(ModelBakery bakery, IUnbakedModel model, ResourceLocation modelLoc, IModelTransform state, Function<RenderMaterial, TextureAtlasSprite> bakedTextureGetter, List<ItemOverride> overrides)
+    public AnimationItemOverrideList(net.minecraft.client.render.model.ModelLoader bakery, UnbakedModel model, Identifier modelLoc, ModelBakeSettings state, Function<SpriteIdentifier, Sprite> bakedTextureGetter, List<ModelOverride> overrides)
     {
         super(bakery, model, ModelLoader.defaultModelGetter(), bakedTextureGetter, overrides);
         this.bakery = bakery;
@@ -63,7 +68,7 @@ public final class AnimationItemOverrideList extends ItemOverrideList
 
     @SuppressWarnings("resource")
     @Override
-    public IBakedModel getOverrideModel(IBakedModel originalModel, ItemStack stack, @Nullable ClientWorld world, @Nullable LivingEntity entity)
+    public BakedModel apply(BakedModel originalModel, ItemStack stack, @Nullable ClientWorld world, @Nullable LivingEntity entity)
     {
         return stack.getCapability(CapabilityAnimation.ANIMATION_CAPABILITY, null)
             .map(asm ->
@@ -76,12 +81,12 @@ public final class AnimationItemOverrideList extends ItemOverrideList
                 }
                 if(world == null)
                 {
-                    w = Minecraft.getInstance().world;
+                    w = MinecraftClient.getInstance().world;
                 }
                 return asm.apply(Animation.getWorldTime(world, Animation.getPartialTickTime())).getLeft();
             })
             // TODO where should uvlock data come from?
-            .map(state -> model.bakeModel(bakery, bakedTextureGetter, new ModelTransformComposition(state, this.state), modelLoc))
-            .orElseGet(() -> super.getOverrideModel(originalModel, stack, world, entity));
+            .map(state -> model.bake(bakery, bakedTextureGetter, new ModelTransformComposition(state, this.state), modelLoc))
+            .orElseGet(() -> super.apply(originalModel, stack, world, entity));
     }
 }

@@ -1,0 +1,36 @@
+--- a/net/minecraft/entity/ExperienceOrbEntity.java
++++ b/net/minecraft/entity/ExperienceOrbEntity.java
+@@ -98,7 +98,8 @@
+       this.move(MovementType.SELF, this.getVelocity());
+       float f = 0.98F;
+       if (this.onGround) {
+-         f = this.world.getBlockState(new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getBlock().getSlipperiness() * 0.98F;
++         BlockPos pos =new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ());
++         f = this.world.getBlockState(pos).getSlipperiness(this.world, pos, this) * 0.98F;
+       }
+ 
+       this.setVelocity(this.getVelocity().multiply((double)f, 0.98D, (double)f));
+@@ -123,6 +124,7 @@
+    }
+ 
+    public boolean damage(DamageSource source, float amount) {
++      if (this.world.isClient || this.removed) return false; //Forge: Fixes MC-53850
+       if (this.isInvulnerableTo(source)) {
+          return false;
+       } else {
+@@ -151,13 +153,14 @@
+    public void onPlayerCollision(PlayerEntity entityIn) {
+       if (!this.world.isClient) {
+          if (this.pickupDelay == 0 && entityIn.experiencePickUpDelay == 0) {
++            if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerXpEvent.PickupXp(entityIn, this))) return;
+             entityIn.experiencePickUpDelay = 2;
+             entityIn.sendPickup(this, 1);
+             Entry<EquipmentSlot, ItemStack> entry = EnchantmentHelper.chooseEquipmentWith(Enchantments.MENDING, entityIn, ItemStack::isDamaged);
+             if (entry != null) {
+                ItemStack itemstack = entry.getValue();
+                if (!itemstack.isEmpty() && itemstack.isDamaged()) {
+-                  int i = Math.min(this.getMendingRepairAmount(this.amount), itemstack.getDamage());
++                  int i = Math.min((int)(this.amount * itemstack.getXpRepairRatio()), itemstack.getDamage());
+                   this.amount -= this.getMendingRepairCost(i);
+                   itemstack.setDamage(itemstack.getDamage() - i);
+                }

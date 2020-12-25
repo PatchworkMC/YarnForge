@@ -19,23 +19,22 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.math.Direction;
 
 /**
  * Assumes VertexFormatElement is present in the BufferBuilder's vertex format.
  */
 public class VertexBufferConsumer implements IVertexConsumer
 {
-    private IVertexBuilder renderer;
+    private VertexConsumer renderer;
 
     public VertexBufferConsumer() {}
 
-    public VertexBufferConsumer(IVertexBuilder buffer)
+    public VertexBufferConsumer(VertexConsumer buffer)
     {
         setBuffer(buffer);
     }
@@ -43,7 +42,7 @@ public class VertexBufferConsumer implements IVertexConsumer
     @Override
     public final VertexFormat getVertexFormat()
     {
-        return DefaultVertexFormats.BLOCK;
+        return VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL;
     }
 
     @Override
@@ -57,7 +56,7 @@ public class VertexBufferConsumer implements IVertexConsumer
         switch (e)
         {
         case 0: // POSITION_3F
-            renderer.pos(d0, d1, d2);
+            renderer.vertex(d0, d1, d2);
             break;
         case 4: // NORMAL_3B
             renderer.normal(d0, d1, d2);
@@ -66,10 +65,10 @@ public class VertexBufferConsumer implements IVertexConsumer
             renderer.color(d0, d1, d2, d3);
             break;
         case 2: // TEX_2F
-            renderer.tex(d0, d1);
+            renderer.texture(d0, d1);
             break;
         case 3: // TEX_2SB
-            renderer.lightmap((int) (d0 * 0xF0), (int) (d1 * 0xF0));
+            renderer.light((int) (d0 * 0xF0), (int) (d1 * 0xF0));
             break;
         case 5: // PADDING_1B
             break;
@@ -78,11 +77,11 @@ public class VertexBufferConsumer implements IVertexConsumer
         }
         if(e == 5)
         {
-            renderer.endVertex();
+            renderer.next();
         }
     }
 
-    public void setBuffer(IVertexBuilder buffer)
+    public void setBuffer(VertexConsumer buffer)
     {
         this.renderer = buffer;
     }
@@ -94,5 +93,5 @@ public class VertexBufferConsumer implements IVertexConsumer
     @Override
     public void setApplyDiffuseLighting(boolean diffuse) {}
     @Override
-    public void setTexture(TextureAtlasSprite texture ) {}
+    public void setTexture(Sprite texture ) {}
 }

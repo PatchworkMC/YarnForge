@@ -1,0 +1,15 @@
+--- a/net/minecraft/entity/ai/pathing/LandPathNodeMaker.java
++++ b/net/minecraft/entity/ai/pathing/LandPathNodeMaker.java
+@@ -463,9 +463,11 @@
+ 
+    protected static PathNodeType getCommonNodeType(BlockView p_237238_0_, BlockPos p_237238_1_) {
+       BlockState blockstate = p_237238_0_.getBlockState(p_237238_1_);
++      PathNodeType type = blockstate.getAiPathNodeType(p_237238_0_, p_237238_1_);
++      if (type != null) return type;
+       Block block = blockstate.getBlock();
+       Material material = blockstate.getMaterial();
+-      if (blockstate.isAir()) {
++      if (blockstate.isAir(p_237238_0_, p_237238_1_)) {
+          return PathNodeType.OPEN;
+       } else if (!blockstate.isIn(BlockTags.TRAPDOORS) && !blockstate.isOf(Blocks.LILY_PAD)) {
+          if (blockstate.isOf(Blocks.CACTUS)) {

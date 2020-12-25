@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/render/entity/model/SkeletonEntityModel.java
++++ b/net/minecraft/client/render/entity/model/SkeletonEntityModel.java
+@@ -45,7 +45,7 @@
+       this.rightArmPose = BipedEntityModel.ArmPose.EMPTY;
+       this.leftArmPose = BipedEntityModel.ArmPose.EMPTY;
+       ItemStack itemstack = entityIn.getStackInHand(Hand.MAIN_HAND);
+-      if (itemstack.getItem() == Items.BOW && entityIn.isAttacking()) {
++      if (itemstack.getItem() instanceof net.minecraft.item.BowItem && entityIn.isAttacking()) {
+          if (entityIn.getMainArm() == Arm.RIGHT) {
+             this.rightArmPose = BipedEntityModel.ArmPose.BOW_AND_ARROW;
+          } else {
+@@ -59,7 +59,7 @@
+    public void setAngles(T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+       super.setAngles(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+       ItemStack itemstack = entityIn.getMainHandStack();
+-      if (entityIn.isAttacking() && (itemstack.isEmpty() || itemstack.getItem() != Items.BOW)) {
++      if (entityIn.isAttacking() && (itemstack.isEmpty() || !(itemstack.getItem() instanceof net.minecraft.item.BowItem))) {
+          float f = MathHelper.sin(this.handSwingProgress * (float)Math.PI);
+          float f1 = MathHelper.sin((1.0F - (1.0F - this.handSwingProgress) * (1.0F - this.handSwingProgress)) * (float)Math.PI);
+          this.rightArm.roll = 0.0F;

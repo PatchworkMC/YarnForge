@@ -20,22 +20,23 @@
 package net.minecraftforge.common.extensions;
 
 import java.util.List;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.DisplayEffectsScreen;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.potion.EffectInstance;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.potion.Potion;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 public interface IForgeEffectInstance {
 
-    default EffectInstance getEffectInstance() {
-        return (EffectInstance)this;
+    default StatusEffectInstance getEffectInstance() {
+        return (StatusEffectInstance)this;
     }
 
     /**
@@ -43,7 +44,7 @@ public interface IForgeEffectInstance {
      * @return true to display it (default), false to hide it.
      */
     default boolean shouldRender() {
-        return getEffectInstance().getPotion().shouldRender(getEffectInstance());
+        return getEffectInstance().getEffectType().shouldRender(getEffectInstance());
     }
 
     /**
@@ -51,7 +52,7 @@ public interface IForgeEffectInstance {
      * @return true to draw the standard text
      */
     default boolean shouldRenderInvText() {
-        return getEffectInstance().getPotion().shouldRenderInvText(getEffectInstance());
+        return getEffectInstance().getEffectType().shouldRenderInvText(getEffectInstance());
     }
 
     /**
@@ -59,7 +60,7 @@ public interface IForgeEffectInstance {
      * @return true to display it (default), false to hide it.
      */
     default boolean shouldRenderHUD() {
-        return getEffectInstance().getPotion().shouldRenderHUD(getEffectInstance());
+        return getEffectInstance().getEffectType().shouldRenderHUD(getEffectInstance());
     }
 
     /**
@@ -72,9 +73,9 @@ public interface IForgeEffectInstance {
      * @param y the y coordinate
      * @param z the z level
      */
-    @OnlyIn(Dist.CLIENT)
-    default void renderInventoryEffect(DisplayEffectsScreen<?> gui, MatrixStack mStack, int x, int y, float z) {
-        getEffectInstance().getPotion().renderInventoryEffect(getEffectInstance(), gui, mStack, x, y, z);
+    @Environment(EnvType.CLIENT)
+    default void renderInventoryEffect(AbstractInventoryScreen<?> gui, MatrixStack mStack, int x, int y, float z) {
+        getEffectInstance().getEffectType().renderInventoryEffect(getEffectInstance(), gui, mStack, x, y, z);
     }
 
     /**
@@ -88,9 +89,9 @@ public interface IForgeEffectInstance {
      * @param z the z level
      * @param alpha the alpha value, blinks when the potion is about to run out
      */
-    @OnlyIn(Dist.CLIENT)
-    default void renderHUDEffect(AbstractGui gui, MatrixStack mStack, int x, int y, float z, float alpha) {
-        getEffectInstance().getPotion().renderHUDEffect(getEffectInstance(), gui, mStack, x, y, z, alpha);
+    @Environment(EnvType.CLIENT)
+    default void renderHUDEffect(DrawableHelper gui, MatrixStack mStack, int x, int y, float z, float alpha) {
+        getEffectInstance().getEffectType().renderHUDEffect(getEffectInstance(), gui, mStack, x, y, z, alpha);
     }
 
     /***
@@ -107,7 +108,7 @@ public interface IForgeEffectInstance {
      * @return true if the given ItemStack is in the list of curative items for this PotionEffect, false otherwise
      */
     default boolean isCurativeItem(ItemStack stack) {
-       return this.getCurativeItems().stream().anyMatch(e -> e.isItemEqual(stack));
+       return this.getCurativeItems().stream().anyMatch(e -> e.isItemEqualIgnoreDamage(stack));
     }
 
     /***
@@ -125,9 +126,9 @@ public interface IForgeEffectInstance {
           this.getCurativeItems().add(stack);
     }
 
-    default void writeCurativeItems(CompoundNBT nbt) {
-       ListNBT list = new ListNBT();
-       getCurativeItems().forEach(s -> list.add(s.write(new CompoundNBT())));
+    default void writeCurativeItems(CompoundTag nbt) {
+       ListTag list = new ListTag();
+       getCurativeItems().forEach(s -> list.add(s.toTag(new CompoundTag())));
        nbt.put("CurativeItems", list);
     }
 }

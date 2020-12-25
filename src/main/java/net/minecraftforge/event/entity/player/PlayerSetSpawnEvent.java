@@ -19,10 +19,10 @@
 
 package net.minecraftforge.event.entity.player;
 
-import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraftforge.eventbus.api.Cancelable;
 
 import javax.annotation.Nullable;

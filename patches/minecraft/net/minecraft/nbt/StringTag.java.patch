@@ -1,0 +1,11 @@
+--- a/net/minecraft/nbt/StringTag.java
++++ b/net/minecraft/nbt/StringTag.java
+@@ -12,7 +12,7 @@
+       public StringTag read(DataInput input, int depth, PositionTracker accounter) throws IOException {
+          accounter.add(288L);
+          String s = input.readUTF();
+-         accounter.add((long)(16 * s.length()));
++         accounter.readUTF(s);
+          return StringTag.of(s);
+       }
+ 

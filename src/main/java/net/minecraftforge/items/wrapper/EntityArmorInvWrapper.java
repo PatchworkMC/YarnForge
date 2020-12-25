@@ -19,8 +19,8 @@
 
 package net.minecraftforge.items.wrapper;
 
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraftforge.items.IItemHandler;
 
 /**
@@ -31,6 +31,6 @@ public class EntityArmorInvWrapper extends EntityEquipmentInvWrapper
 {
     public EntityArmorInvWrapper(final LivingEntity entity)
     {
-        super(entity, EquipmentSlotType.Group.ARMOR);
+        super(entity, EquipmentSlot.Type.ARMOR);
     }
 }

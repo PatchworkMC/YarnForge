@@ -31,40 +31,38 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
+import net.minecraft.resource.AbstractFileResourcePack;
+import net.minecraft.resource.ResourceNotFoundException;
+import net.minecraft.resource.ResourcePack;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.resource.metadata.PackResourceMetadata;
+import net.minecraft.resource.metadata.ResourceMetadataReader;
+import net.minecraft.util.Identifier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import net.minecraft.resources.IResourcePack;
-import net.minecraft.resources.ResourcePack;
-import net.minecraft.resources.ResourcePackFileNotFoundException;
-import net.minecraft.resources.ResourcePackType;
-import net.minecraft.resources.data.IMetadataSectionSerializer;
-import net.minecraft.resources.data.PackMetadataSection;
-import net.minecraft.util.ResourceLocation;
+public class DelegatingResourcePack extends AbstractFileResourcePack {
 
-public class DelegatingResourcePack extends ResourcePack {
-
-	private final List<IResourcePack> delegates;
-	private final Map<String, List<IResourcePack>> namespacesAssets;
-	private final Map<String, List<IResourcePack>> namespacesData;
+	private final List<ResourcePack> delegates;
+	private final Map<String, List<ResourcePack>> namespacesAssets;
+	private final Map<String, List<ResourcePack>> namespacesData;
 
 	private final String name;
-	private final PackMetadataSection packInfo;
+	private final PackResourceMetadata packInfo;
 
-	public DelegatingResourcePack(String id, String name, PackMetadataSection packInfo, List<? extends IResourcePack> packs) {
+	public DelegatingResourcePack(String id, String name, PackResourceMetadata packInfo, List<? extends ResourcePack> packs) {
 		super(new File(id));
 		this.name = name;
 		this.packInfo = packInfo;
 		this.delegates = ImmutableList.copyOf(packs);
-		this.namespacesAssets = this.buildNamespaceMap(ResourcePackType.CLIENT_RESOURCES, delegates);
-		this.namespacesData = this.buildNamespaceMap(ResourcePackType.SERVER_DATA, delegates);
+		this.namespacesAssets = this.buildNamespaceMap(ResourceType.CLIENT_RESOURCES, delegates);
+		this.namespacesData = this.buildNamespaceMap(ResourceType.SERVER_DATA, delegates);
 	}
 
-	private Map<String, List<IResourcePack>> buildNamespaceMap(ResourcePackType type, List<IResourcePack> packList) {
-		Map<String, List<IResourcePack>> map = new HashMap<>();
-		for (IResourcePack pack : packList) {
-			for (String namespace : pack.getResourceNamespaces(type)) {
+	private Map<String, List<ResourcePack>> buildNamespaceMap(ResourceType type, List<ResourcePack> packList) {
+		Map<String, List<ResourcePack>> map = new HashMap<>();
+		for (ResourcePack pack : packList) {
+			for (String namespace : pack.getNamespaces(type)) {
 				map.computeIfAbsent(namespace, k -> new ArrayList<>()).add(pack);
 			}
 		}
@@ -79,79 +77,79 @@ public class DelegatingResourcePack extends ResourcePack {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getMetadata(IMetadataSectionSerializer<T> deserializer) throws IOException {
-		if (deserializer.getSectionName().equals("pack")) {
+	public <T> T parseMetadata(ResourceMetadataReader<T> deserializer) throws IOException {
+		if (deserializer.getKey().equals("pack")) {
 			return (T) packInfo;
 		}
 		return null;
 	}
 
 	@Override
-	public Collection<ResourceLocation> getAllResourceLocations(ResourcePackType type, String pathIn, String pathIn2, int maxDepth, Predicate<String> filter) {
+	public Collection<Identifier> findResources(ResourceType type, String pathIn, String pathIn2, int maxDepth, Predicate<String> filter) {
 		return delegates.stream()
-			.flatMap(r -> r.getAllResourceLocations(type, pathIn, pathIn2, maxDepth, filter).stream())
+			.flatMap(r -> r.findResources(type, pathIn, pathIn2, maxDepth, filter).stream())
 			.collect(Collectors.toList());
 	}
 
 	@Override
-	public Set<String> getResourceNamespaces(ResourcePackType type) {
-		return type == ResourcePackType.CLIENT_RESOURCES ? namespacesAssets.keySet() : namespacesData.keySet();
+	public Set<String> getNamespaces(ResourceType type) {
+		return type == ResourceType.CLIENT_RESOURCES ? namespacesAssets.keySet() : namespacesData.keySet();
 	}
 
 	@Override
 	public void close() {
-		for (IResourcePack pack : delegates) {
+		for (ResourcePack pack : delegates) {
 			pack.close();
 		}
 	}
 
 	@Override
-	public InputStream getRootResourceStream(String fileName) throws IOException {
+	public InputStream openRoot(String fileName) throws IOException {
 		// root resources do not make sense here
-		throw new ResourcePackFileNotFoundException(this.file, fileName);
+		throw new ResourceNotFoundException(this.base, fileName);
 	}
 
 	@Override
-	protected InputStream getInputStream(String resourcePath) throws IOException {
+	protected InputStream openFile(String resourcePath) throws IOException {
 		// never called, we override all methods that call this
-		throw new ResourcePackFileNotFoundException(this.file, resourcePath);
+		throw new ResourceNotFoundException(this.base, resourcePath);
 	}
 
 	@Override
-	protected boolean resourceExists(String resourcePath) {
+	protected boolean containsFile(String resourcePath) {
 		// never called, we override all methods that call this
 		return false;
 	}
 
 	@Override
-	public InputStream getResourceStream(ResourcePackType type, ResourceLocation location) throws IOException {
-		for (IResourcePack pack : getCandidatePacks(type, location)) {
-			if (pack.resourceExists(type, location)) {
-				return pack.getResourceStream(type, location);
+	public InputStream open(ResourceType type, Identifier location) throws IOException {
+		for (ResourcePack pack : getCandidatePacks(type, location)) {
+			if (pack.contains(type, location)) {
+				return pack.open(type, location);
 			}
 		}
-		throw new ResourcePackFileNotFoundException(this.file, getFullPath(type, location));
+		throw new ResourceNotFoundException(this.base, getFilename(type, location));
 	}
 
 	@Override
-	public boolean resourceExists(ResourcePackType type, ResourceLocation location) {
-		for (IResourcePack pack : getCandidatePacks(type, location)) {
-			if (pack.resourceExists(type, location)) {
+	public boolean contains(ResourceType type, Identifier location) {
+		for (ResourcePack pack : getCandidatePacks(type, location)) {
+			if (pack.contains(type, location)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private List<IResourcePack> getCandidatePacks(ResourcePackType type, ResourceLocation location) {
-		Map<String, List<IResourcePack>> map = type == ResourcePackType.CLIENT_RESOURCES ? namespacesAssets : namespacesData;
-		List<IResourcePack> packsWithNamespace = map.get(location.getNamespace());
+	private List<ResourcePack> getCandidatePacks(ResourceType type, Identifier location) {
+		Map<String, List<ResourcePack>> map = type == ResourceType.CLIENT_RESOURCES ? namespacesAssets : namespacesData;
+		List<ResourcePack> packsWithNamespace = map.get(location.getNamespace());
 		return packsWithNamespace == null ? Collections.emptyList() : packsWithNamespace;
 	}
 
-	private static String getFullPath(ResourcePackType type, ResourceLocation location) {
+	private static String getFilename(ResourceType type, Identifier location) {
 		// stolen from ResourcePack
-		return String.format("%s/%s/%s", type.getDirectoryName(), location.getNamespace(), location.getPath());
+		return String.format("%s/%s/%s", type.getDirectory(), location.getNamespace(), location.getPath());
 	}
 
 }

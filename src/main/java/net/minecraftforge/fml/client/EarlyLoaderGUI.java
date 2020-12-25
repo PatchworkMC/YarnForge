@@ -32,25 +32,24 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.stb.STBEasyFont;
 import org.lwjgl.system.MemoryUtil;
-
-import net.minecraft.client.MainWindow;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.Window;
 import net.minecraft.util.math.MathHelper;
 
 public class EarlyLoaderGUI {
-	private final MainWindow window;
+	private final Window window;
 	private boolean handledElsewhere;
 
-	public EarlyLoaderGUI(final MainWindow window) {
+	public EarlyLoaderGUI(final Window window) {
 		this.window = window;
 	}
 
 	@SuppressWarnings("deprecation")
 	private void setupMatrix() {
-		RenderSystem.clear(256, Minecraft.IS_RUNNING_ON_MAC);
+		RenderSystem.clear(256, MinecraftClient.IS_SYSTEM_MAC);
 		RenderSystem.matrixMode(5889);
 		RenderSystem.loadIdentity();
-		RenderSystem.ortho(0.0D, window.getFramebufferWidth() / window.getGuiScaleFactor(), window.getFramebufferHeight() / window.getGuiScaleFactor(), 0.0D, 1000.0D, 3000.0D);
+		RenderSystem.ortho(0.0D, window.getFramebufferWidth() / window.getScaleFactor(), window.getFramebufferHeight() / window.getScaleFactor(), 0.0D, 1000.0D, 3000.0D);
 		RenderSystem.matrixMode(5888);
 		RenderSystem.loadIdentity();
 		RenderSystem.translatef(0.0F, 0.0F, -2000.0F);
@@ -69,16 +68,16 @@ public class EarlyLoaderGUI {
 		if (handledElsewhere) {
 			return;
 		}
-		int guiScale = window.calcGuiScale(0, false);
-		window.setGuiScale(guiScale);
+		int guiScale = window.calculateScaleFactor(0, false);
+		window.setScaleFactor(guiScale);
 
 		RenderSystem.clearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		RenderSystem.clear(GL11.GL_COLOR_BUFFER_BIT, Minecraft.IS_RUNNING_ON_MAC);
+		RenderSystem.clear(GL11.GL_COLOR_BUFFER_BIT, MinecraftClient.IS_SYSTEM_MAC);
 		RenderSystem.pushMatrix();
 		setupMatrix();
 		renderBackground();
 		renderMessages();
-		window.flipFrame();
+		window.swapBuffers();
 		RenderSystem.popMatrix();
 	}
 
@@ -115,7 +114,7 @@ public class EarlyLoaderGUI {
 		final float pctmemory = (float) heapusage.getUsed() / heapusage.getMax();
 		String memory = String.format("Memory Heap: %d / %d MB (%.1f%%)  OffHeap: %d MB", heapusage.getUsed() >> 20, heapusage.getMax() >> 20, pctmemory * 100.0, offheapusage.getUsed() >> 20);
 
-		final int i = MathHelper.hsvToRGB((1.0f - (float) Math.pow(pctmemory, 1.5f)) / 3f, 1.0f, 0.5f);
+		final int i = MathHelper.hsvToRgb((1.0f - (float) Math.pow(pctmemory, 1.5f)) / 3f, 1.0f, 0.5f);
 		memorycolour[2] = ((i) & 0xFF) / 255.0f;
 		memorycolour[1] = ((i >> 8) & 0xFF) / 255.0f;
 		memorycolour[0] = ((i >> 16) & 0xFF) / 255.0f;
@@ -135,7 +134,7 @@ public class EarlyLoaderGUI {
 		// So Disable culling https://github.com/MinecraftForge/MinecraftForge/pull/6824
 		RenderSystem.disableCull();
 		GL14.glBlendColor(0, 0, 0, alpha);
-		RenderSystem.blendFunc(GlStateManager.SourceFactor.CONSTANT_ALPHA, GlStateManager.DestFactor.ONE_MINUS_CONSTANT_ALPHA);
+		RenderSystem.blendFunc(GlStateManager.SrcFactor.CONSTANT_ALPHA, GlStateManager.DstFactor.ONE_MINUS_CONSTANT_ALPHA);
 		RenderSystem.color3f(colour[0], colour[1], colour[2]);
 		RenderSystem.pushMatrix();
 		RenderSystem.translatef(10, line * 10, 0);

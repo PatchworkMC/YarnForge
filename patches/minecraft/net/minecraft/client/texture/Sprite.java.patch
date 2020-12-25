@@ -1,0 +1,29 @@
+--- a/net/minecraft/client/texture/Sprite.java
++++ b/net/minecraft/client/texture/Sprite.java
+@@ -19,7 +19,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @Environment(EnvType.CLIENT)
+-public class Sprite implements AutoCloseable {
++public class Sprite implements AutoCloseable, net.minecraftforge.client.extensions.IForgeTextureAtlasSprite {
+    private final SpriteAtlasTexture atlas;
+    private final Sprite.Info info;
+    private final AnimationResourceMetadata animationMetadata;
+@@ -137,6 +137,7 @@
+ 
+    private void upload(int xOffsetIn, int yOffsetIn, NativeImage[] framesIn) {
+       for(int i = 0; i < this.images.length; ++i) {
++         if ((this.info.width >> i <= 0) || (this.info.height >> i <= 0)) break;
+          framesIn[i].upload(i, this.x >> i, this.y >> i, xOffsetIn >> i, yOffsetIn >> i, this.info.width >> i, this.info.height >> i, this.images.length > 1, false);
+       }
+ 
+@@ -343,4 +344,9 @@
+ 
+       }
+    }
++
++   // Forge Start
++   public int getPixelRGBA(int frameIndex, int x, int y) {
++      return this.images[0].getPixelColor(x + this.frameXs[frameIndex] * getWidth(), y + this.frameYs[frameIndex] * getHeight());
++   }
+ }

@@ -1,32 +1,32 @@
 --- a/net/minecraft/item/HoeItem.java
 +++ b/net/minecraft/item/HoeItem.java
 @@ -21,14 +21,16 @@
-    protected static final Map<Block, BlockState> field_195973_b = Maps.newHashMap(ImmutableMap.of(Blocks.field_196658_i, Blocks.field_150458_ak.func_176223_P(), Blocks.field_185774_da, Blocks.field_150458_ak.func_176223_P(), Blocks.field_150346_d, Blocks.field_150458_ak.func_176223_P(), Blocks.field_196660_k, Blocks.field_150346_d.func_176223_P()));
+    protected static final Map<Block, BlockState> TILLED_BLOCKS = Maps.newHashMap(ImmutableMap.of(Blocks.GRASS_BLOCK, Blocks.FARMLAND.getDefaultState(), Blocks.GRASS_PATH, Blocks.FARMLAND.getDefaultState(), Blocks.DIRT, Blocks.FARMLAND.getDefaultState(), Blocks.COARSE_DIRT, Blocks.DIRT.getDefaultState()));
  
-    public HoeItem(IItemTier p_i231595_1_, int p_i231595_2_, float p_i231595_3_, Item.Properties p_i231595_4_) {
--      super((float)p_i231595_2_, p_i231595_3_, p_i231595_1_, field_234683_c_, p_i231595_4_);
-+      super((float)p_i231595_2_, p_i231595_3_, p_i231595_1_, field_234683_c_, p_i231595_4_.addToolType(net.minecraftforge.common.ToolType.HOE, p_i231595_1_.func_200925_d()));
+    public HoeItem(ToolMaterial itemTier, int attackDamage, float attackSpeed, Item.Settings properties) {
+-      super((float)attackDamage, attackSpeed, itemTier, EFFECTIVE_BLOCKS, properties);
++      super((float)attackDamage, attackSpeed, itemTier, EFFECTIVE_BLOCKS, properties.addToolType(net.minecraftforge.common.ToolType.HOE, itemTier.getMiningLevel()));
     }
  
-    public ActionResultType func_195939_a(ItemUseContext p_195939_1_) {
-       World world = p_195939_1_.func_195991_k();
-       BlockPos blockpos = p_195939_1_.func_195995_a();
--      if (p_195939_1_.func_196000_l() != Direction.DOWN && world.func_180495_p(blockpos.func_177984_a()).func_196958_f()) {
--         BlockState blockstate = field_195973_b.get(world.func_180495_p(blockpos).func_177230_c());
-+      int hook = net.minecraftforge.event.ForgeEventFactory.onHoeUse(p_195939_1_);
-+      if (hook != 0) return hook > 0 ? ActionResultType.SUCCESS : ActionResultType.FAIL;
-+      if (p_195939_1_.func_196000_l() != Direction.DOWN && world.func_175623_d(blockpos.func_177984_a())) {
-+         BlockState blockstate = world.func_180495_p(blockpos).getToolModifiedState(world, blockpos, p_195939_1_.func_195999_j(), p_195939_1_.func_195996_i(), net.minecraftforge.common.ToolType.HOE);
+    public ActionResult useOnBlock(ItemUsageContext context) {
+       World world = context.getWorld();
+       BlockPos blockpos = context.getBlockPos();
+-      if (context.getSide() != Direction.DOWN && world.getBlockState(blockpos.up()).isAir()) {
+-         BlockState blockstate = TILLED_BLOCKS.get(world.getBlockState(blockpos).getBlock());
++      int hook = net.minecraftforge.event.ForgeEventFactory.onHoeUse(context);
++      if (hook != 0) return hook > 0 ? ActionResult.SUCCESS : ActionResult.FAIL;
++      if (context.getSide() != Direction.DOWN && world.isAir(blockpos.up())) {
++         BlockState blockstate = world.getBlockState(blockpos).getToolModifiedState(world, blockpos, context.getPlayer(), context.getStack(), net.minecraftforge.common.ToolType.HOE);
           if (blockstate != null) {
-             PlayerEntity playerentity = p_195939_1_.func_195999_j();
-             world.func_184133_a(playerentity, blockpos, SoundEvents.field_187693_cj, SoundCategory.BLOCKS, 1.0F, 1.0F);
+             PlayerEntity playerentity = context.getPlayer();
+             world.playSound(playerentity, blockpos, SoundEvents.ITEM_HOE_TILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
 @@ -47,4 +49,9 @@
  
-       return ActionResultType.PASS;
+       return ActionResult.PASS;
     }
 +
 +   @javax.annotation.Nullable
 +   public static BlockState getHoeTillingState(BlockState originalState) {
-+      return field_195973_b.get(originalState.func_177230_c());
++      return TILLED_BLOCKS.get(originalState.getBlock());
 +   }
  }

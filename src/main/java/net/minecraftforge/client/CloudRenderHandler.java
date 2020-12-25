@@ -19,8 +19,8 @@
 
 package net.minecraftforge.client;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 
 /**
@@ -31,7 +31,7 @@ import net.minecraft.client.world.ClientWorld;
 @Deprecated
 public interface CloudRenderHandler extends IRenderHandler {
 	@Override
-	default void render(int ticks, float partialTicks, ClientWorld world, Minecraft mc) {}
+	default void render(int ticks, float partialTicks, ClientWorld world, MinecraftClient mc) {}
 
-	void render(int ticks, float partialTicks, MatrixStack matrixStack, ClientWorld world, Minecraft mc);
+	void render(int ticks, float partialTicks, MatrixStack matrixStack, ClientWorld world, MinecraftClient mc);
 }

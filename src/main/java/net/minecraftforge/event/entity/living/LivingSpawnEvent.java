@@ -20,15 +20,14 @@
 package net.minecraftforge.event.entity.living;
 
 import javax.annotation.Nullable;
-import net.minecraft.world.spawner.AbstractSpawner;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.SpawnReason;
-import net.minecraft.world.IWorld;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.world.MobSpawnerLogic;
 import net.minecraft.world.World;
-
+import net.minecraft.world.WorldAccess;
 import net.minecraftforge.eventbus.api.Event.HasResult;
 
 /**
@@ -45,12 +44,12 @@ import net.minecraftforge.eventbus.api.Event.HasResult;
  **/
 public class LivingSpawnEvent extends LivingEvent
 {
-    private final IWorld world;
+    private final WorldAccess world;
     private final double x;
     private final double y;
     private final double z;
 
-    public LivingSpawnEvent(MobEntity entity, IWorld world, double x, double y, double z)
+    public LivingSpawnEvent(MobEntity entity, WorldAccess world, double x, double y, double z)
     {
         super(entity);
         this.world = world;
@@ -59,7 +58,7 @@ public class LivingSpawnEvent extends LivingEvent
         this.z = z;
     }
 
-    public IWorld getWorld() { return world; }
+    public WorldAccess getWorld() { return world; }
     public double getX() { return x; }
     public double getY() { return y; }
     public double getZ() { return z; }
@@ -76,7 +75,7 @@ public class LivingSpawnEvent extends LivingEvent
     public static class CheckSpawn extends LivingSpawnEvent
     {
         @Nullable
-        private final AbstractSpawner spawner;
+        private final MobSpawnerLogic spawner;
         private final SpawnReason spawnReason;
 
         /**
@@ -89,7 +88,7 @@ public class LivingSpawnEvent extends LivingEvent
          * @param spawner position of the MobSpawner
          *                  null if it this spawn is coming from a WorldSpawner
          */
-        public CheckSpawn(MobEntity entity, IWorld world, double x, double y, double z, @Nullable AbstractSpawner spawner, SpawnReason spawnReason)
+        public CheckSpawn(MobEntity entity, WorldAccess world, double x, double y, double z, @Nullable MobSpawnerLogic spawner, SpawnReason spawnReason)
         {
             super(entity, world, x, y, z);
             this.spawner = spawner;
@@ -102,7 +101,7 @@ public class LivingSpawnEvent extends LivingEvent
         }
 
         @Nullable
-        public AbstractSpawner getSpawner()
+        public MobSpawnerLogic getSpawner()
         {
             return spawner;
         }
@@ -130,13 +129,13 @@ public class LivingSpawnEvent extends LivingEvent
     public static class SpecialSpawn extends LivingSpawnEvent
     {
         @Nullable
-        private final AbstractSpawner spawner;
+        private final MobSpawnerLogic spawner;
         private final SpawnReason spawnReason;
 
         /**
          * @param spawner the position of a tileentity or approximate position of an entity that initiated the spawn if any
          */
-        public SpecialSpawn(MobEntity entity, World world, double x, double y, double z, @Nullable AbstractSpawner spawner, SpawnReason spawnReason)
+        public SpecialSpawn(MobEntity entity, World world, double x, double y, double z, @Nullable MobSpawnerLogic spawner, SpawnReason spawnReason)
         {
             super(entity, world, x, y, z);
             this.spawner = spawner;
@@ -144,7 +143,7 @@ public class LivingSpawnEvent extends LivingEvent
         }
 
         @Nullable
-        public AbstractSpawner getSpawner()
+        public MobSpawnerLogic getSpawner()
         {
             return spawner;
         }
@@ -173,7 +172,7 @@ public class LivingSpawnEvent extends LivingEvent
     {
         public AllowDespawn(MobEntity entity)
         {
-            super(entity, entity.world, entity.getPosX(), entity.getPosY(), entity.getPosZ());
+            super(entity, entity.world, entity.getX(), entity.getY(), entity.getZ());
         }
 
     }

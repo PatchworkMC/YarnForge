@@ -1,0 +1,37 @@
+--- a/net/minecraft/data/server/BlockLootTableGenerator.java
++++ b/net/minecraft/data/server/BlockLootTableGenerator.java
+@@ -216,7 +216,7 @@
+       return LootTable.builder();
+    }
+ 
+-   public void accept(BiConsumer<Identifier, LootTable.Builder> p_accept_1_) {
++   protected void addTables() {
+       this.addDrop(Blocks.GRANITE);
+       this.addDrop(Blocks.POLISHED_GRANITE);
+       this.addDrop(Blocks.DIORITE);
+@@ -1066,9 +1066,13 @@
+       this.addDrop(Blocks.FIRE, dropsNothing());
+       this.addDrop(Blocks.SOUL_FIRE, dropsNothing());
+       this.addDrop(Blocks.NETHER_PORTAL, dropsNothing());
++   }
++
++   public void accept(BiConsumer<Identifier, LootTable.Builder> p_accept_1_) {
++      this.addTables();
+       Set<Identifier> set = Sets.newHashSet();
+ 
+-      for(Block block : Registry.BLOCK) {
++      for(Block block : getKnownBlocks()) {
+          Identifier resourcelocation = block.getLootTableId();
+          if (resourcelocation != LootTables.EMPTY && set.add(resourcelocation)) {
+             LootTable.Builder loottable$builder = this.lootTables.remove(resourcelocation);
+@@ -1095,6 +1099,10 @@
+       return dropsWithProperty(door, DoorBlock.HALF, DoubleBlockHalf.LOWER);
+    }
+ 
++   protected Iterable<Block> getKnownBlocks() {
++       return Registry.BLOCK;
++   }
++
+    public void addPottedPlantDrop(Block flowerPot) {
+       this.addDrop(flowerPot, (p_241751_0_) -> {
+          return pottedPlantDrops(((FlowerPotBlock)p_241751_0_).getContent());

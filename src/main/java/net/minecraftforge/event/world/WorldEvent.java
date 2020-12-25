@@ -24,18 +24,13 @@ import java.util.List;
 
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.profiler.Profiler;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.util.IProgressUpdate;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.WorldSettings;
-import net.minecraft.world.biome.MobSpawnInfo;
-import net.minecraft.world.storage.IServerWorldInfo;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.world.level.ServerWorldProperties;
 
 /**
  * WorldEvent is fired when an event involving the world occurs.<br>
@@ -47,13 +42,13 @@ import net.minecraft.world.storage.IServerWorldInfo;
  * All children of this event are fired on the {@link MinecraftForge#EVENT_BUS}.<br>
  **/
 public class WorldEvent extends Event {
-	private final IWorld world;
+	private final WorldAccess world;
 
-	public WorldEvent(IWorld world) {
+	public WorldEvent(WorldAccess world) {
 		this.world = world;
 	}
 
-	public IWorld getWorld() {
+	public WorldAccess getWorld() {
 		return world;
 	}
 
@@ -73,7 +68,7 @@ public class WorldEvent extends Event {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Load extends WorldEvent {
-		public Load(IWorld world) { super(world); }
+		public Load(WorldAccess world) { super(world); }
 	}
 
 	/**
@@ -91,7 +86,7 @@ public class WorldEvent extends Event {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Unload extends WorldEvent {
-		public Unload(IWorld world) { super(world); }
+		public Unload(WorldAccess world) { super(world); }
 	}
 
 	/**
@@ -107,7 +102,7 @@ public class WorldEvent extends Event {
 	 * This event is fired on the {@link MinecraftForge#EVENT_BUS}.<br>
 	 **/
 	public static class Save extends WorldEvent {
-		public Save(IWorld world) { super(world); }
+		public Save(WorldAccess world) { super(world); }
 	}
 
 	/**
@@ -120,11 +115,11 @@ public class WorldEvent extends Event {
 	 */
 	@net.minecraftforge.eventbus.api.Cancelable
 	public static class PotentialSpawns extends WorldEvent {
-		private final EntityClassification type;
+		private final SpawnGroup type;
 		private final BlockPos pos;
-		private final List<MobSpawnInfo.Spawners> list;
+		private final List<SpawnSettings.SpawnEntry> list;
 
-		public PotentialSpawns(IWorld world, EntityClassification type, BlockPos pos, List<MobSpawnInfo.Spawners> oldList) {
+		public PotentialSpawns(WorldAccess world, SpawnGroup type, BlockPos pos, List<SpawnSettings.SpawnEntry> oldList) {
 			super(world);
 			this.pos = pos;
 			this.type = type;
@@ -135,7 +130,7 @@ public class WorldEvent extends Event {
 			}
 		}
 
-		public EntityClassification getType() {
+		public SpawnGroup getType() {
 			return type;
 		}
 
@@ -143,7 +138,7 @@ public class WorldEvent extends Event {
 			return pos;
 		}
 
-		public List<MobSpawnInfo.Spawners> getList() {
+		public List<SpawnSettings.SpawnEntry> getList() {
 			return list;
 		}
 	}
@@ -154,14 +149,14 @@ public class WorldEvent extends Event {
 	 */
 	@net.minecraftforge.eventbus.api.Cancelable
 	public static class CreateSpawnPosition extends WorldEvent {
-		private final IServerWorldInfo settings;
+		private final ServerWorldProperties settings;
 
-		public CreateSpawnPosition(IWorld world, IServerWorldInfo settings) {
+		public CreateSpawnPosition(WorldAccess world, ServerWorldProperties settings) {
 			super(world);
 			this.settings = settings;
 		}
 
-		public IServerWorldInfo getSettings() {
+		public ServerWorldProperties getSettings() {
 			return settings;
 		}
 	}

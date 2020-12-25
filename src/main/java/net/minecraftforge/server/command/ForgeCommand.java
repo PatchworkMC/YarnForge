@@ -21,14 +21,14 @@ package net.minecraftforge.server.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.command.CommandSource;
+import net.minecraft.server.command.ServerCommandSource;
 
 public class ForgeCommand
 {
-    public ForgeCommand(CommandDispatcher<CommandSource> dispatcher)
+    public ForgeCommand(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         dispatcher.register(
-            LiteralArgumentBuilder.<CommandSource>literal("forge")
+            LiteralArgumentBuilder.<ServerCommandSource>literal("forge")
             .then(CommandTps.register())
             .then(CommandTrack.register())
             .then(CommandEntity.register())

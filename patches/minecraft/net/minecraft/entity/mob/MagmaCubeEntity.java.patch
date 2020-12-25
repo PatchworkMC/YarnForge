@@ -1,0 +1,10 @@
+--- a/net/minecraft/entity/mob/MagmaCubeEntity.java
++++ b/net/minecraft/entity/mob/MagmaCubeEntity.java
+@@ -72,6 +72,7 @@
+       Vec3d vector3d = this.getVelocity();
+       this.setVelocity(vector3d.x, (double)(this.getJumpVelocity() + (float)this.getSize() * 0.1F), vector3d.z);
+       this.velocityDirty = true;
++      net.minecraftforge.common.ForgeHooks.onLivingJump(this);
+    }
+ 
+    protected void swimUpward(Tag<Fluid> fluidTag) {

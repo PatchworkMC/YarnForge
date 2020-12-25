@@ -19,18 +19,18 @@
 
 package net.minecraftforge.common.world;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.StringUtils;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.ChatUtil;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
-import net.minecraft.util.registry.DynamicRegistries;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.DimensionType;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.ChunkGenerator;
-import net.minecraft.world.gen.DimensionSettings;
-import net.minecraft.world.gen.settings.DimensionGeneratorSettings;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.gen.GeneratorOptions;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 import net.minecraftforge.common.ForgeConfig;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistryEntry;
@@ -45,10 +45,10 @@ public class ForgeWorldType extends ForgeRegistryEntry<ForgeWorldType>
     {
         String defaultWorldType = ForgeConfig.COMMON.defaultWorldType.get();
 
-        if (StringUtils.isNullOrEmpty(defaultWorldType) || "default".equals(defaultWorldType))
+        if (ChatUtil.isEmpty(defaultWorldType) || "default".equals(defaultWorldType))
             return null; // use vanilla
 
-        ForgeWorldType def = ForgeRegistries.WORLD_TYPES.getValue(new ResourceLocation(defaultWorldType));
+        ForgeWorldType def = ForgeRegistries.WORLD_TYPES.getValue(new Identifier(defaultWorldType));
         if (def == null)
         {
             LOGGER.error("The defaultWorldType '{}' specified in the forge config has not been registered. The vanilla default generator will be used.", defaultWorldType);
@@ -71,12 +71,12 @@ public class ForgeWorldType extends ForgeRegistryEntry<ForgeWorldType>
 
     public String getTranslationKey()
     {
-        return Util.makeTranslationKey("generator", getRegistryName());
+        return Util.createTranslationKey("generator", getRegistryName());
     }
 
-    public ITextComponent getDisplayName()
+    public Text getDisplayName()
     {
-        return new TranslationTextComponent(getTranslationKey());
+        return new TranslatableText(getTranslationKey());
     }
 
     /**
@@ -84,36 +84,36 @@ public class ForgeWorldType extends ForgeRegistryEntry<ForgeWorldType>
      * to construct the DimensionGEneratorSettings:
      * @return The constructed chunk generator.
      */
-    public ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<DimensionSettings> dimensionSettingsRegistry, long seed, String generatorSettings)
+    public ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<ChunkGeneratorSettings> dimensionSettingsRegistry, long seed, String generatorSettings)
     {
         return this.factory.createChunkGenerator(biomeRegistry, dimensionSettingsRegistry, seed, generatorSettings);
     }
 
-    public DimensionGeneratorSettings createSettings(DynamicRegistries dynamicRegistries, long seed, boolean generateStructures, boolean generateLoot, String generatorSettings)
+    public GeneratorOptions createSettings(DynamicRegistryManager dynamicRegistries, long seed, boolean generateStructures, boolean generateLoot, String generatorSettings)
     {
         return this.factory.createSettings(dynamicRegistries, seed, generateStructures, generateLoot, generatorSettings);
     }
 
     public interface IChunkGeneratorFactory
     {
-        ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<DimensionSettings> dimensionSettingsRegistry, long seed, String generatorSettings);
+        ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<ChunkGeneratorSettings> dimensionSettingsRegistry, long seed, String generatorSettings);
 
-        default DimensionGeneratorSettings createSettings(DynamicRegistries dynamicRegistries, long seed, boolean generateStructures, boolean bonusChest, String generatorSettings) {
-            Registry<Biome> biomeRegistry = dynamicRegistries.getRegistry(Registry.BIOME_KEY);
-            Registry<DimensionType> dimensionTypeRegistry = dynamicRegistries.getRegistry(Registry.DIMENSION_TYPE_KEY);
-            Registry<DimensionSettings> dimensionSettingsRegistry = dynamicRegistries.getRegistry(Registry.NOISE_SETTINGS_KEY);
-            return new DimensionGeneratorSettings(seed, generateStructures, bonusChest,
-                    DimensionGeneratorSettings.func_242749_a(dimensionTypeRegistry,
-                            DimensionType.getDefaultSimpleRegistry(dimensionTypeRegistry, biomeRegistry, dimensionSettingsRegistry, seed),
+        default GeneratorOptions createSettings(DynamicRegistryManager dynamicRegistries, long seed, boolean generateStructures, boolean bonusChest, String generatorSettings) {
+            Registry<Biome> biomeRegistry = dynamicRegistries.get(Registry.BIOME_KEY);
+            Registry<DimensionType> dimensionTypeRegistry = dynamicRegistries.get(Registry.DIMENSION_TYPE_KEY);
+            Registry<ChunkGeneratorSettings> dimensionSettingsRegistry = dynamicRegistries.get(Registry.NOISE_SETTINGS_WORLDGEN);
+            return new GeneratorOptions(seed, generateStructures, bonusChest,
+                    GeneratorOptions.method_28608(dimensionTypeRegistry,
+                            DimensionType.createDefaultDimensionOptions(dimensionTypeRegistry, biomeRegistry, dimensionSettingsRegistry, seed),
                             createChunkGenerator(biomeRegistry, dimensionSettingsRegistry, seed, generatorSettings)));
         }
     }
 
     public interface IBasicChunkGeneratorFactory extends IChunkGeneratorFactory
     {
-        ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<DimensionSettings> dimensionSettingsRegistry, long seed);
+        ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<ChunkGeneratorSettings> dimensionSettingsRegistry, long seed);
 
-        default ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<DimensionSettings> dimensionSettingsRegistry, long seed, String generatorSettings)
+        default ChunkGenerator createChunkGenerator(Registry<Biome> biomeRegistry, Registry<ChunkGeneratorSettings> dimensionSettingsRegistry, long seed, String generatorSettings)
         {
             return createChunkGenerator(biomeRegistry, dimensionSettingsRegistry, seed);
         }

@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/MushroomPlantBlock.java
++++ b/net/minecraft/block/MushroomPlantBlock.java
+@@ -63,7 +63,7 @@
+       if (blockstate.isIn(BlockTags.MUSHROOM_GROW_BLOCK)) {
+          return true;
+       } else {
+-         return worldIn.getBaseLightLevel(pos, 0) < 13 && this.canPlantOnTop(blockstate, worldIn, blockpos);
++         return worldIn.getBaseLightLevel(pos, 0) < 13 && blockstate.canSustainPlant(worldIn, blockpos, net.minecraft.util.math.Direction.UP, this);
+       }
+    }
+ 

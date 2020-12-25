@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/decoration/ItemFrameEntity.java
++++ b/net/minecraft/entity/decoration/ItemFrameEntity.java
+@@ -218,7 +218,7 @@
+    }
+ 
+    private void removeFromFrame(ItemStack stack) {
+-      if (stack.getItem() == Items.FILLED_MAP) {
++      if (stack.getItem() instanceof net.minecraft.item.FilledMapItem) {
+          MapState mapdata = FilledMapItem.getOrCreateMapState(stack, this.world);
+          mapdata.removeFrame(this.attachmentPos, this.getEntityId());
+          mapdata.setDirty(true);

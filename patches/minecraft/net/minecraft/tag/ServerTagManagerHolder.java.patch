@@ -1,0 +1,20 @@
+--- a/net/minecraft/tag/ServerTagManagerHolder.java
++++ b/net/minecraft/tag/ServerTagManagerHolder.java
+@@ -3,13 +3,13 @@
+ import java.util.stream.Collectors;
+ 
+ public class ServerTagManagerHolder {
+-   private static volatile TagManager tagManager = TagManager.create(TagGroup.create(BlockTags.getRequiredTags().stream().collect(Collectors.toMap(Tag.Identified::getId, (p_242183_0_) -> {
++   private static volatile TagManager tagManager = net.minecraftforge.common.ForgeTagHandler.populateTagCollectionManager(TagGroup.create(BlockTags.getRequiredTags().stream().distinct().collect(Collectors.toMap(Tag.Identified::getId, (p_242183_0_) -> {
+       return p_242183_0_;
+-   }))), TagGroup.create(ItemTags.getRequiredTags().stream().collect(Collectors.toMap(Tag.Identified::getId, (p_242182_0_) -> {
++   }))), TagGroup.create(ItemTags.getRequiredTags().stream().distinct().collect(Collectors.toMap(Tag.Identified::getId, (p_242182_0_) -> {
+       return p_242182_0_;
+-   }))), TagGroup.create(FluidTags.getRequiredTags().stream().collect(Collectors.toMap(Tag.Identified::getId, (p_242181_0_) -> {
++   }))), TagGroup.create(FluidTags.getRequiredTags().stream().distinct().collect(Collectors.toMap(Tag.Identified::getId, (p_242181_0_) -> {
+       return p_242181_0_;
+-   }))), TagGroup.create(EntityTypeTags.getRequiredTags().stream().collect(Collectors.toMap(Tag.Identified::getId, (p_242179_0_) -> {
++   }))), TagGroup.create(EntityTypeTags.getRequiredTags().stream().distinct().collect(Collectors.toMap(Tag.Identified::getId, (p_242179_0_) -> {
+       return p_242179_0_;
+    }))));
+ 

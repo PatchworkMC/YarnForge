@@ -19,10 +19,10 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.FogRenderer.FogType;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BackgroundRenderer.FogType;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraftforge.eventbus.api.Cancelable;
 
 /**
@@ -32,10 +32,10 @@ import net.minecraftforge.eventbus.api.Cancelable;
 public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.api.Event
 {
     private final GameRenderer renderer;
-    private final ActiveRenderInfo info;
+    private final Camera info;
     private final double renderPartialTicks;
 
-    public EntityViewRenderEvent(GameRenderer renderer, ActiveRenderInfo info, double renderPartialTicks)
+    public EntityViewRenderEvent(GameRenderer renderer, Camera info, double renderPartialTicks)
     {
         this.renderer = renderer;
         this.info = info;
@@ -47,7 +47,7 @@ public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.
         return renderer;
     }
 
-    public ActiveRenderInfo getInfo()
+    public Camera getInfo()
     {
         return info;
     }
@@ -61,9 +61,9 @@ public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.
     {
         private final FogType type;
         @SuppressWarnings("resource")
-        protected FogEvent(FogType type, ActiveRenderInfo info, double renderPartialTicks)
+        protected FogEvent(FogType type, Camera info, double renderPartialTicks)
         {
-            super(Minecraft.getInstance().gameRenderer, info, renderPartialTicks);
+            super(MinecraftClient.getInstance().gameRenderer, info, renderPartialTicks);
             this.type = type;
         }
 
@@ -79,7 +79,7 @@ public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.
     {
         private float density;
 
-        public FogDensity(FogType type, ActiveRenderInfo info, float partialTicks, float density)
+        public FogDensity(FogType type, Camera info, float partialTicks, float density)
         {
             super(type, info, partialTicks);
             this.setDensity(density);
@@ -104,7 +104,7 @@ public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.
     {
         private final float farPlaneDistance;
 
-        public RenderFogEvent(FogType type, ActiveRenderInfo info, float partialTicks, float distance)
+        public RenderFogEvent(FogType type, Camera info, float partialTicks, float distance)
         {
             super(type, info, partialTicks);
             this.farPlaneDistance = distance;
@@ -127,9 +127,9 @@ public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.
         private float blue;
 
         @SuppressWarnings("resource")
-        public FogColors(ActiveRenderInfo info, float partialTicks, float red, float green, float blue)
+        public FogColors(Camera info, float partialTicks, float red, float green, float blue)
         {
-            super(Minecraft.getInstance().gameRenderer, info, partialTicks);
+            super(MinecraftClient.getInstance().gameRenderer, info, partialTicks);
             this.setRed(red);
             this.setGreen(green);
             this.setBlue(blue);
@@ -152,7 +152,7 @@ public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.
         private float pitch;
         private float roll;
 
-        public CameraSetup(GameRenderer renderer, ActiveRenderInfo info, double renderPartialTicks, float yaw, float pitch, float roll)
+        public CameraSetup(GameRenderer renderer, Camera info, double renderPartialTicks, float yaw, float pitch, float roll)
         {
             super(renderer, info, renderPartialTicks);
             this.setYaw(yaw);
@@ -176,7 +176,7 @@ public abstract class EntityViewRenderEvent extends net.minecraftforge.eventbus.
     {
         private double fov;
 
-        public FOVModifier(GameRenderer renderer, ActiveRenderInfo info, double renderPartialTicks, double fov) {
+        public FOVModifier(GameRenderer renderer, Camera info, double renderPartialTicks, double fov) {
             super(renderer, info, renderPartialTicks);
             this.setFOV(fov);
         }

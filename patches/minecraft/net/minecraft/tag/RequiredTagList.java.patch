@@ -1,0 +1,126 @@
+--- a/net/minecraft/tag/RequiredTagList.java
++++ b/net/minecraft/tag/RequiredTagList.java
+@@ -18,13 +18,51 @@
+    private TagGroup<T> group = TagGroup.createEmpty();
+    private final List<RequiredTagList.TagWrapper<T>> tags = Lists.newArrayList();
+    private final Function<TagManager, TagGroup<T>> groupGetter;
++   private static java.util.Map<Identifier, List<RequiredTagList.TagWrapper<?>>> toAdd = com.google.common.collect.Maps.newHashMap();
+ 
+    public RequiredTagList(Function<TagManager, TagGroup<T>> supplierToCollectionFunction) {
+       this.groupGetter = supplierToCollectionFunction;
+    }
+ 
+    public Tag.Identified<T> add(String id) {
+-      RequiredTagList.TagWrapper<T> namedtag = new RequiredTagList.TagWrapper<>(new Identifier(id));
++       return add(new RequiredTagList.TagWrapper<>(new Identifier(id)));
++   }
++
++   public net.minecraftforge.common.Tags.IOptionalNamedTag<T> createOptional(Identifier key, @Nullable Set<java.util.function.Supplier<T>> defaults) {
++       return add(new RequiredTagList.OptionalNamedTag<>(key, defaults));
++   }
++
++   /** Call via ForgeTagHandler#makeWrapperTag to avoid any exceptions due to calling this after it is safe to call {@link #createTag(String)} */
++   public static <T> Tag.Identified<T> createDelayedTag(Identifier tagRegistry, Identifier name) {
++      return delayedAdd(tagRegistry, new RequiredTagList.TagWrapper<>(name));
++   }
++
++   /** Call via ForgeTagHandler#createOptionalTag to avoid any exceptions due to calling this after it is safe to call {@link #createOptional(ResourceLocation, Set)} */
++   public static <T> net.minecraftforge.common.Tags.IOptionalNamedTag<T> createDelayedOptional(Identifier tagRegistry, Identifier key, @Nullable Set<java.util.function.Supplier<T>> defaults) {
++      return delayedAdd(tagRegistry, new RequiredTagList.OptionalNamedTag<>(key, defaults));
++   }
++
++   private static synchronized <T, R extends RequiredTagList.TagWrapper<T>> R delayedAdd(Identifier tagRegistry, R tag) {
++      if (toAdd == null) throw new RuntimeException("Creating delayed tags or optional tags, is only supported before custom tag types have been added.");
++      toAdd.computeIfAbsent(tagRegistry, registry -> Lists.newArrayList()).add(tag);
++      return tag;
++   }
++
++   public static void performDelayedAdd() {
++      if (toAdd != null) {
++         for (java.util.Map.Entry<Identifier, List<RequiredTagList.TagWrapper<?>>> entry : toAdd.entrySet()) {
++            RequiredTagList<?> tagRegistry = RequiredTagListRegistry.get(entry.getKey());
++            if (tagRegistry == null) throw new RuntimeException("A mod attempted to add a delayed tag for a registry that doesn't have custom tag support.");
++            for (RequiredTagList.TagWrapper<?> tag : entry.getValue()) {
++               tagRegistry.add((RequiredTagList.TagWrapper) tag);
++            }
++         }
++         toAdd = null;
++      }
++   }
++
++   private <R extends RequiredTagList.TagWrapper<T>> R add(R namedtag) {
++      namedtag.updateDelegate(group::getTag);
+       this.tags.add(namedtag);
+       return namedtag;
+    }
+@@ -48,6 +86,20 @@
+       });
+    }
+ 
++   public TagGroup<T> reinjectOptionalTags(TagGroup<T> tagCollection) {
++      java.util.Map<Identifier, Tag<T>> currentTags = tagCollection.getTags();
++      java.util.Map<Identifier, Tag<T>> missingOptionals = this.tags.stream().filter(e -> e instanceof net.minecraft.tag.RequiredTagList.OptionalNamedTag && !currentTags.containsKey(e.getId())).collect(Collectors.toMap(TagWrapper::getId, namedTag -> {
++         net.minecraft.tag.RequiredTagList.OptionalNamedTag<T> optionalNamedTag = (net.minecraft.tag.RequiredTagList.OptionalNamedTag<T>) namedTag;
++         optionalNamedTag.defaulted = true;
++         return optionalNamedTag.resolveDefaulted();
++      }));
++      if (!missingOptionals.isEmpty()) {
++         missingOptionals.putAll(currentTags);
++         return TagGroup.create(missingOptionals);
++      }
++      return tagCollection;
++   }
++
+    public TagGroup<T> getGroup() {
+       return this.group;
+    }
+@@ -58,7 +110,7 @@
+ 
+    public Set<Identifier> getMissingTags(TagManager supplier) {
+       TagGroup<T> itagcollection = this.groupGetter.apply(supplier);
+-      Set<Identifier> set = this.tags.stream().map(RequiredTagList.TagWrapper::getId).collect(Collectors.toSet());
++      Set<Identifier> set = this.tags.stream().filter(e -> !(e instanceof net.minecraft.tag.RequiredTagList.OptionalNamedTag)).map(RequiredTagList.TagWrapper::getId).collect(Collectors.toSet());
+       ImmutableSet<Identifier> immutableset = ImmutableSet.copyOf(itagcollection.getTagIds());
+       return Sets.difference(set, immutableset);
+    }
+@@ -95,5 +147,40 @@
+       public List<T> values() {
+          return this.get().values();
+       }
++
++      @Override
++      public String toString() {
++          return "NamedTag[" + getId().toString() + ']';
++      }
++      @Override public boolean equals(Object o) { return (o == this) || (o instanceof Tag.Identified && java.util.Objects.equals(this.getId(), ((Tag.Identified<T>)o).getId())); }
++      @Override public int hashCode() { return getId().hashCode(); }
+    }
++
++   private static class OptionalNamedTag<T> extends TagWrapper<T> implements net.minecraftforge.common.Tags.IOptionalNamedTag<T> {
++      @Nullable
++      private final Set<java.util.function.Supplier<T>> defaults;
++      private boolean defaulted = false;
++
++      private OptionalNamedTag(Identifier name, @Nullable Set<java.util.function.Supplier<T>> defaults) {
++         super(name);
++         this.defaults = defaults;
++      }
++
++      @Override
++      public boolean isDefaulted() {
++         return defaulted;
++      }
++
++      SetTag<T> resolveDefaulted() {
++         if (defaults == null || defaults.isEmpty()) {
++            return SetTag.empty();
++         }
++         return SetTag.of(ImmutableSet.copyOf(defaults.stream().map(java.util.function.Supplier::get).collect(Collectors.toSet())));
++      }
++
++      @Override
++      public String toString() {
++          return "OptionalNamedTag[" + getId().toString() + ']';
++      }
++   }
+ }

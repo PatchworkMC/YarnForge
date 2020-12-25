@@ -1,0 +1,53 @@
+--- a/net/minecraft/util/crash/CrashReport.java
++++ b/net/minecraft/util/crash/CrashReport.java
+@@ -71,6 +71,7 @@
+          List<String> list = Util.getJVMFlags().collect(Collectors.toList());
+          return String.format("%d total; %s", list.size(), list.stream().collect(Collectors.joining(" ")));
+       });
++      net.minecraftforge.fml.CrashReportExtender.enhanceCrashReport(this, this.systemDetailsSection);
+    }
+ 
+    public String getMessage() {
+@@ -89,14 +90,8 @@
+       if (this.stackTrace != null && this.stackTrace.length > 0) {
+          builder.append("-- Head --\n");
+          builder.append("Thread: ").append(Thread.currentThread().getName()).append("\n");
+-         builder.append("Stacktrace:\n");
+-
+-         for(StackTraceElement stacktraceelement : this.stackTrace) {
+-            builder.append("\t").append("at ").append((Object)stacktraceelement);
+-            builder.append("\n");
+-         }
+-
+-         builder.append("\n");
++         builder.append("Stacktrace:");
++         builder.append(net.minecraftforge.fml.CrashReportExtender.generateEnhancedStackTrace(this.stackTrace));
+       }
+ 
+       for(CrashReportSection crashreportcategory : this.otherSections) {
+@@ -123,23 +118,13 @@
+          throwable.setStackTrace(this.cause.getStackTrace());
+       }
+ 
+-      String s;
+-      try {
+-         stringwriter = new StringWriter();
+-         printwriter = new PrintWriter(stringwriter);
+-         throwable.printStackTrace(printwriter);
+-         s = stringwriter.toString();
+-      } finally {
+-         IOUtils.closeQuietly((Writer)stringwriter);
+-         IOUtils.closeQuietly((Writer)printwriter);
+-      }
+-
+-      return s;
++      return net.minecraftforge.fml.CrashReportExtender.generateEnhancedStackTrace(throwable);
+    }
+ 
+    public String asString() {
+       StringBuilder stringbuilder = new StringBuilder();
+       stringbuilder.append("---- Minecraft Crash Report ----\n");
++      net.minecraftforge.fml.CrashReportExtender.addCrashReportHeader(stringbuilder, this);
+       stringbuilder.append("// ");
+       stringbuilder.append(generateWittyComment());
+       stringbuilder.append("\n\n");

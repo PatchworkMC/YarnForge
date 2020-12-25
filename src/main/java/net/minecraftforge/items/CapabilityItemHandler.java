@@ -20,10 +20,10 @@
 package net.minecraftforge.items;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.math.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -40,18 +40,18 @@ public class CapabilityItemHandler
         CapabilityManager.INSTANCE.register(IItemHandler.class, new Capability.IStorage<IItemHandler>()
         {
             @Override
-            public INBT writeNBT(Capability<IItemHandler> capability, IItemHandler instance, Direction side)
+            public Tag writeNBT(Capability<IItemHandler> capability, IItemHandler instance, Direction side)
             {
-                ListNBT nbtTagList = new ListNBT();
+                ListTag nbtTagList = new ListTag();
                 int size = instance.getSlots();
                 for (int i = 0; i < size; i++)
                 {
                     ItemStack stack = instance.getStackInSlot(i);
                     if (!stack.isEmpty())
                     {
-                        CompoundNBT itemTag = new CompoundNBT();
+                        CompoundTag itemTag = new CompoundTag();
                         itemTag.putInt("Slot", i);
-                        stack.write(itemTag);
+                        stack.toTag(itemTag);
                         nbtTagList.add(itemTag);
                     }
                 }
@@ -59,20 +59,20 @@ public class CapabilityItemHandler
             }
 
             @Override
-            public void readNBT(Capability<IItemHandler> capability, IItemHandler instance, Direction side, INBT base)
+            public void readNBT(Capability<IItemHandler> capability, IItemHandler instance, Direction side, Tag base)
             {
                 if (!(instance instanceof IItemHandlerModifiable))
                     throw new RuntimeException("IItemHandler instance does not implement IItemHandlerModifiable");
                 IItemHandlerModifiable itemHandlerModifiable = (IItemHandlerModifiable) instance;
-                ListNBT tagList = (ListNBT) base;
+                ListTag tagList = (ListTag) base;
                 for (int i = 0; i < tagList.size(); i++)
                 {
-                    CompoundNBT itemTags = tagList.getCompound(i);
+                    CompoundTag itemTags = tagList.getCompound(i);
                     int j = itemTags.getInt("Slot");
 
                     if (j >= 0 && j < instance.getSlots())
                     {
-                        itemHandlerModifiable.setStackInSlot(j, ItemStack.read(itemTags));
+                        itemHandlerModifiable.setStackInSlot(j, ItemStack.fromTag(itemTags));
                     }
                 }
             }

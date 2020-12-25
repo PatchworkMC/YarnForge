@@ -1,0 +1,68 @@
+--- a/net/minecraft/client/gui/screen/TitleScreen.java
++++ b/net/minecraft/client/gui/screen/TitleScreen.java
+@@ -60,6 +60,7 @@
+    private final RotatingCubeMapRenderer backgroundRenderer = new RotatingCubeMapRenderer(PANORAMA_CUBE_MAP);
+    private final boolean doBackgroundFade;
+    private long backgroundFadeStart;
++   private net.minecraftforge.client.gui.NotificationModUpdateScreen modUpdateNotification;
+ 
+    public TitleScreen() {
+       this(false);
+@@ -103,11 +104,16 @@
+       this.copyrightTextX = this.width - this.copyrightTextWidth - 2;
+       int i = 24;
+       int j = this.height / 4 + 48;
++      ButtonWidget modButton = null;
+       if (this.client.isDemo()) {
+          this.initWidgetsDemo(j, 24);
+       } else {
+          this.initWidgetsNormal(j, 24);
++         modButton = this.addButton(new ButtonWidget(this.width / 2 - 100, j + 24 * 2, 98, 20, new TranslatableText("fml.menu.mods"), button -> {
++            this.client.openScreen(new net.minecraftforge.fml.client.gui.screen.ModListScreen(this));
++         }));
+       }
++      modUpdateNotification = net.minecraftforge.client.gui.NotificationModUpdateScreen.init(this, modButton);
+ 
+       this.addButton(new TexturedButtonWidget(this.width / 2 - 124, j + 72 + 12, 20, 20, 0, 106, 20, ButtonWidget.WIDGETS_LOCATION, 256, 256, (p_213090_1_) -> {
+          this.client.openScreen(new LanguageOptionsScreen(this, this.client.options, this.client.getLanguageManager()));
+@@ -149,7 +155,7 @@
+          Screen screen = (Screen)(this.client.options.skipMultiplayerWarning ? new MultiplayerScreen(this) : new MultiplayerWarningScreen(this));
+          this.client.openScreen(screen);
+       }, button$itooltip))).active = flag;
+-      (this.addButton(new ButtonWidget(this.width / 2 - 100, yIn + rowHeightIn * 2, 200, 20, new TranslatableText("menu.online"), (p_238661_1_) -> {
++      (this.addButton(new ButtonWidget(this.width / 2 + 2, yIn + rowHeightIn * 2, 98, 20, new TranslatableText("menu.online"), (p_238661_1_) -> {
+          this.switchToRealms();
+       }, button$itooltip))).active = flag;
+    }
+@@ -235,6 +241,7 @@
+ 
+          this.client.getTextureManager().bindTexture(EDITION_TITLE_TEXTURE);
+          drawTexture(matrixStack, j + 88, 67, 0.0F, 0.0F, 98, 14, 128, 16);
++         net.minecraftforge.client.ForgeHooksClient.renderMainMenu(this, matrixStack, this.textRenderer, this.width, this.height);
+          if (this.splashText != null) {
+             RenderSystem.pushMatrix();
+             RenderSystem.translatef((float)(this.width / 2 + 90), 70.0F, 0.0F);
+@@ -257,7 +264,14 @@
+             s = s + I18n.translate("menu.modded");
+          }
+ 
+-         drawStringWithShadow(matrixStack, this.textRenderer, s, 2, this.height - 10, 16777215 | l);
++         net.minecraftforge.fml.BrandingControl.forEachLine(true, true, (brdline, brd) ->
++            drawStringWithShadow(matrixStack, this.textRenderer, brd, 2, this.height - ( 10 + brdline * (this.textRenderer.fontHeight + 1)), 16777215 | l)
++         );
++
++         net.minecraftforge.fml.BrandingControl.forEachAboveCopyrightLine((brdline, brd) ->
++            drawStringWithShadow(matrixStack, this.textRenderer, brd, this.width - textRenderer.getWidth(brd), this.height - (10 + (brdline + 1) * ( this.textRenderer.fontHeight + 1)), 16777215 | l)
++         );
++
+          drawStringWithShadow(matrixStack, this.textRenderer, "Copyright Mojang AB. Do not distribute!", this.copyrightTextX, this.height - 10, 16777215 | l);
+          if (mouseX > this.copyrightTextX && mouseX < this.copyrightTextX + this.copyrightTextWidth && mouseY > this.height - 10 && mouseY < this.height) {
+             fill(matrixStack, this.copyrightTextX, this.height - 1, this.copyrightTextX + this.copyrightTextWidth, this.height, 16777215 | l);
+@@ -271,6 +285,7 @@
+          if (this.areRealmsNotificationsEnabled() && f1 >= 1.0F) {
+             this.realmsNotificationGui.render(matrixStack, mouseX, mouseY, partialTicks);
+          }
++         modUpdateNotification.render(matrixStack, mouseX, mouseY, partialTicks);
+ 
+       }
+    }

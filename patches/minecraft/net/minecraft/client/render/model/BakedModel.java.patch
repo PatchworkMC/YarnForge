@@ -1,0 +1,28 @@
+--- a/net/minecraft/client/render/model/BakedModel.java
++++ b/net/minecraft/client/render/model/BakedModel.java
+@@ -14,7 +14,9 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @Environment(EnvType.CLIENT)
+-public interface BakedModel {
++public interface BakedModel extends net.minecraftforge.client.extensions.IForgeBakedModel {
++   /**@deprecated Forge: Use {@link net.minecraftforge.client.extensions.IForgeBakedModel#getQuads(IBlockState, EnumFacing, Random, net.minecraftforge.client.model.data.IModelData)}*/
++   @Deprecated
+    List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand);
+ 
+    boolean useAmbientOcclusion();
+@@ -25,9 +27,13 @@
+ 
+    boolean isBuiltin();
+ 
++   /**@deprecated Forge: Use {@link net.minecraftforge.client.extensions.IForgeBakedModel#getParticleTexture(net.minecraftforge.client.model.data.IModelData)}*/
++   @Deprecated
+    Sprite getSprite();
+ 
+-   ModelTransformation getTransformation();
++   /**@deprecated Forge: Use {@link net.minecraftforge.client.extensions.IForgeBakedModel#handlePerspective(net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType, com.mojang.blaze3d.matrix.MatrixStack)} instead */
++   @Deprecated
++   default ModelTransformation getTransformation() { return ModelTransformation.NONE; }
+ 
+    ModelOverrideList getOverrides();
+ }

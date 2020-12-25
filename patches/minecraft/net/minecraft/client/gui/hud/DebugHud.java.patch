@@ -1,0 +1,28 @@
+--- a/net/minecraft/client/gui/hud/DebugHud.java
++++ b/net/minecraft/client/gui/hud/DebugHud.java
+@@ -364,7 +364,7 @@
+                list.add(this.propertyToString(entry));
+             }
+ 
+-            for(Identifier resourcelocation : this.client.getNetworkHandler().getTagManager().getBlocks().getTagsFor(blockstate.getBlock())) {
++            for(Identifier resourcelocation : blockstate.getBlock().getTags()) {
+                list.add("#" + resourcelocation);
+             }
+          }
+@@ -380,7 +380,7 @@
+                list.add(this.propertyToString(entry1));
+             }
+ 
+-            for(Identifier resourcelocation1 : this.client.getNetworkHandler().getTagManager().getFluids().getTagsFor(fluidstate.getFluid())) {
++            for(Identifier resourcelocation1 : fluidstate.getFluid().getTags()) {
+                list.add("#" + resourcelocation1);
+             }
+          }
+@@ -390,6 +390,7 @@
+             list.add("");
+             list.add(Formatting.UNDERLINE + "Targeted Entity");
+             list.add(String.valueOf((Object)Registry.ENTITY_TYPE.getId(entity.getType())));
++            entity.getType().getTags().forEach(t -> list.add("#" + t));
+          }
+ 
+          return list;

@@ -24,16 +24,16 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.merchant.villager.VillagerTrades.ITrade;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.MerchantOffer;
+import net.minecraft.village.TradeOffer;
+import net.minecraft.village.TradeOffers.Factory;
 
 /**
  * A default, exposed implementation of ITrade.  All of the other implementations of ITrade (in VillagerTrades) are not public.
  * This class contains everything needed to make a MerchantOffer, the actual "trade" object shown in trading guis.
  */
-public class BasicTrade implements ITrade
+public class BasicTrade implements Factory
 {
 
     protected final ItemStack price;
@@ -70,9 +70,9 @@ public class BasicTrade implements ITrade
 
     @Override
     @Nullable
-    public MerchantOffer getOffer(Entity merchant, Random rand)
+    public TradeOffer create(Entity merchant, Random rand)
     {
-        return new MerchantOffer(price, price2, forSale, maxTrades, xp, priceMult);
+        return new TradeOffer(price, price2, forSale, maxTrades, xp, priceMult);
     }
 
 }

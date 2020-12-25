@@ -38,7 +38,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ExtensionPoint;
@@ -56,35 +55,35 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.multiplayer.PlayerController;
-import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.client.network.ServerInfo;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.ServerStatusResponse;
-import net.minecraft.resources.FallbackResourceManager;
-import net.minecraft.resources.IResourcePack;
-import net.minecraft.resources.ResourcePack;
-import net.minecraft.resources.SimpleReloadableResourceManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.resource.AbstractFileResourcePack;
+import net.minecraft.resource.NamespaceResourceManager;
+import net.minecraft.resource.ReloadableResourceManagerImpl;
+import net.minecraft.resource.ResourcePack;
+import net.minecraft.server.ServerMetadata;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.Identifier;
 
 public class ClientHooks {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final Marker CLIENTHOOKS = MarkerManager.getMarker("CLIENTHOOKS");
 
-	private static final ResourceLocation iconSheet = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/icons.png");
+	private static final Identifier iconSheet = new Identifier(ForgeVersion.MOD_ID, "textures/gui/icons.png");
 
 	@Nullable
 
-	public static void processForgeListPingData(ServerStatusResponse packet, ServerData target) {
+	public static void processForgeListPingData(ServerMetadata packet, ServerInfo target) {
 		if (packet.getForgeData() != null) {
 			final Map<String, String> mods = packet.getForgeData().getRemoteModData();
-			final Map<ResourceLocation, Pair<String, Boolean>> remoteChannels = packet.getForgeData().getRemoteChannels();
+			final Map<Identifier, Pair<String, Boolean>> remoteChannels = packet.getForgeData().getRemoteChannels();
 			final int fmlver = packet.getForgeData().getFMLNetworkVersion();
 
 			boolean fmlNetMatches = fmlver == FMLNetworkConstants.FMLNETVERSION;
@@ -107,7 +106,7 @@ public class ClientHooks {
 				filter(e -> !ModList.get().isLoaded(e.getKey())).
 				collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-			LOGGER.debug(CLIENTHOOKS, "Received FML ping data from server at {}: FMLNETVER={}, mod list is compatible : {}, channel list is compatible: {}, extra server mods: {}", target.serverIP, fmlver, modsMatch, channelsMatch, extraServerMods);
+			LOGGER.debug(CLIENTHOOKS, "Received FML ping data from server at {}: FMLNETVER={}, mod list is compatible : {}, channel list is compatible: {}, extra server mods: {}", target.address, fmlver, modsMatch, channelsMatch, extraServerMods);
 
 			String extraReason = null;
 
@@ -138,7 +137,7 @@ public class ClientHooks {
 
 	}
 
-	public static void drawForgePingInfo(MultiplayerScreen gui, ServerData target, MatrixStack mStack, int x, int y, int width, int relativeMouseX, int relativeMouseY) {
+	public static void drawForgePingInfo(MultiplayerScreen gui, ServerInfo target, MatrixStack mStack, int x, int y, int width, int relativeMouseX, int relativeMouseY) {
 		int idx;
 		String tooltip;
 		if (target.forgeData == null) {
@@ -173,13 +172,13 @@ public class ClientHooks {
 				tooltip = ForgeI18n.parseMessage("fml.menu.multiplayer.unknown", target.forgeData.type);
 		}
 
-		Minecraft.getInstance().getTextureManager().bindTexture(iconSheet);
-		AbstractGui.blit(mStack, x + width - 18, y + 10, 16, 16, 0, idx, 16, 16, 256, 256);
+		MinecraftClient.getInstance().getTextureManager().bindTexture(iconSheet);
+		DrawableHelper.drawTexture(mStack, x + width - 18, y + 10, 16, 16, 0, idx, 16, 16, 256, 256);
 
 		if (relativeMouseX > width - 15 && relativeMouseX < width && relativeMouseY > 10 && relativeMouseY < 26)
 		//TODO using StringTextComponent here is a hack, we should be using TranslationTextComponents.
 		{
-			gui.func_238854_b_(Collections.singletonList(new StringTextComponent(tooltip)));
+			gui.setTooltip(Collections.singletonList(new LiteralText(tooltip)));
 		}
 
 	}
@@ -190,33 +189,33 @@ public class ClientHooks {
 
 	@SuppressWarnings("resource")
 	static File getSavesDir() {
-		return new File(Minecraft.getInstance().gameDir, "saves");
+		return new File(MinecraftClient.getInstance().runDirectory, "saves");
 	}
 
-	private static NetworkManager getClientToServerNetworkManager() {
-		return Minecraft.getInstance().getConnection() != null ? Minecraft.getInstance().getConnection().getNetworkManager() : null;
+	private static ClientConnection getClientToServerNetworkManager() {
+		return MinecraftClient.getInstance().getNetworkHandler() != null ? MinecraftClient.getInstance().getNetworkHandler().getConnection() : null;
 	}
 
 	public static void handleClientWorldClosing(ClientWorld world) {
-		NetworkManager client = getClientToServerNetworkManager();
+		ClientConnection client = getClientToServerNetworkManager();
 		// ONLY revert a non-local connection
-		if (client != null && !client.isLocalChannel()) {
+		if (client != null && !client.isLocal()) {
 			GameData.revertToFrozen();
 		}
 	}
 
-	private static final SetMultimap<String, ResourceLocation> missingTextures = HashMultimap.create();
+	private static final SetMultimap<String, Identifier> missingTextures = HashMultimap.create();
 	private static final Set<String> badTextureDomains = Sets.newHashSet();
-	private static final Table<String, String, Set<ResourceLocation>> brokenTextures = HashBasedTable.create();
+	private static final Table<String, String, Set<Identifier>> brokenTextures = HashBasedTable.create();
 
-	public static void trackMissingTexture(ResourceLocation resourceLocation) {
+	public static void trackMissingTexture(Identifier resourceLocation) {
 		badTextureDomains.add(resourceLocation.getNamespace());
 		missingTextures.put(resourceLocation.getNamespace(), resourceLocation);
 	}
 
-	public static void trackBrokenTexture(ResourceLocation resourceLocation, String error) {
+	public static void trackBrokenTexture(Identifier resourceLocation, String error) {
 		badTextureDomains.add(resourceLocation.getNamespace());
-		Set<ResourceLocation> badType = brokenTextures.get(resourceLocation.getNamespace(), error);
+		Set<Identifier> badType = brokenTextures.get(resourceLocation.getNamespace(), error);
 		if (badType == null) {
 			badType = Sets.newHashSet();
 			brokenTextures.put(resourceLocation.getNamespace(), MoreObjects.firstNonNull(error, "Unknown error"), badType);
@@ -231,26 +230,26 @@ public class ClientHooks {
 		Logger logger = LogManager.getLogger("FML.TEXTURE_ERRORS");
 		logger.error(Strings.repeat("+=", 25));
 		logger.error("The following texture errors were found.");
-		Map<String, FallbackResourceManager> resManagers = ObfuscationReflectionHelper.getPrivateValue(SimpleReloadableResourceManager.class, (SimpleReloadableResourceManager) Minecraft.getInstance().getResourceManager(), "field_199014" + "_c");
+		Map<String, NamespaceResourceManager> resManagers = ObfuscationReflectionHelper.getPrivateValue(ReloadableResourceManagerImpl.class, (ReloadableResourceManagerImpl) MinecraftClient.getInstance().getResourceManager(), "field_199014" + "_c");
 		for (String resourceDomain : badTextureDomains) {
-			Set<ResourceLocation> missing = missingTextures.get(resourceDomain);
+			Set<Identifier> missing = missingTextures.get(resourceDomain);
 			logger.error(Strings.repeat("=", 50));
 			logger.error("  DOMAIN {}", resourceDomain);
 			logger.error(Strings.repeat("-", 50));
 			logger.error("  domain {} is missing {} texture{}", resourceDomain, missing.size(), missing.size() != 1 ? "s" : "");
-			FallbackResourceManager fallbackResourceManager = resManagers.get(resourceDomain);
+			NamespaceResourceManager fallbackResourceManager = resManagers.get(resourceDomain);
 			if (fallbackResourceManager == null) {
 				logger.error("    domain {} is missing a resource manager - it is probably a side-effect of automatic texture processing", resourceDomain);
 			} else {
-				List<IResourcePack> resPacks = fallbackResourceManager.resourcePacks;
+				List<ResourcePack> resPacks = fallbackResourceManager.packList;
 				logger.error("    domain {} has {} location{}:", resourceDomain, resPacks.size(), resPacks.size() != 1 ? "s" : "");
-				for (IResourcePack resPack : resPacks) {
+				for (ResourcePack resPack : resPacks) {
 					if (resPack instanceof ModFileResourcePack) {
 						ModFileResourcePack modRP = (ModFileResourcePack) resPack;
 						List<IModInfo> mods = modRP.getModFile().getModInfos();
 						logger.error("      mod(s) {} resources at {}", mods.stream().map(IModInfo::getDisplayName).collect(Collectors.toList()), modRP.getModFile().getFilePath());
-					} else if (resPack instanceof ResourcePack) {
-						logger.error("      resource pack at path {}", ((ResourcePack) resPack).file.getPath());
+					} else if (resPack instanceof AbstractFileResourcePack) {
+						logger.error("      resource pack at path {}", ((AbstractFileResourcePack) resPack).base.getPath());
 					} else {
 						logger.error("      unknown resourcepack type {} : {}", resPack.getClass().getName(), resPack.getName());
 					}
@@ -259,7 +258,7 @@ public class ClientHooks {
 			logger.error(Strings.repeat("-", 25));
 			if (missingTextures.containsKey(resourceDomain)) {
 				logger.error("    The missing resources for domain {} are:", resourceDomain);
-				for (ResourceLocation rl : missing) {
+				for (Identifier rl : missing) {
 					logger.error("      {}", rl.getPath());
 				}
 				logger.error(Strings.repeat("-", 25));
@@ -268,11 +267,11 @@ public class ClientHooks {
 				logger.error("    No other errors exist for domain {}", resourceDomain);
 			} else {
 				logger.error("    The following other errors were reported for domain {}:", resourceDomain);
-				Map<String, Set<ResourceLocation>> resourceErrs = brokenTextures.row(resourceDomain);
+				Map<String, Set<Identifier>> resourceErrs = brokenTextures.row(resourceDomain);
 				for (String error : resourceErrs.keySet()) {
 					logger.error(Strings.repeat("-", 25));
 					logger.error("    Problem: {}", error);
-					for (ResourceLocation rl : resourceErrs.get(error)) {
+					for (Identifier rl : resourceErrs.get(error)) {
 						logger.error("      {}", rl.getPath());
 					}
 				}
@@ -282,15 +281,15 @@ public class ClientHooks {
 		logger.error(Strings.repeat("+=", 25));
 	}
 
-	public static void firePlayerLogin(PlayerController pc, ClientPlayerEntity player, NetworkManager networkManager) {
+	public static void firePlayerLogin(ClientPlayerInteractionManager pc, ClientPlayerEntity player, ClientConnection networkManager) {
 		MinecraftForge.EVENT_BUS.post(new ClientPlayerNetworkEvent.LoggedInEvent(pc, player, networkManager));
 	}
 
-	public static void firePlayerLogout(PlayerController pc, ClientPlayerEntity player) {
-		MinecraftForge.EVENT_BUS.post(new ClientPlayerNetworkEvent.LoggedOutEvent(pc, player, player != null ? player.connection != null ? player.connection.getNetworkManager() : null : null));
+	public static void firePlayerLogout(ClientPlayerInteractionManager pc, ClientPlayerEntity player) {
+		MinecraftForge.EVENT_BUS.post(new ClientPlayerNetworkEvent.LoggedOutEvent(pc, player, player != null ? player.networkHandler != null ? player.networkHandler.getConnection() : null : null));
 	}
 
-	public static void firePlayerRespawn(PlayerController pc, ClientPlayerEntity oldPlayer, ClientPlayerEntity newPlayer, NetworkManager networkManager) {
+	public static void firePlayerRespawn(ClientPlayerInteractionManager pc, ClientPlayerEntity oldPlayer, ClientPlayerEntity newPlayer, ClientConnection networkManager) {
 		MinecraftForge.EVENT_BUS.post(new ClientPlayerNetworkEvent.RespawnEvent(pc, oldPlayer, newPlayer, networkManager));
 	}
 

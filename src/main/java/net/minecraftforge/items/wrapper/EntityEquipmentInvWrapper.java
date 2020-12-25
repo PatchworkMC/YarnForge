@@ -20,8 +20,8 @@
 package net.minecraftforge.items.wrapper;
 
 import com.google.common.collect.ImmutableList;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
@@ -50,21 +50,21 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
     /**
      * The slots exposed by this wrapper, with {@link EntityEquipmentSlot#index} as the index.
      */
-    protected final List<EquipmentSlotType> slots;
+    protected final List<EquipmentSlot> slots;
 
     /**
      * @param entity   The entity.
      * @param slotType The slot type to expose.
      */
-    public EntityEquipmentInvWrapper(final LivingEntity entity, final EquipmentSlotType.Group slotType)
+    public EntityEquipmentInvWrapper(final LivingEntity entity, final EquipmentSlot.Type slotType)
     {
         this.entity = entity;
 
-        final List<EquipmentSlotType> slots = new ArrayList<EquipmentSlotType>();
+        final List<EquipmentSlot> slots = new ArrayList<EquipmentSlot>();
 
-        for (final EquipmentSlotType slot : EquipmentSlotType.values())
+        for (final EquipmentSlot slot : EquipmentSlot.values())
         {
-            if (slot.getSlotType() == slotType)
+            if (slot.getType() == slotType)
             {
                 slots.add(slot);
             }
@@ -83,7 +83,7 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
     @Override
     public ItemStack getStackInSlot(final int slot)
     {
-        return entity.getItemStackFromSlot(validateSlotIndex(slot));
+        return entity.getEquippedStack(validateSlotIndex(slot));
     }
 
     @Nonnull
@@ -93,9 +93,9 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
         if (stack.isEmpty())
             return ItemStack.EMPTY;
 
-        final EquipmentSlotType equipmentSlot = validateSlotIndex(slot);
+        final EquipmentSlot equipmentSlot = validateSlotIndex(slot);
 
-        final ItemStack existing = entity.getItemStackFromSlot(equipmentSlot);
+        final ItemStack existing = entity.getEquippedStack(equipmentSlot);
 
         int limit = getStackLimit(slot, stack);
 
@@ -116,11 +116,11 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
         {
             if (existing.isEmpty())
             {
-                entity.setItemStackToSlot(equipmentSlot, reachedLimit ? ItemHandlerHelper.copyStackWithSize(stack, limit) : stack);
+                entity.equipStack(equipmentSlot, reachedLimit ? ItemHandlerHelper.copyStackWithSize(stack, limit) : stack);
             }
             else
             {
-                existing.grow(reachedLimit ? limit : stack.getCount());
+                existing.increment(reachedLimit ? limit : stack.getCount());
             }
         }
 
@@ -134,20 +134,20 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
         if (amount == 0)
             return ItemStack.EMPTY;
 
-        final EquipmentSlotType equipmentSlot = validateSlotIndex(slot);
+        final EquipmentSlot equipmentSlot = validateSlotIndex(slot);
 
-        final ItemStack existing = entity.getItemStackFromSlot(equipmentSlot);
+        final ItemStack existing = entity.getEquippedStack(equipmentSlot);
 
         if (existing.isEmpty())
             return ItemStack.EMPTY;
 
-        final int toExtract = Math.min(amount, existing.getMaxStackSize());
+        final int toExtract = Math.min(amount, existing.getMaxCount());
 
         if (existing.getCount() <= toExtract)
         {
             if (!simulate)
             {
-                entity.setItemStackToSlot(equipmentSlot, ItemStack.EMPTY);
+                entity.equipStack(equipmentSlot, ItemStack.EMPTY);
             }
 
             return existing;
@@ -156,7 +156,7 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
         {
             if (!simulate)
             {
-                entity.setItemStackToSlot(equipmentSlot, ItemHandlerHelper.copyStackWithSize(existing, existing.getCount() - toExtract));
+                entity.equipStack(equipmentSlot, ItemHandlerHelper.copyStackWithSize(existing, existing.getCount() - toExtract));
             }
 
             return ItemHandlerHelper.copyStackWithSize(existing, toExtract);
@@ -166,22 +166,22 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
     @Override
     public int getSlotLimit(final int slot)
     {
-        final EquipmentSlotType equipmentSlot = validateSlotIndex(slot);
-        return equipmentSlot.getSlotType() == EquipmentSlotType.Group.ARMOR ? 1 : 64;
+        final EquipmentSlot equipmentSlot = validateSlotIndex(slot);
+        return equipmentSlot.getType() == EquipmentSlot.Type.ARMOR ? 1 : 64;
     }
 
     protected int getStackLimit(final int slot, @Nonnull final ItemStack stack)
     {
-        return Math.min(getSlotLimit(slot), stack.getMaxStackSize());
+        return Math.min(getSlotLimit(slot), stack.getMaxCount());
     }
 
     @Override
     public void setStackInSlot(final int slot, @Nonnull final ItemStack stack)
     {
-        final EquipmentSlotType equipmentSlot = validateSlotIndex(slot);
-        if (ItemStack.areItemStacksEqual(entity.getItemStackFromSlot(equipmentSlot), stack))
+        final EquipmentSlot equipmentSlot = validateSlotIndex(slot);
+        if (ItemStack.areEqual(entity.getEquippedStack(equipmentSlot), stack))
             return;
-        entity.setItemStackToSlot(equipmentSlot, stack);
+        entity.equipStack(equipmentSlot, stack);
     }
 
     @Override
@@ -190,7 +190,7 @@ public abstract class EntityEquipmentInvWrapper implements IItemHandlerModifiabl
         return true;
     }
 
-    protected EquipmentSlotType validateSlotIndex(final int slot)
+    protected EquipmentSlot validateSlotIndex(final int slot)
     {
         if (slot < 0 || slot >= slots.size())
             throw new IllegalArgumentException("Slot " + slot + " not in valid range - [0," + slots.size() + ")");

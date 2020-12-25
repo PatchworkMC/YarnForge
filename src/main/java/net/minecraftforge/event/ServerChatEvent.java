@@ -19,8 +19,8 @@
 
 package net.minecraftforge.event;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
@@ -47,8 +47,8 @@ public class ServerChatEvent extends net.minecraftforge.eventbus.api.Event
 {
     private final String message, username;
     private final ServerPlayerEntity player;
-    private ITextComponent component;
-    public ServerChatEvent(ServerPlayerEntity player, String message, ITextComponent component)
+    private Text component;
+    public ServerChatEvent(ServerPlayerEntity player, String message, Text component)
     {
         super();
         this.message = message;
@@ -57,12 +57,12 @@ public class ServerChatEvent extends net.minecraftforge.eventbus.api.Event
         this.component = component;
     }
 
-    public void setComponent(ITextComponent e)
+    public void setComponent(Text e)
     {
         this.component = e;
     }
 
-    public ITextComponent getComponent()
+    public Text getComponent()
     {
         return this.component;
     }

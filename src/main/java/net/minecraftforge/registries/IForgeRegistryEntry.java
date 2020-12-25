@@ -18,9 +18,8 @@
  */
 
 package net.minecraftforge.registries;
-import net.minecraft.util.ResourceLocation;
-
 import javax.annotation.Nullable;
+import net.minecraft.util.Identifier;
 
 public interface IForgeRegistryEntry<V>
 {
@@ -39,7 +38,7 @@ public interface IForgeRegistryEntry<V>
      * @param name Unique registry name
      * @return This instance
      */
-    V setRegistryName(ResourceLocation name);
+    V setRegistryName(Identifier name);
 
     /**
      * A unique identifier for this entry, if this entry is registered already it will return it's official registry name.
@@ -49,7 +48,7 @@ public interface IForgeRegistryEntry<V>
      * @return Unique identifier or null.
      */
     @Nullable
-    ResourceLocation getRegistryName();
+    Identifier getRegistryName();
 
     /**
      * Determines the type for this entry, used to look up the correct registry in the global registries list as there can only be one

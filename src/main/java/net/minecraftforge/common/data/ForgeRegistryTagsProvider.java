@@ -25,8 +25,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.TagsProvider;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.server.AbstractTagProvider;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistry;
@@ -34,7 +34,7 @@ import net.minecraftforge.registries.GameData;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
-public abstract class ForgeRegistryTagsProvider<T extends IForgeRegistryEntry<T>> extends TagsProvider<T>
+public abstract class ForgeRegistryTagsProvider<T extends IForgeRegistryEntry<T>> extends AbstractTagProvider<T>
 {
     //Special handling for vanilla tag types in case someone decides to use the ForgeRegistryTagsProvider instead of one of the vanilla subtypes
     private static final Map<IForgeRegistry<?>, String> vanillaTypes = ImmutableMap.<IForgeRegistry<?>, String>builder()
@@ -66,9 +66,9 @@ public abstract class ForgeRegistryTagsProvider<T extends IForgeRegistryEntry<T>
     }
 
     @Override
-    protected Path makePath(ResourceLocation id)
+    protected Path getOutput(Identifier id)
     {
-        return generator.getOutputFolder().resolve("data/" + id.getNamespace() + "/tags/" + folder + "/" + id.getPath() + ".json");
+        return root.getOutput().resolve("data/" + id.getNamespace() + "/tags/" + folder + "/" + id.getPath() + ".json");
     }
 
     @Override

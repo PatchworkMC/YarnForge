@@ -19,7 +19,7 @@
 
 package net.minecraftforge.debug.world;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.BiomeLoadingEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -37,7 +37,7 @@ public class BiomeLoadingEventTest {
         }
     }
     public void onBiomeLoading(BiomeLoadingEvent event){
-        ResourceLocation biome = event.getName();
+        Identifier biome = event.getName();
         LOGGER.info(String.format("Biome loaded: %s", biome.toString()));
     }
 }

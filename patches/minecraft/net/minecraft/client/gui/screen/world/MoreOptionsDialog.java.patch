@@ -1,0 +1,19 @@
+--- a/net/minecraft/client/gui/screen/world/MoreOptionsDialog.java
++++ b/net/minecraft/client/gui/screen/world/MoreOptionsDialog.java
+@@ -140,6 +140,7 @@
+       this.mapTypeButton.active = this.field_25049.isPresent();
+       this.customizeTypeButton = p_239048_1_.addButton(new ButtonWidget(j, 120, 150, 20, new TranslatableText("selectWorld.customizeType"), (p_239044_3_) -> {
+          GeneratorType.ScreenProvider biomegeneratortypescreens$ifactory = GeneratorType.SCREEN_PROVIDERS.get(this.field_25049);
++         biomegeneratortypescreens$ifactory = net.minecraftforge.client.ForgeHooksClient.getBiomeGeneratorTypeScreenFactory(this.field_25049, biomegeneratortypescreens$ifactory);
+          if (biomegeneratortypescreens$ifactory != null) {
+             p_239048_2_.openScreen(biomegeneratortypescreens$ifactory.createEditScreen(p_239048_1_, this.generatorOptions));
+          }
+@@ -298,7 +299,7 @@
+       } else {
+          this.mapFeaturesButton.visible = p_239059_1_;
+          this.bonusItemsButton.visible = p_239059_1_;
+-         this.customizeTypeButton.visible = p_239059_1_ && GeneratorType.SCREEN_PROVIDERS.containsKey(this.field_25049);
++         this.customizeTypeButton.visible = p_239059_1_ && (GeneratorType.SCREEN_PROVIDERS.containsKey(this.field_25049) || net.minecraftforge.client.ForgeHooksClient.hasBiomeGeneratorSettingsOptionsScreen(this.field_25049));
+          this.field_25048.visible = p_239059_1_;
+       }
+ 

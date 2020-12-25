@@ -1,0 +1,45 @@
+--- a/net/minecraft/entity/mob/SlimeEntity.java
++++ b/net/minecraft/entity/mob/SlimeEntity.java
+@@ -126,6 +126,7 @@
+       if (this.onGround && !this.onGroundLastTick) {
+          int i = this.getSize();
+ 
++         if (spawnCustomParticles()) i = 0; // don't spawn particles if it's handled by the implementation itself
+          for(int j = 0; j < i * 8; ++j) {
+             float f = this.random.nextFloat() * ((float)Math.PI * 2F);
+             float f1 = this.random.nextFloat() * 0.5F + 0.5F;
+@@ -177,9 +178,10 @@
+       return (EntityType<? extends SlimeEntity>)super.getType();
+    }
+ 
+-   public void remove() {
++   @Override
++   public void remove(boolean keepData) {
+       int i = this.getSize();
+-      if (!this.world.isClient && i > 1 && this.isDead()) {
++      if (!this.world.isClient && i > 1 && this.isDead() && !this.removed) {
+          Text itextcomponent = this.getCustomName();
+          boolean flag = this.isAiDisabled();
+          float f = (float)i / 4.0F;
+@@ -203,7 +205,7 @@
+          }
+       }
+ 
+-      super.remove();
++      super.remove(keepData);
+    }
+ 
+    public void pushAwayFrom(Entity entityIn) {
+@@ -323,6 +325,12 @@
+       return super.getDimensions(poseIn).scaled(0.255F * (float)this.getSize());
+    }
+ 
++   /**
++    * Called when the slime spawns particles on landing, see onUpdate.
++    * Return true to prevent the spawning of the default particles.
++    */
++   protected boolean spawnCustomParticles() { return false; }
++
+    static class FaceTowardTargetGoal extends Goal {
+       private final SlimeEntity slime;
+       private int ticksLeft;

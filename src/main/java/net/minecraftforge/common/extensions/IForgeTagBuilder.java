@@ -19,52 +19,52 @@
 
 package net.minecraftforge.common.extensions;
 
-import net.minecraft.data.TagsProvider;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.server.AbstractTagProvider;
+import net.minecraft.tag.Tag;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.RegistryKey;
 
 //TODO, Tag removal support.
 public interface IForgeTagBuilder<T>
 {
 
-    default TagsProvider.Builder<T> getBuilder() {
-        return (TagsProvider.Builder<T>) this;
+    default AbstractTagProvider.ObjectBuilder<T> getBuilder() {
+        return (AbstractTagProvider.ObjectBuilder<T>) this;
     }
 
     @SuppressWarnings("unchecked")
-    default TagsProvider.Builder<T> addTags(ITag.INamedTag<T>... values) {
-        TagsProvider.Builder<T> builder = getBuilder();
-        for (ITag.INamedTag<T> value : values) {
+    default AbstractTagProvider.ObjectBuilder<T> addTags(Tag.Identified<T>... values) {
+        AbstractTagProvider.ObjectBuilder<T> builder = getBuilder();
+        for (Tag.Identified<T> value : values) {
             builder.addTag(value);
         }
         return builder;
     }
 
-    default TagsProvider.Builder<T> add(RegistryKey<T>... keys) {
-        TagsProvider.Builder<T> builder = getBuilder();
+    default AbstractTagProvider.ObjectBuilder<T> add(RegistryKey<T>... keys) {
+        AbstractTagProvider.ObjectBuilder<T> builder = getBuilder();
         for (RegistryKey<T> key : keys) {
-            builder.getInternalBuilder().addItemEntry(key.getLocation(), getBuilder().getModID());
+            builder.getInternalBuilder().add(key.getValue(), getBuilder().getModID());
         }
         return builder;
     }
 
-    default TagsProvider.Builder<T> replace() {
+    default AbstractTagProvider.ObjectBuilder<T> replace() {
         return replace(true);
     }
 
-    default TagsProvider.Builder<T> replace(boolean value) {
+    default AbstractTagProvider.ObjectBuilder<T> replace(boolean value) {
         getBuilder().getInternalBuilder().replace(value);
         return getBuilder();
     }
 
-    default TagsProvider.Builder<T> addOptional(final ResourceLocation location)
+    default AbstractTagProvider.ObjectBuilder<T> addOptional(final Identifier location)
     {
-        return getBuilder().add(new ITag.OptionalItemEntry(location));
+        return getBuilder().add(new Tag.OptionalObjectEntry(location));
     }
 
-    default TagsProvider.Builder<T> addOptionalTag(final ResourceLocation location)
+    default AbstractTagProvider.ObjectBuilder<T> addOptionalTag(final Identifier location)
     {
-        return getBuilder().add(new ITag.OptionalTagEntry(location));
+        return getBuilder().add(new Tag.OptionalTagEntry(location));
     }
 }

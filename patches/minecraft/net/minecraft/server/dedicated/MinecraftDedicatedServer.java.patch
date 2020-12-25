@@ -1,0 +1,50 @@
+--- a/net/minecraft/server/dedicated/MinecraftDedicatedServer.java
++++ b/net/minecraft/server/dedicated/MinecraftDedicatedServer.java
+@@ -79,6 +79,7 @@
+    public boolean setupServer() throws IOException {
+       Thread thread = new Thread("Server console handler") {
+          public void run() {
++            if (net.minecraftforge.server.console.TerminalHandler.handleCommands(MinecraftDedicatedServer.this)) return;
+             BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+ 
+             String s1;
+@@ -160,11 +161,13 @@
+          SkullBlockEntity.setUserCache(this.getUserCache());
+          SkullBlockEntity.setSessionService(this.getSessionService());
+          UserCache.setUseRemote(this.isOnlineMode());
++         if (!net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerAboutToStart(this)) return false;
+          LOGGER.info("Preparing level \"{}\"", (Object)this.getLevelName());
+          this.loadWorld();
+          long j = Util.getMeasuringTimeNano() - i;
+          String s = String.format(Locale.ROOT, "%.3fs", (double)j / 1.0E9D);
+          LOGGER.info("Done ({})! For help, type \"help\"", (Object)s);
++         this.timeReference = Util.getMeasuringTimeMs(); //Forge: Update server time to prevent watchdog/spaming during long load.
+          if (serverproperties.announcePlayerAchievements != null) {
+             this.getGameRules().get(GameRules.ANNOUNCE_ADVANCEMENTS).set(serverproperties.announcePlayerAchievements, this);
+          }
+@@ -188,11 +191,12 @@
+          }
+ 
+          Items.AIR.appendStacks(ItemGroup.SEARCH, DefaultedList.of());
++         // <3 you Grum for this, saves us ~30 patch files! --^
+          if (serverproperties.enableJmxMonitoring) {
+             ServerMBean.register(this);
+          }
+ 
+-         return true;
++         return net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerStarting(this);
+       }
+    }
+ 
+@@ -513,6 +517,11 @@
+       return false;
+    }
+ 
++   @Override //Forge: Enable formated text for colors in console.
++   public void sendSystemMessage(net.minecraft.text.Text message, java.util.UUID senderUUID) {
++      LOGGER.info(message.getString());
++   }
++
+    public int adjustTrackingDistance(int p_230512_1_) {
+       return this.getProperties().entityBroadcastRangePercentage * p_230512_1_ / 100;
+    }

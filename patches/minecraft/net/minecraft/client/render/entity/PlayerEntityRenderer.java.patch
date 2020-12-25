@@ -1,0 +1,12 @@
+--- a/net/minecraft/client/render/entity/PlayerEntityRenderer.java
++++ b/net/minecraft/client/render/entity/PlayerEntityRenderer.java
+@@ -61,7 +61,9 @@
+ 
+    public void render(AbstractClientPlayerEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, VertexConsumerProvider bufferIn, int packedLightIn) {
+       this.setModelPose(entityIn);
++      if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderPlayerEvent.Pre(entityIn, this, partialTicks, matrixStackIn, bufferIn, packedLightIn))) return;
+       super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderPlayerEvent.Post(entityIn, this, partialTicks, matrixStackIn, bufferIn, packedLightIn));
+    }
+ 
+    public Vec3d getPositionOffset(AbstractClientPlayerEntity entityIn, float partialTicks) {

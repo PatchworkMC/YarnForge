@@ -19,8 +19,8 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraft.client.network.play.NetworkPlayerInfo;
-import net.minecraft.world.GameType;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.world.GameMode;
 import net.minecraftforge.eventbus.api.Event;
 
 /**
@@ -28,28 +28,28 @@ import net.minecraftforge.eventbus.api.Event;
  */
 public class ClientPlayerChangeGameModeEvent extends Event
 {
-    private final NetworkPlayerInfo info;
-    private final GameType currentGameMode;
-    private final GameType newGameMode;
+    private final PlayerListEntry info;
+    private final GameMode currentGameMode;
+    private final GameMode newGameMode;
 
-    public ClientPlayerChangeGameModeEvent(NetworkPlayerInfo info, GameType currentGameMode, GameType newGameMode)
+    public ClientPlayerChangeGameModeEvent(PlayerListEntry info, GameMode currentGameMode, GameMode newGameMode)
     {
         this.info = info;
         this.currentGameMode = currentGameMode;
         this.newGameMode = newGameMode;
     }
 
-    public NetworkPlayerInfo getInfo()
+    public PlayerListEntry getInfo()
     {
         return info;
     }
 
-    public GameType getCurrentGameMode()
+    public GameMode getCurrentGameMode()
     {
         return currentGameMode;
     }
 
-    public GameType getNewGameMode()
+    public GameMode getNewGameMode()
     {
         return newGameMode;
     }

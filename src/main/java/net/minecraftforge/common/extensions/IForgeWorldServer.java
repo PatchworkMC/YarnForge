@@ -19,7 +19,7 @@
 
 package net.minecraftforge.common.extensions;
 
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.world.ServerWorld;
 
 public interface IForgeWorldServer extends IForgeWorld
 {

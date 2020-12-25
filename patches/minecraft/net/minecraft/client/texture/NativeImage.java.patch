@@ -1,0 +1,29 @@
+--- a/net/minecraft/client/texture/NativeImage.java
++++ b/net/minecraft/client/texture/NativeImage.java
+@@ -182,7 +182,7 @@
+    public int getPixelColor(int x, int y) {
+       if (this.format != NativeImage.Format.ABGR) {
+          throw new IllegalArgumentException(String.format("getPixelRGBA only works on RGBA images; have %s", this.format));
+-      } else if (x <= this.width && y <= this.height) {
++      } else if (x >= 0 && y >= 0 && x < this.width && y < this.height) { //Fix MC-162953 bounds checks in `NativeImage`
+          this.checkAllocated();
+          long i = (long)((x + y * this.width) * 4);
+          return MemoryUtil.memGetInt(this.pointer + i);
+@@ -194,7 +194,7 @@
+    public void setPixelColor(int x, int y, int value) {
+       if (this.format != NativeImage.Format.ABGR) {
+          throw new IllegalArgumentException(String.format("getPixelRGBA only works on RGBA images; have %s", this.format));
+-      } else if (x <= this.width && y <= this.height) {
++      } else if (x >= 0 && y >= 0 && x < this.width && y < this.height) { //Fix MC-162953 bounds checks in `NativeImage`
+          this.checkAllocated();
+          long i = (long)((x + y * this.width) * 4);
+          MemoryUtil.memPutInt(this.pointer + i, value);
+@@ -206,7 +206,7 @@
+    public byte getPixelOpacity(int x, int y) {
+       if (!this.format.hasOpacityChannel()) {
+          throw new IllegalArgumentException(String.format("no luminance or alpha in %s", this.format));
+-      } else if (x <= this.width && y <= this.height) {
++      } else if (x >= 0 && y >= 0 && x < this.width && y < this.height) { //Fix MC-162953 bounds checks in `NativeImage`
+          int i = (x + y * this.width) * this.format.getChannelCount() + this.format.getOpacityOffset() / 8;
+          return MemoryUtil.memGetByte(this.pointer + (long)i);
+       } else {

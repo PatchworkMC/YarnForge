@@ -20,10 +20,8 @@
 package net.minecraftforge.client.event;
 
 import javax.annotation.Nonnull;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
-
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraftforge.eventbus.api.Cancelable;
@@ -39,7 +37,7 @@ public class RenderHandEvent extends Event
 {
     private final Hand hand;
     private final MatrixStack mat;
-    private final IRenderTypeBuffer buffers;
+    private final VertexConsumerProvider buffers;
     private final int light;
     private final float partialTicks;
     private final float interpolatedPitch;
@@ -48,7 +46,7 @@ public class RenderHandEvent extends Event
     @Nonnull
     private final ItemStack stack;
 
-    public RenderHandEvent(Hand hand, MatrixStack mat, IRenderTypeBuffer buffers, int light,
+    public RenderHandEvent(Hand hand, MatrixStack mat, VertexConsumerProvider buffers, int light,
                            float partialTicks, float interpolatedPitch,
                            float swingProgress, float equipProgress, @Nonnull ItemStack stack)
     {
@@ -73,7 +71,7 @@ public class RenderHandEvent extends Event
         return mat;
     }
 
-    public IRenderTypeBuffer getBuffers() {
+    public VertexConsumerProvider getBuffers() {
         return buffers;
     }
 

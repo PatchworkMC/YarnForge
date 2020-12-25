@@ -19,7 +19,7 @@
 
 package net.minecraftforge.event.world;
 
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.world.ServerWorld;
 
 /**
  * This event is fired when all players are asleep and the time should be set to day.<br>

@@ -1,0 +1,15 @@
+--- a/net/minecraft/recipe/Recipe.java
++++ b/net/minecraft/recipe/Recipe.java
+@@ -21,9 +21,9 @@
+       DefaultedList<ItemStack> nonnulllist = DefaultedList.ofSize(inv.size(), ItemStack.EMPTY);
+ 
+       for(int i = 0; i < nonnulllist.size(); ++i) {
+-         Item item = inv.getStack(i).getItem();
+-         if (item.hasRecipeRemainder()) {
+-            nonnulllist.set(i, new ItemStack(item.getRecipeRemainder()));
++         ItemStack item = inv.getStack(i);
++         if (item.hasContainerItem()) {
++            nonnulllist.set(i, item.getContainerItem());
+          }
+       }
+ 

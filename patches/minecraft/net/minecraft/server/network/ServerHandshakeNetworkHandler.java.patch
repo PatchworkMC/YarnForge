@@ -1,0 +1,10 @@
+--- a/net/minecraft/server/network/ServerHandshakeNetworkHandler.java
++++ b/net/minecraft/server/network/ServerHandshakeNetworkHandler.java
+@@ -22,6 +22,7 @@
+    }
+ 
+    public void onHandshake(HandshakeC2SPacket packetIn) {
++      if (!net.minecraftforge.fml.server.ServerLifecycleHooks.handleServerLogin(packetIn, this.connection)) return;
+       switch(packetIn.getIntendedState()) {
+       case LOGIN:
+          this.connection.setState(NetworkState.LOGIN);

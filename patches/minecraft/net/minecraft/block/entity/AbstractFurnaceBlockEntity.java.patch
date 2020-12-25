@@ -1,0 +1,126 @@
+--- a/net/minecraft/block/entity/AbstractFurnaceBlockEntity.java
++++ b/net/minecraft/block/entity/AbstractFurnaceBlockEntity.java
+@@ -92,6 +92,7 @@
+       this.recipeType = recipeTypeIn;
+    }
+ 
++   @Deprecated //Forge - get burn times by calling ForgeHooks#getBurnTime(ItemStack)
+    public static Map<Item, Integer> createFuelTimeMap() {
+       Map<Item, Integer> map = Maps.newLinkedHashMap();
+       addFuel(map, Items.LAVA_BUCKET, 20000);
+@@ -185,13 +186,13 @@
+       return this.burnTime > 0;
+    }
+ 
+-   public void fromTag(BlockState state, CompoundTag nbt) {
++   public void fromTag(BlockState state, CompoundTag nbt) { //TODO: MARK
+       super.fromTag(state, nbt);
+       this.inventory = DefaultedList.ofSize(this.size(), ItemStack.EMPTY);
+       Inventories.fromTag(nbt, this.inventory);
+-      this.burnTime = nbt.getShort("BurnTime");
+-      this.cookTime = nbt.getShort("CookTime");
+-      this.cookTimeTotal = nbt.getShort("CookTimeTotal");
++      this.burnTime = nbt.getInt("BurnTime");
++      this.cookTime = nbt.getInt("CookTime");
++      this.cookTimeTotal = nbt.getInt("CookTimeTotal");
+       this.fuelTime = this.getFuelTime(this.inventory.get(1));
+       CompoundTag compoundnbt = nbt.getCompound("RecipesUsed");
+ 
+@@ -203,9 +204,9 @@
+ 
+    public CompoundTag toTag(CompoundTag compound) {
+       super.toTag(compound);
+-      compound.putShort("BurnTime", (short)this.burnTime);
+-      compound.putShort("CookTime", (short)this.cookTime);
+-      compound.putShort("CookTimeTotal", (short)this.cookTimeTotal);
++      compound.putInt("BurnTime", this.burnTime);
++      compound.putInt("CookTime", this.cookTime);
++      compound.putInt("CookTimeTotal", this.cookTimeTotal);
+       Inventories.toTag(compound, this.inventory);
+       CompoundTag compoundnbt = new CompoundTag();
+       this.recipesUsed.forEach((p_235643_1_, p_235643_2_) -> {
+@@ -231,12 +232,14 @@
+                this.fuelTime = this.burnTime;
+                if (this.isBurning()) {
+                   flag1 = true;
++                  if (itemstack.hasContainerItem())
++                      this.inventory.set(1, itemstack.getContainerItem());
++                  else
+                   if (!itemstack.isEmpty()) {
+                      Item item = itemstack.getItem();
+                      itemstack.decrement(1);
+                      if (itemstack.isEmpty()) {
+-                        Item item1 = item.getRecipeRemainder();
+-                        this.inventory.set(1, item1 == null ? ItemStack.EMPTY : new ItemStack(item1));
++                        this.inventory.set(1, itemstack.getContainerItem());
+                      }
+                   }
+                }
+@@ -280,10 +283,10 @@
+                return true;
+             } else if (!itemstack1.isItemEqualIgnoreDamage(itemstack)) {
+                return false;
+-            } else if (itemstack1.getCount() < this.getMaxCountPerStack() && itemstack1.getCount() < itemstack1.getMaxCount()) {
++            } else if (itemstack1.getCount() + itemstack.getCount() <= this.getMaxCountPerStack() && itemstack1.getCount() + itemstack.getCount() <= itemstack1.getMaxCount()) { // Forge fix: make furnace respect stack sizes in furnace recipes
+                return true;
+             } else {
+-               return itemstack1.getCount() < itemstack.getMaxCount();
++               return itemstack1.getCount() + itemstack.getCount() <= itemstack.getMaxCount(); // Forge fix: make furnace respect stack sizes in furnace recipes
+             }
+          }
+       } else {
+@@ -299,7 +302,7 @@
+          if (itemstack2.isEmpty()) {
+             this.inventory.set(2, itemstack1.copy());
+          } else if (itemstack2.getItem() == itemstack1.getItem()) {
+-            itemstack2.increment(1);
++            itemstack2.increment(itemstack1.getCount());
+          }
+ 
+          if (!this.world.isClient) {
+@@ -319,7 +322,7 @@
+          return 0;
+       } else {
+          Item item = fuel.getItem();
+-         return createFuelTimeMap().getOrDefault(item, 0);
++         return net.minecraftforge.common.ForgeHooks.getBurnTime(fuel);
+       }
+    }
+ 
+@@ -328,7 +331,7 @@
+    }
+ 
+    public static boolean canUseAsFuel(ItemStack stack) {
+-      return createFuelTimeMap().containsKey(stack.getItem());
++      return net.minecraftforge.common.ForgeHooks.getBurnTime(stack) > 0;
+    }
+ 
+    public int[] getAvailableSlots(Direction side) {
+@@ -475,4 +478,27 @@
+       }
+ 
+    }
++
++   net.minecraftforge.common.util.LazyOptional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
++           net.minecraftforge.items.wrapper.SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable Direction facing) {
++      if (!this.removed && facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
++         if (facing == Direction.UP)
++            return handlers[0].cast();
++         else if (facing == Direction.DOWN)
++            return handlers[1].cast();
++         else
++            return handlers[2].cast();
++      }
++      return super.getCapability(capability, facing);
++   }
++
++   @Override
++   protected void invalidateCaps() {
++      super.invalidateCaps();
++      for (int x = 0; x < handlers.length; x++)
++        handlers[x].invalidate();
++   }
+ }

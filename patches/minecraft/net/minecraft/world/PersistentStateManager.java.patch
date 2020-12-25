@@ -1,0 +1,16 @@
+--- a/net/minecraft/world/PersistentStateManager.java
++++ b/net/minecraft/world/PersistentStateManager.java
+@@ -47,9 +47,13 @@
+    @Nullable
+    public <T extends PersistentState> T get(Supplier<T> defaultSupplier, String name) {
+       PersistentState worldsaveddata = this.loadedStates.get(name);
++      if (worldsaveddata == net.minecraftforge.common.util.DummyWorldSaveData.DUMMY) return null;
+       if (worldsaveddata == null && !this.loadedStates.containsKey(name)) {
+          worldsaveddata = this.readFromFile(defaultSupplier, name);
+          this.loadedStates.put(name, worldsaveddata);
++      } else if (worldsaveddata == null) {
++         this.loadedStates.put(name, net.minecraftforge.common.util.DummyWorldSaveData.DUMMY);
++         return null;
+       }
+ 
+       return (T)worldsaveddata;

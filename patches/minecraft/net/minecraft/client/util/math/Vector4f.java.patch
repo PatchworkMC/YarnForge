@@ -1,0 +1,19 @@
+--- a/net/minecraft/client/util/math/Vector4f.java
++++ b/net/minecraft/client/util/math/Vector4f.java
+@@ -127,4 +127,16 @@
+    public String toString() {
+       return "[" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + "]";
+    }
++
++    // Forge start
++    public void set(float[] values) {
++        this.x = values[0];
++        this.y = values[1];
++        this.z = values[2];
++        this.w = values[3];
++    }
++    public void setX(float x) { this.x = x; }
++    public void setY(float y) { this.y = y; }
++    public void setZ(float z) { this.z = z; }
++    public void setW(float z) { this.w = z; }
+ }

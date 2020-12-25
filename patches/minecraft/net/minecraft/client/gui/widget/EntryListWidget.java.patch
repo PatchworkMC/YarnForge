@@ -1,0 +1,16 @@
+--- a/net/minecraft/client/gui/widget/EntryListWidget.java
++++ b/net/minecraft/client/gui/widget/EntryListWidget.java
+@@ -494,6 +494,13 @@
+       p_238480_1_.list = this;
+    }
+ 
++   public int getWidth() { return this.width; }
++   public int getHeight() { return this.height; }
++   public int getTop() { return this.top; }
++   public int getBottom() { return this.bottom; }
++   public int getLeft() { return this.left; }
++   public int getRight() { return this.right; }
++
+    @Environment(EnvType.CLIENT)
+    public abstract static class Entry<E extends EntryListWidget.Entry<E>> implements Element {
+       @Deprecated

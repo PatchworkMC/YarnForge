@@ -1,0 +1,17 @@
+--- a/net/minecraft/tag/BlockTags.java
++++ b/net/minecraft/tag/BlockTags.java
+@@ -97,6 +97,14 @@
+       return REQUIRED_TAGS.add(id);
+    }
+ 
++   public static net.minecraftforge.common.Tags.IOptionalNamedTag<Block> createOptional(Identifier name) {
++       return createOptional(name, null);
++   }
++
++   public static net.minecraftforge.common.Tags.IOptionalNamedTag<Block> createOptional(Identifier name, @javax.annotation.Nullable java.util.Set<java.util.function.Supplier<Block>> defaults) {
++      return REQUIRED_TAGS.createOptional(name, defaults);
++   }
++
+    public static TagGroup<Block> getTagGroup() {
+       return REQUIRED_TAGS.getGroup();
+    }

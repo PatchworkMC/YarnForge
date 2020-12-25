@@ -20,13 +20,12 @@
 package net.minecraftforge.client;
 
 import com.google.common.collect.Maps;
-import net.minecraft.client.gui.screen.BiomeGeneratorTypeScreens;
-import net.minecraft.util.registry.DynamicRegistries;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.ChunkGenerator;
-import net.minecraft.world.gen.DimensionSettings;
-import net.minecraft.world.gen.settings.DimensionGeneratorSettings;
+import net.minecraft.world.gen.GeneratorOptions;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 import net.minecraftforge.common.world.ForgeWorldType;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
@@ -41,10 +40,10 @@ public class ForgeWorldTypeScreens
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final Map<ForgeWorldType, BiomeGeneratorTypeScreens> GENERATORS = Maps.newHashMap();
-    private static final Map<ForgeWorldType, BiomeGeneratorTypeScreens.IFactory> GENERATOR_SCREEN_FACTORIES = Maps.newHashMap();
+    private static final Map<ForgeWorldType, net.minecraft.client.world.GeneratorType> GENERATORS = Maps.newHashMap();
+    private static final Map<ForgeWorldType, net.minecraft.client.world.GeneratorType.ScreenProvider> GENERATOR_SCREEN_FACTORIES = Maps.newHashMap();
 
-    public static synchronized void registerFactory(ForgeWorldType type, BiomeGeneratorTypeScreens.IFactory factory)
+    public static synchronized void registerFactory(ForgeWorldType type, net.minecraft.client.world.GeneratorType.ScreenProvider factory)
     {
         if (GENERATOR_SCREEN_FACTORIES.containsKey(type))
             throw new IllegalStateException("Factory has already been registered for: " + type);
@@ -52,25 +51,25 @@ public class ForgeWorldTypeScreens
         GENERATOR_SCREEN_FACTORIES.put(type, factory);
     }
 
-    static BiomeGeneratorTypeScreens getDefaultGenerator()
+    static net.minecraft.client.world.GeneratorType getDefaultGenerator()
     {
         ForgeWorldType def = ForgeWorldType.getDefaultWorldType();
         if (def == null)
         {
-            return BiomeGeneratorTypeScreens.field_239066_a_;
+            return net.minecraft.client.world.GeneratorType.DEFAULT;
         }
 
-        BiomeGeneratorTypeScreens gen = GENERATORS.get(def);
+        net.minecraft.client.world.GeneratorType gen = GENERATORS.get(def);
         if (gen == null)
         {
             LOGGER.error("The default world type '{}' has not been added to the GUI. Was it registered too late?", def.getRegistryName());
-            return BiomeGeneratorTypeScreens.field_239066_a_;
+            return net.minecraft.client.world.GeneratorType.DEFAULT;
         }
 
         return gen;
     }
 
-    static BiomeGeneratorTypeScreens.IFactory getGeneratorScreenFactory(Optional<BiomeGeneratorTypeScreens> generator, @Nullable BiomeGeneratorTypeScreens.IFactory biomegeneratortypescreens$ifactory)
+    static net.minecraft.client.world.GeneratorType.ScreenProvider getGeneratorScreenFactory(Optional<net.minecraft.client.world.GeneratorType> generator, @Nullable net.minecraft.client.world.GeneratorType.ScreenProvider biomegeneratortypescreens$ifactory)
     {
         return generator.filter(gen -> gen instanceof GeneratorType)
                 .map(type -> GENERATOR_SCREEN_FACTORIES.get(((GeneratorType)type).getWorldType()))
@@ -82,11 +81,11 @@ public class ForgeWorldTypeScreens
         ForgeRegistries.WORLD_TYPES.forEach(wt -> {
             GeneratorType gen = new GeneratorType(wt);
             GENERATORS.put(wt, gen);
-            BiomeGeneratorTypeScreens.registerGenerator(gen);
+            net.minecraft.client.world.GeneratorType.registerGenerator(gen);
         });
     }
 
-    private static class GeneratorType extends BiomeGeneratorTypeScreens
+    private static class GeneratorType extends net.minecraft.client.world.GeneratorType
     {
         private final ForgeWorldType worldType;
 
@@ -103,14 +102,14 @@ public class ForgeWorldTypeScreens
 
         @Nonnull
         @Override
-        public DimensionGeneratorSettings func_241220_a_(@Nonnull DynamicRegistries.Impl dynamicRegistries, long seed, boolean generateStructures, boolean bonusChest)
+        public GeneratorOptions createDefaultOptions(@Nonnull DynamicRegistryManager.Impl dynamicRegistries, long seed, boolean generateStructures, boolean bonusChest)
         {
             return worldType.createSettings(dynamicRegistries, seed, generateStructures, bonusChest, "");
         }
 
         @Nonnull
         @Override
-        protected ChunkGenerator func_241869_a(@Nonnull Registry<Biome> p_241869_1_, @Nonnull Registry<DimensionSettings> p_241869_2_, long p_241869_3_)
+        protected ChunkGenerator getChunkGenerator(@Nonnull Registry<Biome> p_241869_1_, @Nonnull Registry<ChunkGeneratorSettings> p_241869_2_, long p_241869_3_)
         {
             return worldType.createChunkGenerator(p_241869_1_, p_241869_2_, p_241869_3_, "");
         }

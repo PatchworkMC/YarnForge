@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.util.NonNullList;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.util.collection.DefaultedList;
 
 public class BrewingRecipeRegistry {
 
@@ -96,7 +96,7 @@ public class BrewingRecipeRegistry {
      * Extra parameters exist to allow modders to create bigger brewing stands
      * without much hassle
      */
-    public static boolean canBrew(NonNullList<ItemStack> inputs, ItemStack ingredient, int[] inputIndexes)
+    public static boolean canBrew(DefaultedList<ItemStack> inputs, ItemStack ingredient, int[] inputIndexes)
     {
         if (ingredient.isEmpty()) return false;
 
@@ -115,7 +115,7 @@ public class BrewingRecipeRegistry {
      * Used by the brewing stand to brew its inventory Extra parameters exist to
      * allow modders to create bigger brewing stands without much hassle
      */
-    public static void brewPotions(NonNullList<ItemStack> inputs, ItemStack ingredient, int[] inputIndexes)
+    public static void brewPotions(DefaultedList<ItemStack> inputs, ItemStack ingredient, int[] inputIndexes)
     {
         for (int i : inputIndexes)
         {

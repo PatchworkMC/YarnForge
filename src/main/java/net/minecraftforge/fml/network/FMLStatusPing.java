@@ -32,14 +32,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSyntaxException;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModList;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
 
 import static net.minecraftforge.fml.network.FMLNetworkConstants.NETWORK;
 
@@ -65,7 +64,7 @@ import static net.minecraftforge.fml.network.FMLNetworkConstants.NETWORK;
 public class FMLStatusPing {
 	private static final Logger LOGGER = LogManager.getLogger();
 
-	private final transient Map<ResourceLocation, Pair<String, Boolean>> channels;
+	private final transient Map<Identifier, Pair<String, Boolean>> channels;
 	private final transient Map<String, String> mods;
 	private final transient int fmlNetworkVer;
 
@@ -78,7 +77,7 @@ public class FMLStatusPing {
 		this.fmlNetworkVer = FMLNetworkConstants.FMLNETVERSION;
 	}
 
-	private FMLStatusPing(Map<ResourceLocation, Pair<String, Boolean>> deserialized, Map<String, String> modMarkers, int fmlNetVer) {
+	private FMLStatusPing(Map<Identifier, Pair<String, Boolean>> deserialized, Map<String, String> modMarkers, int fmlNetVer) {
 		this.channels = ImmutableMap.copyOf(deserialized);
 		this.mods = modMarkers;
 		this.fmlNetworkVer = fmlNetVer;
@@ -87,17 +86,17 @@ public class FMLStatusPing {
 	public static class Serializer {
 		public static FMLStatusPing deserialize(JsonObject forgeData, JsonDeserializationContext ctx) {
 			try {
-				final Map<ResourceLocation, Pair<String, Boolean>> channels = StreamSupport.stream(JSONUtils.getJsonArray(forgeData, "channels").spliterator(), false).
+				final Map<Identifier, Pair<String, Boolean>> channels = StreamSupport.stream(JsonHelper.getArray(forgeData, "channels").spliterator(), false).
 					map(JsonElement::getAsJsonObject).
-					collect(Collectors.toMap(jo -> new ResourceLocation(JSONUtils.getString(jo, "res")),
-						jo -> Pair.of(JSONUtils.getString(jo, "version"), JSONUtils.getBoolean(jo, "required")))
+					collect(Collectors.toMap(jo -> new Identifier(JsonHelper.getString(jo, "res")),
+						jo -> Pair.of(JsonHelper.getString(jo, "version"), JsonHelper.getBoolean(jo, "required")))
 					);
 
-				final Map<String, String> mods = StreamSupport.stream(JSONUtils.getJsonArray(forgeData, "mods").spliterator(), false).
+				final Map<String, String> mods = StreamSupport.stream(JsonHelper.getArray(forgeData, "mods").spliterator(), false).
 					map(JsonElement::getAsJsonObject).
-					collect(Collectors.toMap(jo -> JSONUtils.getString(jo, "modId"), jo -> JSONUtils.getString(jo, "modmarker")));
+					collect(Collectors.toMap(jo -> JsonHelper.getString(jo, "modId"), jo -> JsonHelper.getString(jo, "modmarker")));
 
-				final int remoteFMLVersion = JSONUtils.getInt(forgeData, "fmlNetworkVersion");
+				final int remoteFMLVersion = JsonHelper.getInt(forgeData, "fmlNetworkVersion");
 				return new FMLStatusPing(channels, mods, remoteFMLVersion);
 			} catch (JsonSyntaxException e) {
 				LOGGER.debug(NETWORK, "Encountered an error parsing status ping data", e);
@@ -131,7 +130,7 @@ public class FMLStatusPing {
 		}
 	}
 
-	public Map<ResourceLocation, Pair<String, Boolean>> getRemoteChannels() {
+	public Map<Identifier, Pair<String, Boolean>> getRemoteChannels() {
 		return this.channels;
 	}
 

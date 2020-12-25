@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/FernBlock.java
++++ b/net/minecraft/block/FernBlock.java
+@@ -7,7 +7,7 @@
+ import net.minecraft.world.BlockView;
+ import net.minecraft.world.World;
+ 
+-public class FernBlock extends PlantBlock implements Fertilizable {
++public class FernBlock extends PlantBlock implements Fertilizable, net.minecraftforge.common.IForgeShearable {
+    protected static final VoxelShape SHAPE = Block.createCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 13.0D, 14.0D);
+ 
+    public FernBlock(AbstractBlock.Settings properties) {

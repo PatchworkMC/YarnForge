@@ -24,28 +24,27 @@ import java.util.Objects;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.matrix.MatrixStack;
-
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.Direction;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.util.math.Vector3f;
+import net.minecraft.client.util.math.Vector4f;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.util.math.vector.Vector4f;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.BlockRenderView;
 
 public class VertexLighterFlat extends QuadGatheringTransformer
 {
-    protected static final VertexFormatElement NORMAL_4F = new VertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.NORMAL, 4);
+    protected static final VertexFormatElement NORMAL_4F = new VertexFormatElement(0, VertexFormatElement.Format.FLOAT, VertexFormatElement.Type.NORMAL, 4);
     
     // TODO 1.16/1.17 possibly refactor out the need for the "unpacked" format entirely. It's creating more headaches than solutions.
     // This mess reverses the conversion to float bits done in LightUtil.unpack
-    private static final int LIGHTMAP_PACKING_FACTOR = ((256 << (8 * (DefaultVertexFormats.TEX_2SB.getType().getSize() - 1))) - 1) >>> 1;
+    private static final int LIGHTMAP_PACKING_FACTOR = ((256 << (8 * (VertexFormats.LIGHT_ELEMENT.getFormat().getSize() - 1))) - 1) >>> 1;
     // Max lightmap value, for rescaling
     private static final int LIGHTMAP_MAX = 0xF0;
     // Inlined factor for rescaling input lightmap values, "rounded" up to the next float value to avoid precision loss when result is truncated to int
@@ -84,7 +83,7 @@ public class VertexLighterFlat extends QuadGatheringTransformer
     {
         for(int i = 0; i < getVertexFormat().getElements().size(); i++)
         {
-            switch(getVertexFormat().getElements().get(i).getUsage())
+            switch(getVertexFormat().getElements().get(i).getType())
             {
                 case POSITION:
                     posIndex = i;
@@ -130,8 +129,8 @@ public class VertexLighterFlat extends QuadGatheringTransformer
     static VertexFormat withNormal(VertexFormat format)
     {
         //This is the case in 99.99%. Cache the value, so we don't have to redo it every time, and the speed up the equals check in LightUtil
-        if (format == DefaultVertexFormats.BLOCK)
-            return DefaultVertexFormats.BLOCK;
+        if (format == VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL)
+            return VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL;
         return withNormalUncached(format);
     }
 
@@ -165,9 +164,9 @@ public class VertexLighterFlat extends QuadGatheringTransformer
             Vector3f v1 = new Vector3f(position[3]);
             Vector3f t = new Vector3f(position[1]);
             Vector3f v2 = new Vector3f(position[2]);
-            v1.sub(t);
+            v1.subtract(t);
             t.set(position[0]);
-            v2.sub(t);
+            v2.subtract(t);
             v2.cross(v1);
             v2.normalize();
             for(int v = 0; v < 4; v++)
@@ -222,12 +221,12 @@ public class VertexLighterFlat extends QuadGatheringTransformer
             for(int e = 0; e < count; e++)
             {
                 VertexFormatElement element = format.getElements().get(e);
-                switch(element.getUsage())
+                switch(element.getType())
                 {
                     case POSITION:
                         final Vector4f pos = new Vector4f(
                                 position[v][0], position[v][1], position[v][2], 1);
-                        pos.transform(pose.getMatrix());
+                        pos.transform(pose.getModel());
 
                         position[v][0] = pos.getX();
                         position[v][1] = pos.getY();
@@ -279,8 +278,8 @@ public class VertexLighterFlat extends QuadGatheringTransformer
         int i = side == null ? 0 : side.ordinal() + 1;
         int brightness = blockInfo.getPackedLight()[i];
 
-        lightmap[0] = LightTexture.getLightBlock(brightness) / (float) 0xF;
-        lightmap[1] = LightTexture.getLightSky(brightness) / (float) 0xF;
+        lightmap[0] = LightmapTextureManager.getBlockLightCoordinates(brightness) / (float) 0xF;
+        lightmap[1] = LightmapTextureManager.getSkyLightCoordinates(brightness) / (float) 0xF;
     }
 
     protected void updateColor(float[] normal, float[] color, float x, float y, float z, float tint, int multiplier)
@@ -302,14 +301,14 @@ public class VertexLighterFlat extends QuadGatheringTransformer
     public void setQuadOrientation(Direction orientation) {}
     public void setQuadCulled() {}
     @Override
-    public void setTexture(TextureAtlasSprite texture) {}
+    public void setTexture(Sprite texture) {}
     @Override
     public void setApplyDiffuseLighting(boolean diffuse)
     {
         this.diffuse = diffuse;
     }
 
-    public void setWorld(IBlockDisplayReader world)
+    public void setWorld(BlockRenderView world)
     {
         blockInfo.setWorld(world);
     }

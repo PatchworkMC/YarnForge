@@ -1,0 +1,25 @@
+--- a/net/minecraft/client/gui/screen/ingame/HandledScreens.java
++++ b/net/minecraft/client/gui/screen/ingame/HandledScreens.java
+@@ -23,6 +23,10 @@
+    private static final Map<ScreenHandlerType<?>, HandledScreens.Provider<?, ?>> PROVIDERS = Maps.newHashMap();
+ 
+    public static <T extends ScreenHandler> void open(@Nullable ScreenHandlerType<T> type, MinecraftClient mc, int windowId, Text title) {
++      getScreenFactory(type, mc, windowId, title).ifPresent(f -> f.open(title, type, mc, windowId));
++   }
++
++   public static <T extends ScreenHandler> java.util.Optional<Provider<T, ?>> getScreenFactory(@Nullable ScreenHandlerType<T> type, MinecraftClient mc, int windowId, Text title) {
+       if (type == null) {
+          LOGGER.warn("Trying to open invalid screen with name: {}", (Object)title.getString());
+       } else {
+@@ -30,9 +34,10 @@
+          if (iscreenfactory == null) {
+             LOGGER.warn("Failed to create screen for menu type: {}", (Object)Registry.SCREEN_HANDLER.getId(type));
+          } else {
+-            iscreenfactory.open(title, type, mc, windowId);
++            return java.util.Optional.of(iscreenfactory);
+          }
+       }
++      return java.util.Optional.empty();
+    }
+ 
+    @Nullable

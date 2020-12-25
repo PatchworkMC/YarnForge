@@ -1,0 +1,26 @@
+--- a/net/minecraft/client/render/BufferBuilder.java
++++ b/net/minecraft/client/render/BufferBuilder.java
+@@ -294,6 +294,7 @@
+       }
+ 
+       ByteBuffer bytebuffer = this.buffer.slice();
++      bytebuffer.order(this.buffer.order()); // FORGE: Fix incorrect byte order
+       ((Buffer)this.buffer).clear();
+       return Pair.of(bufferbuilder$drawstate, bytebuffer);
+    }
+@@ -361,4 +362,15 @@
+          this.format = vertexFormatIn;
+       }
+    }
++
++   // Forge start
++   public void putBulkData(ByteBuffer buffer) {
++      grow(buffer.limit() + this.format.getVertexSize());
++      ((Buffer)this.buffer).position(this.vertexCount * this.format.getVertexSize());
++      this.buffer.put(buffer);
++      this.vertexCount += buffer.limit() / this.format.getVertexSize();
++      this.elementOffset += buffer.limit();
++   }
++
++   public VertexFormat getVertexFormat() { return this.format; }
+ }

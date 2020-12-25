@@ -22,13 +22,11 @@ package net.minecraftforge.fml.event.lifecycle;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
+import net.minecraft.util.Identifier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
-import net.minecraft.util.ResourceLocation;
 
 /**
  * Called whenever the ID mapping might have changed. If you register for this event, you
@@ -44,12 +42,12 @@ import net.minecraft.util.ResourceLocation;
  */
 public class FMLModIdMappingEvent extends ModLifecycleEvent {
 	public class ModRemapping {
-		public final ResourceLocation registry;
-		public final ResourceLocation key;
+		public final Identifier registry;
+		public final Identifier key;
 		public final int oldId;
 		public final int newId;
 
-		private ModRemapping(ResourceLocation registry, ResourceLocation key, int oldId, int newId) {
+		private ModRemapping(Identifier registry, Identifier key, int oldId, int newId) {
 			this.registry = registry;
 			this.key = key;
 			this.oldId = oldId;
@@ -57,12 +55,12 @@ public class FMLModIdMappingEvent extends ModLifecycleEvent {
 		}
 	}
 
-	private final Map<ResourceLocation, ImmutableList<ModRemapping>> remaps;
-	private final ImmutableSet<ResourceLocation> keys;
+	private final Map<Identifier, ImmutableList<ModRemapping>> remaps;
+	private final ImmutableSet<Identifier> keys;
 
 	public final boolean isFrozen;
 
-	public FMLModIdMappingEvent(Map<ResourceLocation, Map<ResourceLocation, Integer[]>> remaps, boolean isFrozen) {
+	public FMLModIdMappingEvent(Map<Identifier, Map<Identifier, Integer[]>> remaps, boolean isFrozen) {
 		super(null);
 		this.isFrozen = isFrozen;
 		this.remaps = Maps.newHashMap();
@@ -76,11 +74,11 @@ public class FMLModIdMappingEvent extends ModLifecycleEvent {
 		this.keys = ImmutableSet.copyOf(this.remaps.keySet());
 	}
 
-	public ImmutableSet<ResourceLocation> getRegistries() {
+	public ImmutableSet<Identifier> getRegistries() {
 		return this.keys;
 	}
 
-	public ImmutableList<ModRemapping> getRemaps(ResourceLocation registry) {
+	public ImmutableList<ModRemapping> getRemaps(Identifier registry) {
 		return this.remaps.get(registry);
 	}
 }

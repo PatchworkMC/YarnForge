@@ -1,0 +1,81 @@
+--- a/net/minecraft/block/entity/BlockEntity.java
++++ b/net/minecraft/block/entity/BlockEntity.java
+@@ -18,7 +18,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public abstract class BlockEntity {
++public abstract class BlockEntity extends net.minecraftforge.common.capabilities.CapabilityProvider<BlockEntity> implements net.minecraftforge.common.extensions.IForgeTileEntity {
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final BlockEntityType<?> type;
+    @Nullable
+@@ -28,9 +28,12 @@
+    @Nullable
+    private BlockState cachedState;
+    private boolean invalid;
++   private CompoundTag customTileData;
+ 
+    public BlockEntity(BlockEntityType<?> tileEntityTypeIn) {
++      super(BlockEntity.class);
+       this.type = tileEntityTypeIn;
++      this.gatherCapabilities();
+    }
+ 
+    @Nullable
+@@ -49,6 +52,8 @@
+ 
+    public void fromTag(BlockState state, CompoundTag nbt) {
+       this.pos = new BlockPos(nbt.getInt("x"), nbt.getInt("y"), nbt.getInt("z"));
++      if (nbt.contains("ForgeData")) this.customTileData = nbt.getCompound("ForgeData");
++      if (getCapabilities() != null && nbt.contains("ForgeCaps")) deserializeCaps(nbt.getCompound("ForgeCaps"));
+    }
+ 
+    public CompoundTag toTag(CompoundTag compound) {
+@@ -64,6 +69,8 @@
+          compound.putInt("x", this.pos.getX());
+          compound.putInt("y", this.pos.getY());
+          compound.putInt("z", this.pos.getZ());
++         if (this.customTileData != null) compound.put("ForgeData", this.customTileData);
++         if (getCapabilities() != null) compound.put("ForgeCaps", serializeCaps());
+          return compound;
+       }
+    }
+@@ -96,7 +103,7 @@
+       if (this.world != null) {
+          this.cachedState = this.world.getBlockState(this.pos);
+          this.world.markDirty(this.pos, this);
+-         if (!this.cachedState.isAir()) {
++         if (!this.cachedState.isAir(this.world, this.pos)) {
+             this.world.updateComparators(this.pos, this.cachedState.getBlock());
+          }
+       }
+@@ -135,8 +142,15 @@
+ 
+    public void markRemoved() {
+       this.removed = true;
++      this.invalidateCaps();
++      requestModelDataUpdate();
+    }
+ 
++   @Override
++   public void onChunkUnloaded() {
++      this.invalidateCaps();
++   }
++
+    public void cancelRemoval() {
+       this.removed = false;
+    }
+@@ -177,6 +191,13 @@
+       return this.type;
+    }
+ 
++   @Override
++   public CompoundTag getTileData() {
++      if (this.customTileData == null)
++         this.customTileData = new CompoundTag();
++      return this.customTileData;
++   }
++
+    public void markInvalid() {
+       if (!this.invalid) {
+          this.invalid = true;

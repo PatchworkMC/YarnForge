@@ -1,0 +1,10 @@
+--- a/net/minecraft/block/SpreadableBlock.java
++++ b/net/minecraft/block/SpreadableBlock.java
+@@ -33,6 +33,7 @@
+ 
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random) {
+       if (!canSurvive(state, worldIn, pos)) {
++         if (!worldIn.isAreaLoaded(pos, 3)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light and spreading
+          worldIn.setBlockState(pos, Blocks.DIRT.getDefaultState());
+       } else {
+          if (worldIn.getLightLevel(pos.up()) >= 9) {

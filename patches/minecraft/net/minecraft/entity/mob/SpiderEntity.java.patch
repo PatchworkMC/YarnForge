@@ -1,0 +1,16 @@
+--- a/net/minecraft/entity/mob/SpiderEntity.java
++++ b/net/minecraft/entity/mob/SpiderEntity.java
+@@ -117,7 +117,12 @@
+    }
+ 
+    public boolean canHaveStatusEffect(StatusEffectInstance potioneffectIn) {
+-      return potioneffectIn.getEffectType() == StatusEffects.POISON ? false : super.canHaveStatusEffect(potioneffectIn);
++      if (potioneffectIn.getEffectType() == StatusEffects.POISON) {
++         net.minecraftforge.event.entity.living.PotionEvent.PotionApplicableEvent event = new net.minecraftforge.event.entity.living.PotionEvent.PotionApplicableEvent(this, potioneffectIn);
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
++         return event.getResult() == net.minecraftforge.eventbus.api.Event.Result.ALLOW;
++      }
++      return super.canHaveStatusEffect(potioneffectIn);
+    }
+ 
+    public boolean isClimbingWall() {

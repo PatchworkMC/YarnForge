@@ -1,0 +1,14 @@
+--- a/net/minecraft/client/render/VertexFormat.java
++++ b/net/minecraft/client/render/VertexFormat.java
+@@ -86,4 +86,11 @@
+ 
+       }
+    }
++
++   // Forge start
++   public int getOffset(int index) { return offsets.getInt(index); }
++   public boolean hasPosition() { return elements.stream().anyMatch(e -> e.getType() == VertexFormatElement.Type.POSITION); }
++   public boolean hasNormal() { return elements.stream().anyMatch(e -> e.getType() == VertexFormatElement.Type.NORMAL); }
++   public boolean hasColor() { return elements.stream().anyMatch(e -> e.getType() == VertexFormatElement.Type.COLOR); }
++   public boolean hasUV(int which) { return elements.stream().anyMatch(e -> e.getType() == VertexFormatElement.Type.UV && e.getIndex() == which); }
+ }

@@ -1,0 +1,10 @@
+--- a/net/minecraft/entity/attribute/EntityAttribute.java
++++ b/net/minecraft/entity/attribute/EntityAttribute.java
+@@ -1,6 +1,6 @@
+ package net.minecraft.entity.attribute;
+ 
+-public class EntityAttribute {
++public class EntityAttribute extends net.minecraftforge.registries.ForgeRegistryEntry<EntityAttribute> {
+    private final double fallback;
+    private boolean tracked;
+    private final String translationKey;

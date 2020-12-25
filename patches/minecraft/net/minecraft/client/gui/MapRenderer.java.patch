@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/gui/MapRenderer.java
++++ b/net/minecraft/client/gui/MapRenderer.java
+@@ -118,6 +118,7 @@
+ 
+          for(MapIcon mapdecoration : this.mapState.icons.values()) {
+             if (!p_228089_3_ || mapdecoration.isAlwaysRendered()) {
++               if (mapdecoration.render(k)) { k++; continue; }
+                p_228089_1_.push();
+                p_228089_1_.translate((double)(0.0F + (float)mapdecoration.getX() / 2.0F + 64.0F), (double)(0.0F + (float)mapdecoration.getZ() / 2.0F + 64.0F), (double)-0.02F);
+                p_228089_1_.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion((float)(mapdecoration.getRotation() * 360) / 16.0F));

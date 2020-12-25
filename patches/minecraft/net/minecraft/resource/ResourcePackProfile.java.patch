@@ -1,0 +1,52 @@
+--- a/net/minecraft/resource/ResourcePackProfile.java
++++ b/net/minecraft/resource/ResourcePackProfile.java
+@@ -32,6 +32,7 @@
+    private final ResourcePackProfile.InsertionPosition position;
+    private final boolean alwaysEnabled;
+    private final boolean pinned;
++   private final boolean hidden; // Forge: Allow packs to be hidden from the UI entirely
+    private final ResourcePackSource source;
+ 
+    @Nullable
+@@ -55,7 +56,12 @@
+       return null;
+    }
+ 
++   @Deprecated
+    public ResourcePackProfile(String p_i231422_1_, boolean p_i231422_2_, Supplier<ResourcePack> p_i231422_3_, Text p_i231422_4_, Text p_i231422_5_, ResourcePackCompatibility p_i231422_6_, ResourcePackProfile.InsertionPosition p_i231422_7_, boolean p_i231422_8_, ResourcePackSource p_i231422_9_) {
++       this(p_i231422_1_, p_i231422_2_, p_i231422_3_, p_i231422_4_, p_i231422_5_, p_i231422_6_, p_i231422_7_, p_i231422_8_, p_i231422_9_, false);
++   }
++
++   public ResourcePackProfile(String p_i231422_1_, boolean p_i231422_2_, Supplier<ResourcePack> p_i231422_3_, Text p_i231422_4_, Text p_i231422_5_, ResourcePackCompatibility p_i231422_6_, ResourcePackProfile.InsertionPosition p_i231422_7_, boolean p_i231422_8_, ResourcePackSource p_i231422_9_, boolean hidden) {
+       this.name = p_i231422_1_;
+       this.packGetter = p_i231422_3_;
+       this.displayName = p_i231422_4_;
+@@ -65,12 +71,18 @@
+       this.position = p_i231422_7_;
+       this.pinned = p_i231422_8_;
+       this.source = p_i231422_9_;
++      this.hidden = hidden;
+    }
+ 
++   @Deprecated
+    public ResourcePackProfile(String p_i231421_1_, boolean p_i231421_2_, Supplier<ResourcePack> p_i231421_3_, ResourcePack p_i231421_4_, PackResourceMetadata p_i231421_5_, ResourcePackProfile.InsertionPosition p_i231421_6_, ResourcePackSource p_i231421_7_) {
+-      this(p_i231421_1_, p_i231421_2_, p_i231421_3_, new LiteralText(p_i231421_4_.getName()), p_i231421_5_.getDescription(), ResourcePackCompatibility.from(p_i231421_5_.getPackFormat()), p_i231421_6_, false, p_i231421_7_);
++       this(p_i231421_1_, p_i231421_2_, p_i231421_3_, p_i231421_4_, p_i231421_5_, p_i231421_6_, p_i231421_7_, false);
+    }
+ 
++   public ResourcePackProfile(String p_i231421_1_, boolean p_i231421_2_, Supplier<ResourcePack> p_i231421_3_, ResourcePack p_i231421_4_, PackResourceMetadata p_i231421_5_, ResourcePackProfile.InsertionPosition p_i231421_6_, ResourcePackSource p_i231421_7_, boolean hidden) {
++      this(p_i231421_1_, p_i231421_2_, p_i231421_3_, new LiteralText(p_i231421_4_.getName()), p_i231421_5_.getDescription(), ResourcePackCompatibility.from(p_i231421_5_.getPackFormat()), p_i231421_6_, false, p_i231421_7_, hidden);
++   }
++
+    @Environment(EnvType.CLIENT)
+    public Text getDisplayName() {
+       return this.displayName;
+@@ -115,6 +127,8 @@
+    public ResourcePackSource getSource() {
+       return this.source;
+    }
++   
++   public boolean isHidden() { return hidden; }
+ 
+    public boolean equals(Object p_equals_1_) {
+       if (this == p_equals_1_) {

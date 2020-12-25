@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
+import net.minecraft.client.MinecraftClient;
 import net.minecraftforge.fml.network.FMLHandshakeMessages;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.commons.lang3.tuple.Pair;
@@ -44,8 +45,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-
-import net.minecraft.client.Minecraft;
 
 public class ConfigTracker {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -115,7 +114,7 @@ public class ConfigTracker {
 	}
 
 	public void receiveSyncedConfig(final FMLHandshakeMessages.S2CConfigData s2CConfigData, final Supplier<NetworkEvent.Context> contextSupplier) {
-		if (!Minecraft.getInstance().isIntegratedServerRunning()) {
+		if (!MinecraftClient.getInstance().isInSingleplayer()) {
 			Optional.ofNullable(fileMap.get(s2CConfigData.getFileName())).ifPresent(mc -> {
 				mc.setConfigData(TomlFormat.instance().createParser().parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
 				mc.fireEvent(new ModConfig.Reloading(mc));

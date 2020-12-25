@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.event.sound;
 
-import net.minecraft.client.audio.SoundEngine;
+import net.minecraft.client.sound.SoundSystem;
 
 /**
  * This event is raised by the SoundManager when it does its first setup of the
@@ -27,7 +27,7 @@ import net.minecraft.client.audio.SoundEngine;
  */
 public class SoundSetupEvent extends SoundEvent
 {
-    public SoundSetupEvent(SoundEngine manager)
+    public SoundSetupEvent(SoundSystem manager)
     {
         super(manager);
     }

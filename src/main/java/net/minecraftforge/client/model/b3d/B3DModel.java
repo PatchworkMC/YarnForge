@@ -38,7 +38,12 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-
+import net.minecraft.client.util.math.AffineTransformation;
+import net.minecraft.client.util.math.Vector3f;
+import net.minecraft.client.util.math.Vector4f;
+import net.minecraft.util.math.Matrix4f;
+import net.minecraft.util.math.Quaternion;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.vector.*;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.commons.io.IOUtils;
@@ -248,8 +253,8 @@ public class B3DModel
                 String path = readString();
                 int flags = buf.getInt();
                 int blend = buf.getInt();
-                Vector2f pos = new Vector2f(buf.getFloat(), buf.getFloat());
-                Vector2f scale = new Vector2f(buf.getFloat(), buf.getFloat());
+                Vec2f pos = new Vec2f(buf.getFloat(), buf.getFloat());
+                Vec2f scale = new Vec2f(buf.getFloat(), buf.getFloat());
                 float rot = buf.getFloat();
                 ret.add(new Texture(path, flags, blend, pos, scale, rot));
             }
@@ -528,15 +533,15 @@ public class B3DModel
 
     public static class Texture
     {
-        public static final Texture White = new Texture("builtin/white", 0, 0, new Vector2f(0, 0), new Vector2f(1, 1), 0);
+        public static final Texture White = new Texture("builtin/white", 0, 0, new Vec2f(0, 0), new Vec2f(1, 1), 0);
         private final String path;
         private final int flags;
         private final int blend;
-        private final Vector2f pos;
-        private final Vector2f scale;
+        private final Vec2f pos;
+        private final Vec2f scale;
         private final float rot;
 
-        public Texture(String path, int flags, int blend, Vector2f pos, Vector2f scale, float rot)
+        public Texture(String path, int flags, int blend, Vec2f pos, Vec2f scale, float rot)
         {
             this.path = path;
             this.flags = flags;
@@ -561,12 +566,12 @@ public class B3DModel
             return blend;
         }
 
-        public Vector2f getPos()
+        public Vec2f getPos()
         {
             return pos;
         }
 
-        public Vector2f getScale()
+        public Vec2f getScale()
         {
             return scale;
         }
@@ -662,7 +667,7 @@ public class B3DModel
             Matrix4f t = new Matrix4f();
             if(mesh.getWeightMap().get(this).isEmpty())
             {
-                t.setIdentity();
+                t.loadIdentity();
             }
             else
             {
@@ -670,14 +675,14 @@ public class B3DModel
                 {
                     totalWeight += bone.getLeft();
                     Matrix4f bm = animator.apply(bone.getRight());
-                    bm.mul(bone.getLeft());
+                    bm.multiply(bone.getLeft());
                     t.add(bm);
                 }
-                if(Math.abs(totalWeight) > 1e-4) t.mul(1f / totalWeight);
-                else t.setIdentity();
+                if(Math.abs(totalWeight) > 1e-4) t.multiply(1f / totalWeight);
+                else t.loadIdentity();
             }
 
-            TransformationMatrix trsr = new TransformationMatrix(t);
+            AffineTransformation trsr = new AffineTransformation(t);
 
             // pos
             Vector4f pos = new Vector4f(this.pos);
@@ -784,9 +789,9 @@ public class B3DModel
         public static Vector3f getNormal(Vertex v1, Vertex v2, Vertex v3)
         {
             Vector3f a = v2.getPos().copy();
-            a.sub(v1.getPos());
+            a.subtract(v1.getPos());
             Vector3f b = v3.getPos().copy();
-            b.sub(v1.getPos());
+            b.subtract(v1.getPos());
             Vector3f c = a.copy();
             c.cross(b);
             c.normalize();

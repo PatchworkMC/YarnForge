@@ -1,6 +1,6 @@
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
-@@ -71,6 +71,8 @@
+@@ -72,6 +72,8 @@
        OptionSpec<Integer> optionspec11 = optionparser.accepts("port").withRequiredArg().ofType(Integer.class).defaultsTo(-1);
        OptionSpec<String> optionspec12 = optionparser.accepts("serverId").withRequiredArg();
        OptionSpec<String> optionspec13 = optionparser.nonOptions();
@@ -9,36 +9,36 @@
  
        try {
           OptionSet optionset = optionparser.parse(p_main_0_);
-@@ -78,33 +80,38 @@
+@@ -79,33 +81,38 @@
              optionparser.printHelpOn(System.err);
              return;
           }
 +         Path path1 = Paths.get("eula.txt");
-+         ServerEula servereula = new ServerEula(path1);
++         EulaReader servereula = new EulaReader(path1);
  
-+         if (!servereula.func_154346_a()) {
-+            field_240759_a_.info("You need to agree to the EULA in order to run the server. Go to eula.txt for more info.");
++         if (!servereula.isEulaAgreedTo()) {
++            LOGGER.info("You need to agree to the EULA in order to run the server. Go to eula.txt for more info.");
 +            return;
 +         }
 +
-          CrashReport.func_230188_h_();
-          Bootstrap.func_151354_b();
-          Bootstrap.func_218821_c();
-          Util.func_240994_l_();
+          CrashReport.initCrashReport();
+          Bootstrap.initialize();
+          Bootstrap.logMissing();
+          Util.startTimerHack();
 +         if (!optionset.has(optionspec1)) net.minecraftforge.fml.server.ServerModLoader.load(); // Load mods before we load almost anything else anymore. Single spot now. Only loads if they haven't passed the initserver param
-          DynamicRegistries.Impl dynamicregistries$impl = DynamicRegistries.func_239770_b_();
+          DynamicRegistryManager.Impl dynamicregistries$impl = DynamicRegistryManager.create();
           Path path = Paths.get("server.properties");
-          ServerPropertiesProvider serverpropertiesprovider = new ServerPropertiesProvider(dynamicregistries$impl, path);
-          serverpropertiesprovider.func_219035_b();
+          ServerPropertiesLoader serverpropertiesprovider = new ServerPropertiesLoader(dynamicregistries$impl, path);
+          serverpropertiesprovider.store();
 -         Path path1 = Paths.get("eula.txt");
--         ServerEula servereula = new ServerEula(path1);
+-         EulaReader servereula = new EulaReader(path1);
           if (optionset.has(optionspec1)) {
-             field_240759_a_.info("Initialized '{}' and '{}'", path.toAbsolutePath(), path1.toAbsolutePath());
+             LOGGER.info("Initialized '{}' and '{}'", path.toAbsolutePath(), path1.toAbsolutePath());
              return;
           }
  
--         if (!servereula.func_154346_a()) {
--            field_240759_a_.info("You need to agree to the EULA in order to run the server. Go to eula.txt for more info.");
+-         if (!servereula.isEulaAgreedTo()) {
+-            LOGGER.info("You need to agree to the EULA in order to run the server. Go to eula.txt for more info.");
 -            return;
 -         }
 -
@@ -46,29 +46,29 @@
           YggdrasilAuthenticationService yggdrasilauthenticationservice = new YggdrasilAuthenticationService(Proxy.NO_PROXY);
           MinecraftSessionService minecraftsessionservice = yggdrasilauthenticationservice.createMinecraftSessionService();
           GameProfileRepository gameprofilerepository = yggdrasilauthenticationservice.createProfileRepository();
-          PlayerProfileCache playerprofilecache = new PlayerProfileCache(gameprofilerepository, new File(file1, MinecraftServer.field_152367_a.getName()));
-          String s = Optional.ofNullable(optionset.valueOf(optionspec10)).orElse(serverpropertiesprovider.func_219034_a().field_219021_o);
+          UserCache playerprofilecache = new UserCache(gameprofilerepository, new File(file1, MinecraftServer.USER_CACHE_FILE.getName()));
+          String s = Optional.ofNullable(optionset.valueOf(optionspec10)).orElse(serverpropertiesprovider.getPropertiesHandler().levelName);
 +         if (s == null || s.isEmpty() || new File(file1, s).getAbsolutePath().equals(new File(s).getAbsolutePath())) {
-+            field_240759_a_.error("Invalid world directory specified, must not be null, empty or the same directory as your universe! " + s);
++            LOGGER.error("Invalid world directory specified, must not be null, empty or the same directory as your universe! " + s);
 +            return;
 +         }
-          SaveFormat saveformat = SaveFormat.func_237269_a_(file1.toPath());
-          SaveFormat.LevelSave saveformat$levelsave = saveformat.func_237274_c_(s);
-          MinecraftServer.func_240777_a_(saveformat$levelsave);
-@@ -142,6 +149,8 @@
-                dimensiongeneratorsettings = optionset.has(optionspec3) ? serverproperties.field_241082_U_.func_236230_k_() : serverproperties.field_241082_U_;
+          LevelStorage saveformat = LevelStorage.create(file1.toPath());
+          LevelStorage.Session saveformat$levelsave = saveformat.createSession(s);
+          MinecraftServer.convertLevel(saveformat$levelsave);
+@@ -143,6 +150,8 @@
+                dimensiongeneratorsettings = optionset.has(optionspec3) ? serverproperties.generatorOptions.withBonusChest() : serverproperties.generatorOptions;
              }
  
 +            // Forge: Deserialize the DimensionGeneratorSettings to ensure modded dims are loaded on first server load (see SimpleRegistryCodec#decode). Vanilla behaviour only loads from the server.properties and deserializes only after the 2nd server load.
-+            dimensiongeneratorsettings = DimensionGeneratorSettings.field_236201_a_.encodeStart(net.minecraft.util.registry.WorldGenSettingsExport.func_240896_a_(NBTDynamicOps.field_210820_a, dynamicregistries$impl), dimensiongeneratorsettings).flatMap(nbt -> DimensionGeneratorSettings.field_236201_a_.parse(worldsettingsimport, nbt)).getOrThrow(false, errorMsg->{});
-             iserverconfiguration = new ServerWorldInfo(worldsettings, dimensiongeneratorsettings, Lifecycle.stable());
++            dimensiongeneratorsettings = GeneratorOptions.CODEC.encodeStart(net.minecraft.util.dynamic.RegistryReadingOps.of(NbtOps.INSTANCE, dynamicregistries$impl), dimensiongeneratorsettings).flatMap(nbt -> GeneratorOptions.CODEC.parse(worldsettingsimport, nbt)).getOrThrow(false, errorMsg->{});
+             iserverconfiguration = new LevelProperties(worldsettings, dimensiongeneratorsettings, Lifecycle.stable());
           }
  
-@@ -169,6 +178,7 @@
+@@ -170,6 +179,7 @@
           Thread thread = new Thread("Server Shutdown Thread") {
              public void run() {
-                dedicatedserver.func_71263_m(true);
+                dedicatedserver.stop(true);
 +               LogManager.shutdown(); // we're manually managing the logging shutdown on the server. Make sure we do it here at the end.
              }
           };
-          thread.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(field_240759_a_));
+          thread.setUncaughtExceptionHandler(new UncaughtExceptionLogger(LOGGER));

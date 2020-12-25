@@ -1,0 +1,43 @@
+--- a/net/minecraft/screen/ScreenHandler.java
++++ b/net/minecraft/screen/ScreenHandler.java
+@@ -121,9 +121,11 @@
+          ItemStack itemstack = this.slots.get(i).getStack();
+          ItemStack itemstack1 = this.trackedStacks.get(i);
+          if (!ItemStack.areEqual(itemstack1, itemstack)) {
++            boolean clientStackChanged = !itemstack1.equals(itemstack, true);
+             ItemStack itemstack2 = itemstack.copy();
+             this.trackedStacks.set(i, itemstack2);
+ 
++            if (clientStackChanged)
+             for(ScreenHandlerListener icontainerlistener : this.listeners) {
+                icontainerlistener.onSlotUpdate(this, i, itemstack2);
+             }
+@@ -501,14 +503,15 @@
+             ItemStack itemstack = slot.getStack();
+             if (!itemstack.isEmpty() && canStacksCombine(stack, itemstack)) {
+                int j = itemstack.getCount() + stack.getCount();
+-               if (j <= stack.getMaxCount()) {
++               int maxSize = Math.min(slot.getMaxItemCount(), stack.getMaxCount());
++               if (j <= maxSize) {
+                   stack.setCount(0);
+                   itemstack.setCount(j);
+                   slot.markDirty();
+                   flag = true;
+-               } else if (itemstack.getCount() < stack.getMaxCount()) {
+-                  stack.decrement(stack.getMaxCount() - itemstack.getCount());
+-                  itemstack.setCount(stack.getMaxCount());
++               } else if (itemstack.getCount() < maxSize) {
++                  stack.decrement(maxSize - itemstack.getCount());
++                  itemstack.setCount(maxSize);
+                   slot.markDirty();
+                   flag = true;
+                }
+@@ -609,7 +612,7 @@
+          stack.setCount(1);
+          break;
+       case 2:
+-         stack.setCount(stack.getItem().getMaxCount());
++         stack.setCount(stack.getMaxCount());
+       }
+ 
+       stack.increment(slotStackSize);

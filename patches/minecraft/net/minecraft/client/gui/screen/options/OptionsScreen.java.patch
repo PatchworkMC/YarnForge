@@ -1,0 +1,23 @@
+--- a/net/minecraft/client/gui/screen/options/OptionsScreen.java
++++ b/net/minecraft/client/gui/screen/options/OptionsScreen.java
+@@ -5,6 +5,7 @@
+ import net.fabricmc.api.EnvType;
+ import net.fabricmc.api.Environment;
+ import net.minecraft.client.gui.screen.ConfirmScreen;
++import net.minecraft.client.gui.screen.GameMenuScreen;
+ import net.minecraft.client.gui.screen.Screen;
+ import net.minecraft.client.gui.screen.ScreenTexts;
+ import net.minecraft.client.gui.screen.VideoOptionsScreen;
+@@ -151,4 +152,12 @@
+       drawCenteredText(matrixStack, this.textRenderer, this.title, this.width / 2, 15, 16777215);
+       super.render(matrixStack, mouseX, mouseY, partialTicks);
+    }
++
++    @Override
++    public void onClose() {
++        // We need to consider 2 potential parent screens here:
++        // 1. From the main menu, in which case display the main menu
++        // 2. From the pause menu, in which case exit back to game
++        this.client.openScreen(this.parent instanceof GameMenuScreen ? null : this.parent);
++    }
+ }

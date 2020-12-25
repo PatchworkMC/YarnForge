@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/explosion/ExplosionBehavior.java
++++ b/net/minecraft/world/explosion/ExplosionBehavior.java
+@@ -8,7 +8,7 @@
+ 
+ public class ExplosionBehavior {
+    public Optional<Float> getBlastResistance(Explosion explosion, BlockView reader, BlockPos pos, BlockState state, FluidState fluid) {
+-      return state.isAir() && fluid.isEmpty() ? Optional.empty() : Optional.of(Math.max(state.getBlock().getBlastResistance(), fluid.getBlastResistance()));
++      return state.isAir(reader, pos) && fluid.isEmpty() ? Optional.empty() : Optional.of(Math.max(state.getExplosionResistance(reader, pos, explosion), fluid.getExplosionResistance(reader, pos, explosion)));
+    }
+ 
+    public boolean canDestroyBlock(Explosion explosion, BlockView reader, BlockPos pos, BlockState state, float power) {

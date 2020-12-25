@@ -20,9 +20,17 @@
 package net.minecraftforge.client.model;
 
 import com.mojang.datafixers.util.Pair;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.JsonUnbakedModel;
+import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.client.model.geometry.IModelGeometry;
 import net.minecraftforge.client.model.geometry.IModelGeometryPart;
 
@@ -32,21 +40,21 @@ import java.util.function.Function;
 
 public class BlockModelConfiguration implements IModelConfiguration
 {
-    public final BlockModel owner;
+    public final JsonUnbakedModel owner;
     public final VisibilityData visibilityData = new VisibilityData();
     @Nullable
     private IModelGeometry<?> customGeometry;
     @Nullable
-    private IModelTransform customModelState;
+    private ModelBakeSettings customModelState;
 
-    public BlockModelConfiguration(BlockModel owner)
+    public BlockModelConfiguration(JsonUnbakedModel owner)
     {
         this.owner = owner;
     }
 
     @Nullable
     @Override
-    public IUnbakedModel getOwnerModel()
+    public UnbakedModel getOwnerModel()
     {
         return owner;
     }
@@ -54,7 +62,7 @@ public class BlockModelConfiguration implements IModelConfiguration
     @Override
     public String getModelName()
     {
-        return owner.name;
+        return owner.id;
     }
 
     public boolean hasCustomGeometry()
@@ -74,12 +82,12 @@ public class BlockModelConfiguration implements IModelConfiguration
     }
 
     @Nullable
-    public IModelTransform getCustomModelState()
+    public ModelBakeSettings getCustomModelState()
     {
         return owner.parent != null && customModelState == null ? owner.parent.customData.getCustomModelState() : customModelState;
     }
 
-    public void setCustomModelState(IModelTransform modelState)
+    public void setCustomModelState(ModelBakeSettings modelState)
     {
         this.customModelState = modelState;
     }
@@ -95,13 +103,13 @@ public class BlockModelConfiguration implements IModelConfiguration
     @Override
     public boolean isTexturePresent(String name)
     {
-        return owner.isTexturePresent(name);
+        return owner.textureExists(name);
     }
 
     @Override
-    public RenderMaterial resolveTexture(String name)
+    public SpriteIdentifier resolveTexture(String name)
     {
-        return owner.resolveTextureName(name);
+        return owner.resolveSprite(name);
     }
 
     @Override
@@ -112,25 +120,25 @@ public class BlockModelConfiguration implements IModelConfiguration
     @Override
     public boolean isSideLit()
     {
-        return owner.getGuiLight().isSideLit();
+        return owner.getGuiLight().isSide();
     }
 
     @Override
     public boolean useSmoothLighting()
     {
-        return owner.isAmbientOcclusion();
+        return owner.useAmbientOcclusion();
     }
 
     @Override
-    public ItemCameraTransforms getCameraTransforms()
+    public ModelTransformation getCameraTransforms()
     {
-        return owner.getAllTransforms();
+        return owner.getTransformations();
     }
 
     @Override
-    public IModelTransform getCombinedTransform()
+    public ModelBakeSettings getCombinedTransform()
     {
-        IModelTransform state = getCustomModelState();
+        ModelBakeSettings state = getCustomModelState();
 
         return state != null
                 ? new SimpleModelTransform(PerspectiveMapWrapper.getTransformsWithFallback(state, getCameraTransforms()), state.getRotation())
@@ -144,14 +152,14 @@ public class BlockModelConfiguration implements IModelConfiguration
         this.visibilityData.copyFrom(other.visibilityData);
     }
 
-    public Collection<RenderMaterial> getTextureDependencies(Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
+    public Collection<SpriteIdentifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
     {
         IModelGeometry<?> geometry = getCustomGeometry();
         return geometry == null ? Collections.emptySet() :
                 geometry.getTextures(this, modelGetter, missingTextureErrors);
     }
 
-    public IBakedModel bake(ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> bakedTextureGetter, IModelTransform modelTransform, ItemOverrideList overrides, ResourceLocation modelLocation)
+    public BakedModel bake(ModelLoader bakery, Function<SpriteIdentifier, Sprite> bakedTextureGetter, ModelBakeSettings modelTransform, ModelOverrideList overrides, Identifier modelLocation)
     {
         IModelGeometry<?> geometry = getCustomGeometry();
         if (geometry == null)

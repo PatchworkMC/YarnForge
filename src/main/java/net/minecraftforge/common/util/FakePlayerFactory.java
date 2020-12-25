@@ -24,11 +24,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-
+import net.minecraft.server.world.ServerWorld;
 import com.google.common.collect.Maps;
 import com.mojang.authlib.GameProfile;
-
-import net.minecraft.world.server.ServerWorld;
 
 //To be expanded for generic Mod fake players?
 public class FakePlayerFactory

@@ -1,0 +1,52 @@
+--- a/net/minecraft/tag/TagManager.java
++++ b/net/minecraft/tag/TagManager.java
+@@ -8,7 +8,7 @@
+ import net.minecraft.network.PacketByteBuf;
+ import net.minecraft.util.registry.Registry;
+ 
+-public interface TagManager {
++public interface TagManager extends net.minecraftforge.common.extensions.IForgeTagCollectionSupplier {
+    TagManager EMPTY = create(TagGroup.createEmpty(), TagGroup.createEmpty(), TagGroup.createEmpty(), TagGroup.createEmpty());
+ 
+    TagGroup<Block> getBlocks();
+@@ -22,6 +22,7 @@
+    default void apply() {
+       RequiredTagListRegistry.updateTagManager(this);
+       Blocks.refreshShapeCache();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.TagsUpdatedEvent.VanillaTagTypes(this));
+    }
+ 
+    default void toPacket(PacketByteBuf buffer) {
+@@ -58,4 +59,32 @@
+          }
+       };
+    }
++
++   static TagManager reinjectOptionalTags(TagManager tagCollectionSupplier) {
++      TagGroup<Block> blockTagCollection = BlockTags.REQUIRED_TAGS.reinjectOptionalTags(tagCollectionSupplier.getBlocks());
++      TagGroup<Item> itemTagCollection = ItemTags.REQUIRED_TAGS.reinjectOptionalTags(tagCollectionSupplier.getItems());
++      TagGroup<Fluid> fluidTagCollection = FluidTags.REQUIRED_TAGS.reinjectOptionalTags(tagCollectionSupplier.getFluids());
++      TagGroup<EntityType<?>> entityTypeTagCollection = EntityTypeTags.REQUIRED_TAGS.reinjectOptionalTags(tagCollectionSupplier.getEntityTypes());
++      return new TagManager() {
++         @Override
++         public TagGroup<Block> getBlocks() {
++            return blockTagCollection;
++         }
++
++         @Override
++         public TagGroup<Item> getItems() {
++            return itemTagCollection;
++         }
++
++         @Override
++         public TagGroup<Fluid> getFluids() {
++            return fluidTagCollection;
++         }
++
++         @Override
++         public TagGroup<EntityType<?>> getEntityTypes() {
++            return entityTypeTagCollection;
++         }
++      };
++   }
+ }

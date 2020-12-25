@@ -3,30 +3,30 @@
 @@ -50,7 +50,7 @@
     }
  
-    private void func_196482_a(World p_196482_1_, BlockPos p_196482_2_) {
--      if (p_196482_1_.func_180495_p(p_196482_2_.func_177984_a()).func_196958_f()) {
-+      if (p_196482_1_.func_175623_d(p_196482_2_.func_177984_a())) {
-          p_196482_1_.func_175641_c(p_196482_2_, this, 0, 0);
+    private void playNote(World worldIn, BlockPos pos) {
+-      if (worldIn.getBlockState(pos.up()).isAir()) {
++      if (worldIn.isAir(pos.up())) {
+          worldIn.addSyncedBlockEvent(pos, this, 0, 0);
        }
  
 @@ -60,7 +60,9 @@
-       if (p_225533_2_.field_72995_K) {
-          return ActionResultType.SUCCESS;
+       if (worldIn.isClient) {
+          return ActionResult.SUCCESS;
        } else {
--         p_225533_1_ = p_225533_1_.func_235896_a_(field_196485_c);
-+         int _new = net.minecraftforge.common.ForgeHooks.onNoteChange(p_225533_2_, p_225533_3_, p_225533_1_, p_225533_1_.func_177229_b(field_196485_c), p_225533_1_.func_235896_a_(field_196485_c).func_177229_b(field_196485_c));
-+         if (_new == -1) return ActionResultType.FAIL;
-+         p_225533_1_ = p_225533_1_.func_206870_a(field_196485_c, _new);
-          p_225533_2_.func_180501_a(p_225533_3_, p_225533_1_, 3);
-          this.func_196482_a(p_225533_2_, p_225533_3_);
-          p_225533_4_.func_195066_a(Stats.field_188087_U);
+-         state = state.cycle(NOTE);
++         int _new = net.minecraftforge.common.ForgeHooks.onNoteChange(worldIn, pos, state, state.get(NOTE), state.cycle(NOTE).get(NOTE));
++         if (_new == -1) return ActionResult.FAIL;
++         state = state.with(NOTE, _new);
+          worldIn.setBlockState(pos, state, 3);
+          this.playNote(worldIn, pos);
+          player.incrementStat(Stats.TUNE_NOTEBLOCK);
 @@ -76,6 +78,9 @@
     }
  
-    public boolean func_189539_a(BlockState p_189539_1_, World p_189539_2_, BlockPos p_189539_3_, int p_189539_4_, int p_189539_5_) {
-+      net.minecraftforge.event.world.NoteBlockEvent.Play e = new net.minecraftforge.event.world.NoteBlockEvent.Play(p_189539_2_, p_189539_3_, p_189539_1_, p_189539_1_.func_177229_b(field_196485_c), p_189539_1_.func_177229_b(field_196483_a));
+    public boolean onSyncedBlockEvent(BlockState state, World worldIn, BlockPos pos, int id, int param) {
++      net.minecraftforge.event.world.NoteBlockEvent.Play e = new net.minecraftforge.event.world.NoteBlockEvent.Play(worldIn, pos, state, state.get(NOTE), state.get(INSTRUMENT));
 +      if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(e)) return false;
-+      p_189539_1_ = p_189539_1_.func_206870_a(field_196485_c, e.getVanillaNoteId()).func_206870_a(field_196483_a, e.getInstrument());
-       int i = p_189539_1_.func_177229_b(field_196485_c);
++      state = state.with(NOTE, e.getVanillaNoteId()).with(INSTRUMENT, e.getInstrument());
+       int i = state.get(NOTE);
        float f = (float)Math.pow(2.0D, (double)(i - 12) / 12.0D);
-       p_189539_2_.func_184133_a((PlayerEntity)null, p_189539_3_, p_189539_1_.func_177229_b(field_196483_a).func_208088_a(), SoundCategory.RECORDS, 3.0F, f);
+       worldIn.playSound((PlayerEntity)null, pos, state.get(INSTRUMENT).getSound(), SoundCategory.RECORDS, 3.0F, f);

@@ -1,0 +1,13 @@
+--- a/net/minecraft/screen/AbstractRecipeScreenHandler.java
++++ b/net/minecraft/screen/AbstractRecipeScreenHandler.java
+@@ -35,6 +35,10 @@
+    @Environment(EnvType.CLIENT)
+    public abstract int getCraftingSlotCount();
+ 
++   public java.util.List<net.minecraft.client.recipebook.RecipeBookGroup> getRecipeBookCategories() {
++      return net.minecraft.client.recipebook.RecipeBookGroup.method_30285(this.getCategory());
++   }
++
+    @Environment(EnvType.CLIENT)
+    public abstract RecipeBookCategory getCategory();
+ }

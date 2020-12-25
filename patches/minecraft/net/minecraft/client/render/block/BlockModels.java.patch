@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/render/block/BlockModels.java
++++ b/net/minecraft/client/render/block/BlockModels.java
+@@ -26,10 +26,16 @@
+       this.modelManager = manager;
+    }
+ 
++   @Deprecated
+    public Sprite getSprite(BlockState state) {
+-      return this.getModel(state).getSprite();
++      return this.getModel(state).getParticleTexture(net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
+    }
+ 
++   public Sprite getTexture(BlockState state, net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos) {
++      net.minecraftforge.client.model.data.IModelData data = net.minecraftforge.client.model.ModelDataManager.getModelData(world, pos);
++      return this.getModel(state).getParticleTexture(data == null ? net.minecraftforge.client.model.data.EmptyModelData.INSTANCE : data);
++   }
++
+    public BakedModel getModel(BlockState state) {
+       BakedModel ibakedmodel = this.models.get(state);
+       if (ibakedmodel == null) {

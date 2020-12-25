@@ -1,0 +1,26 @@
+--- a/net/minecraft/screen/ScreenHandlerType.java
++++ b/net/minecraft/screen/ScreenHandlerType.java
+@@ -7,7 +7,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class ScreenHandlerType<T extends ScreenHandler> {
++public class ScreenHandlerType<T extends ScreenHandler> extends net.minecraftforge.registries.ForgeRegistryEntry<ScreenHandlerType<?>> implements net.minecraftforge.common.extensions.IForgeContainerType<T> {
+    public static final ScreenHandlerType<GenericContainerScreenHandler> GENERIC_9X1 = register("generic_9x1", GenericContainerScreenHandler::createGeneric9x1);
+    public static final ScreenHandlerType<GenericContainerScreenHandler> GENERIC_9X2 = register("generic_9x2", GenericContainerScreenHandler::createGeneric9x2);
+    public static final ScreenHandlerType<GenericContainerScreenHandler> GENERIC_9X3 = register("generic_9x3", GenericContainerScreenHandler::createGeneric9x3);
+@@ -48,6 +48,14 @@
+    public T create(int windowId, PlayerInventory player) {
+       return this.factory.create(windowId, player);
+    }
++   
++   @Override
++   public T create(int windowId, PlayerInventory playerInv, net.minecraft.network.PacketByteBuf extraData) {
++      if (this.factory instanceof net.minecraftforge.fml.network.IContainerFactory) {
++         return ((net.minecraftforge.fml.network.IContainerFactory<T>) this.factory).create(windowId, playerInv, extraData);
++      }
++      return create(windowId, playerInv);
++   }
+ 
+    public interface Factory<T extends ScreenHandler> {
+       @Environment(EnvType.CLIENT)

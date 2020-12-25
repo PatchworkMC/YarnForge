@@ -1,0 +1,21 @@
+--- a/net/minecraft/text/Style.java
++++ b/net/minecraft/text/Style.java
+@@ -126,6 +126,18 @@
+       return new Style(this.color, this.bold, this.italic, p_244282_1_, this.strikethrough, this.obfuscated, this.clickEvent, this.hoverEvent, this.insertion, this.font);
+    }
+ 
++   public Style setUnderlined(@Nullable Boolean underlined) {
++      return new Style(this.color, this.bold, this.italic, underlined, this.strikethrough, this.obfuscated, this.clickEvent, this.hoverEvent, this.insertion, this.font);
++   }
++
++   public Style setStrikethrough(@Nullable Boolean strikethrough) {
++      return new Style(this.color, this.bold, this.italic, this.underlined, strikethrough, this.obfuscated, this.clickEvent, this.hoverEvent, this.insertion, this.font);
++   }
++
++   public Style setObfuscated(@Nullable Boolean obfuscated) {
++      return new Style(this.color, this.bold, this.italic, this.underlined, this.strikethrough, obfuscated, this.clickEvent, this.hoverEvent, this.insertion, this.font);
++   }
++
+    public Style withClickEvent(@Nullable ClickEvent clickEvent) {
+       return new Style(this.color, this.bold, this.italic, this.underlined, this.strikethrough, this.obfuscated, clickEvent, this.hoverEvent, this.insertion, this.font);
+    }

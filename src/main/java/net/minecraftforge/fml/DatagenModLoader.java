@@ -23,13 +23,11 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-
+import net.minecraft.Bootstrap;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import net.minecraft.util.registry.Bootstrap;
 
 public class DatagenModLoader {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -52,7 +50,7 @@ public class DatagenModLoader {
 		}
 		LOGGER.info("Initializing Data Gatherer for mods {}", mods);
 		runningDataGen = true;
-		Bootstrap.register();
+		Bootstrap.initialize();
 		dataGeneratorConfig = new GatherDataEvent.DataGeneratorConfig(mods, path, inputs, serverGenerators, clientGenerators, devToolGenerators, reportsGenerator, structureValidator, flat);
 		ModLoader.get().gatherAndInitializeMods(ModWorkManager.syncExecutor(), ModWorkManager.parallelExecutor(), () -> {});
 		if (!mods.contains("forge")) {

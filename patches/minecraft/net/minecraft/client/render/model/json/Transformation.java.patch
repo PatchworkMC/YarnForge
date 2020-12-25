@@ -1,0 +1,14 @@
+--- a/net/minecraft/client/render/model/json/Transformation.java
++++ b/net/minecraft/client/render/model/json/Transformation.java
+@@ -16,7 +16,11 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
++/**
++ * @deprecated use {@link net.minecraft.util.math.vector.TransformationMatrix} through {@link net.minecraftforge.client.extensions.IForgeBakedModel#handlePerspective}
++ */
+ @Environment(EnvType.CLIENT)
++@Deprecated
+ public class Transformation {
+    public static final Transformation IDENTITY = new Transformation(new Vector3f(), new Vector3f(), new Vector3f(1.0F, 1.0F, 1.0F));
+    public final Vector3f rotation;

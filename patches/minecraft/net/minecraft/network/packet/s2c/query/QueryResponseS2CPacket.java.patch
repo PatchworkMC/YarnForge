@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/packet/s2c/query/QueryResponseS2CPacket.java
++++ b/net/minecraft/network/packet/s2c/query/QueryResponseS2CPacket.java
+@@ -32,7 +32,7 @@
+    }
+ 
+    public void write(PacketByteBuf buf) throws IOException {
+-      buf.writeString(GSON.toJson(this.metadata));
++      buf.writeString(this.metadata.getJson()); //Forge: Let the response cache the JSON
+    }
+ 
+    public void apply(ClientQueryPacketListener handler) {

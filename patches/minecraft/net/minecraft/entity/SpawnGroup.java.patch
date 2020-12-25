@@ -1,0 +1,37 @@
+--- a/net/minecraft/entity/SpawnGroup.java
++++ b/net/minecraft/entity/SpawnGroup.java
+@@ -6,7 +6,7 @@
+ import java.util.stream.Collectors;
+ import net.minecraft.util.StringIdentifiable;
+ 
+-public enum SpawnGroup implements StringIdentifiable {
++public enum SpawnGroup implements StringIdentifiable, net.minecraftforge.common.IExtensibleEnum {
+    MONSTER("monster", 70, false, false, 128),
+    CREATURE("creature", 10, true, true, 128),
+    AMBIENT("ambient", 15, true, false, 128),
+@@ -14,7 +14,7 @@
+    WATER_AMBIENT("water_ambient", 20, true, false, 64),
+    MISC("misc", -1, true, true, 128);
+ 
+-   public static final Codec<SpawnGroup> CODEC = StringIdentifiable.createCodec(SpawnGroup::values, SpawnGroup::byName);
++   public static final Codec<SpawnGroup> CODEC = net.minecraftforge.common.IExtensibleEnum.createCodecForExtensibleEnum(SpawnGroup::values, SpawnGroup::byName);
+    private static final Map<String, SpawnGroup> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(SpawnGroup::getName, (p_220362_0_) -> {
+       return p_220362_0_;
+    }));
+@@ -57,6 +57,16 @@
+       return this.animal;
+    }
+ 
++   public static SpawnGroup create(String name, String id, int maxNumberOfCreatureIn, boolean isPeacefulCreatureIn, boolean isAnimalIn, int despawnDistance) {
++      throw new IllegalStateException("Enum not extended");
++   }
++
++   @Override
++   @Deprecated
++   public void init() {
++      BY_NAME.put(this.getName(), this);
++   }
++
+    public int getImmediateDespawnRange() {
+       return this.immediateDespawnRange;
+    }

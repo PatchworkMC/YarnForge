@@ -19,16 +19,15 @@
 
 package net.minecraftforge.common.model.animation;
 
-import net.minecraft.util.math.vector.TransformationMatrix;
-
 import java.util.Optional;
+import net.minecraft.client.util.math.AffineTransformation;
 
 /**
  * Model part that's a part of the hierarchical skeleton.
  */
 public interface IJoint
 {
-    TransformationMatrix getInvBindPose();
+    AffineTransformation getInvBindPose();
 
     Optional<? extends IJoint> getParent();
 }

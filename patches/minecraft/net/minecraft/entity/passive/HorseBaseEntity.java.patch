@@ -1,0 +1,53 @@
+--- a/net/minecraft/entity/passive/HorseBaseEntity.java
++++ b/net/minecraft/entity/passive/HorseBaseEntity.java
+@@ -277,6 +277,7 @@
+ 
+       this.items.addListener(this);
+       this.updateSaddle();
++      this.itemHandler = net.minecraftforge.common.util.LazyOptional.of(() -> new net.minecraftforge.items.wrapper.InvWrapper(this.items));
+    }
+ 
+    protected void updateSaddle() {
+@@ -335,9 +336,9 @@
+    protected void playStepSound(BlockPos pos, BlockState blockIn) {
+       if (!blockIn.getMaterial().isLiquid()) {
+          BlockState blockstate = this.world.getBlockState(pos.up());
+-         BlockSoundGroup soundtype = blockIn.getSoundGroup();
++         BlockSoundGroup soundtype = blockIn.getSoundType(world, pos, this);
+          if (blockstate.isOf(Blocks.SNOW)) {
+-            soundtype = blockstate.getSoundGroup();
++            soundtype = blockstate.getSoundType(world, pos, this);
+          }
+ 
+          if (this.hasPassengers() && this.playExtraHorseSounds) {
+@@ -695,6 +696,7 @@
+                this.setVelocity(vector3d.x, d1, vector3d.z);
+                this.setInAir(true);
+                this.velocityDirty = true;
++               net.minecraftforge.common.ForgeHooks.onLivingJump(this);
+                if (f1 > 0.0F) {
+                   float f2 = MathHelper.sin(this.yaw * ((float)Math.PI / 180F));
+                   float f3 = MathHelper.cos(this.yaw * ((float)Math.PI / 180F));
+@@ -1011,4 +1013,22 @@
+       this.initAttributes();
+       return super.initialize(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    }
++
++   private net.minecraftforge.common.util.LazyOptional<?> itemHandler = null;
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.util.math.Direction facing) {
++      if (this.isAlive() && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY && itemHandler != null)
++         return itemHandler.cast();
++      return super.getCapability(capability, facing);
++   }
++
++   @Override
++   protected void invalidateCaps() {
++      super.invalidateCaps();
++      if (itemHandler != null) {
++         itemHandler.invalidate();
++         itemHandler = null;
++      }
++   }
+ }

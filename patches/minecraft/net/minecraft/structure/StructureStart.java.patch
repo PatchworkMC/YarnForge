@@ -1,0 +1,12 @@
+--- a/net/minecraft/structure/StructureStart.java
++++ b/net/minecraft/structure/StructureStart.java
+@@ -86,6 +86,9 @@
+    public CompoundTag toTag(int chunkX, int chunkZ) {
+       CompoundTag compoundnbt = new CompoundTag();
+       if (this.hasChildren()) {
++         if (Registry.STRUCTURE_FEATURE.getId(this.getFeature()) == null) { // FORGE: This is just a more friendly error instead of the 'Null String' below
++            throw new RuntimeException("StructureStart \"" + this.getClass().getName() + "\": \"" + this.getFeature() + "\" missing ID Mapping, Modder see MapGenStructureIO");
++         }
+          compoundnbt.putString("id", Registry.STRUCTURE_FEATURE.getId(this.getFeature()).toString());
+          compoundnbt.putInt("ChunkX", chunkX);
+          compoundnbt.putInt("ChunkZ", chunkZ);

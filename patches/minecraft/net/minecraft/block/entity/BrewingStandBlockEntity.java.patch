@@ -1,0 +1,84 @@
+--- a/net/minecraft/block/entity/BrewingStandBlockEntity.java
++++ b/net/minecraft/block/entity/BrewingStandBlockEntity.java
+@@ -147,6 +147,7 @@
+ 
+    private boolean canCraft() {
+       ItemStack itemstack = this.inventory.get(3);
++      if (!itemstack.isEmpty()) return net.minecraftforge.common.brewing.BrewingRecipeRegistry.canBrew(inventory, itemstack, SIDE_SLOTS); // divert to VanillaBrewingRegistry
+       if (itemstack.isEmpty()) {
+          return false;
+       } else if (!BrewingRecipeRegistry.isValidIngredient(itemstack)) {
+@@ -164,22 +165,22 @@
+    }
+ 
+    private void craft() {
++      if (net.minecraftforge.event.ForgeEventFactory.onPotionAttemptBrew(inventory)) return;
+       ItemStack itemstack = this.inventory.get(3);
+ 
+-      for(int i = 0; i < 3; ++i) {
+-         this.inventory.set(i, BrewingRecipeRegistry.craft(itemstack, this.inventory.get(i)));
+-      }
+-
+-      itemstack.decrement(1);
++      net.minecraftforge.common.brewing.BrewingRecipeRegistry.brewPotions(inventory, itemstack, SIDE_SLOTS);
++      net.minecraftforge.event.ForgeEventFactory.onPotionBrewed(inventory);
+       BlockPos blockpos = this.getPos();
+-      if (itemstack.getItem().hasRecipeRemainder()) {
+-         ItemStack itemstack1 = new ItemStack(itemstack.getItem().getRecipeRemainder());
++      if (itemstack.hasContainerItem()) {
++         ItemStack itemstack1 = itemstack.getContainerItem();
++         itemstack.decrement(1);
+          if (itemstack.isEmpty()) {
+             itemstack = itemstack1;
+          } else if (!this.world.isClient) {
+             ItemScatterer.spawn(this.world, (double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), itemstack1);
+          }
+       }
++      else itemstack.decrement(1);
+ 
+       this.inventory.set(3, itemstack);
+       this.world.syncWorldEvent(1035, blockpos, 0);
+@@ -230,13 +231,13 @@
+ 
+    public boolean isValid(int index, ItemStack stack) {
+       if (index == 3) {
+-         return BrewingRecipeRegistry.isValidIngredient(stack);
++         return net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidIngredient(stack);
+       } else {
+          Item item = stack.getItem();
+          if (index == 4) {
+             return item == Items.BLAZE_POWDER;
+          } else {
+-            return (item == Items.POTION || item == Items.SPLASH_POTION || item == Items.LINGERING_POTION || item == Items.GLASS_BOTTLE) && this.getStack(index).isEmpty();
++            return net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidInput(stack) && this.getStack(index).isEmpty();
+          }
+       }
+    }
+@@ -268,4 +269,27 @@
+    protected ScreenHandler createScreenHandler(int id, PlayerInventory player) {
+       return new BrewingStandScreenHandler(id, player, this, this.propertyDelegate);
+    }
++
++   net.minecraftforge.common.util.LazyOptional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
++           net.minecraftforge.items.wrapper.SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable Direction facing) {
++      if (!this.removed && facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
++         if (facing == Direction.UP)
++            return handlers[0].cast();
++         else if (facing == Direction.DOWN)
++            return handlers[1].cast();
++         else
++            return handlers[2].cast();
++      }
++      return super.getCapability(capability, facing);
++   }
++
++   @Override
++   protected void invalidateCaps() {
++      super.invalidateCaps();
++      for (int x = 0; x < handlers.length; x++)
++        handlers[x].invalidate();
++   }
+ }

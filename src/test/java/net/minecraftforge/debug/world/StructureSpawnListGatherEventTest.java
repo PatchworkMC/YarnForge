@@ -19,10 +19,10 @@
 
 package net.minecraftforge.debug.world;
 
-import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
-import net.minecraft.world.biome.MobSpawnInfo;
-import net.minecraft.world.gen.feature.structure.Structure;
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.world.biome.SpawnSettings;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.StructureSpawnListGatherEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -44,15 +44,15 @@ public class StructureSpawnListGatherEventTest
 
     private void onStructureSpawnListGather(StructureSpawnListGatherEvent event)
     {
-        if (event.getStructure() == Structure.STRONGHOLD)
+        if (event.getStructure() == StructureFeature.STRONGHOLD)
         {
-            event.addEntitySpawn(EntityClassification.MONSTER, new MobSpawnInfo.Spawners(EntityType.WITHER_SKELETON, 100, 5, 15));
+            event.addEntitySpawn(SpawnGroup.MONSTER, new SpawnSettings.SpawnEntry(EntityType.WITHER_SKELETON, 100, 5, 15));
             LOGGER.info("Adding wither skeleton spawns to strong holds");
         }
-        else if (event.getStructure() == Structure.SHIPWRECK)
+        else if (event.getStructure() == StructureFeature.SHIPWRECK)
         {
             event.setInsideOnly(false);
-            event.addEntitySpawn(EntityClassification.MONSTER, new MobSpawnInfo.Spawners(EntityType.GUARDIAN, 100, 5, 15));
+            event.addEntitySpawn(SpawnGroup.MONSTER, new SpawnSettings.SpawnEntry(EntityType.GUARDIAN, 100, 5, 15));
             LOGGER.info("Adding guardians spawns to shipwrecks");
         }
     }

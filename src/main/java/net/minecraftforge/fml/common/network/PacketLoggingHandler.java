@@ -21,7 +21,12 @@ package net.minecraftforge.fml.common.network;
 
 import java.util.Iterator;
 import java.util.List;
-
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.NetworkSide;
+import net.minecraft.network.Packet;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.SizePrepender;
+import net.minecraft.network.SplitterHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -32,47 +37,40 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.network.IPacket;
-import net.minecraft.network.NettyVarint21FrameDecoder;
-import net.minecraft.network.NettyVarint21FrameEncoder;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.PacketDirection;
-
 public class PacketLoggingHandler {
 	private static final Logger LOGGER = LogManager.getLogger();
 
-	public static void register(NetworkManager manager) {
+	public static void register(ClientConnection manager) {
 		ChannelPipeline pipeline = manager.channel().pipeline();
-		final PacketDirection direction = manager.getDirection();
-		if (manager.isLocalChannel()) {
-			pipeline.addBefore("packet_handler", "splitter", new SimpleChannelInboundHandler<IPacket<?>>() {
-				final String prefix = (direction == PacketDirection.SERVERBOUND ? "SERVER: C->S" : "CLIENT: S->C");
+		final NetworkSide direction = manager.getDirection();
+		if (manager.isLocal()) {
+			pipeline.addBefore("packet_handler", "splitter", new SimpleChannelInboundHandler<Packet<?>>() {
+				final String prefix = (direction == NetworkSide.SERVERBOUND ? "SERVER: C->S" : "CLIENT: S->C");
 
 				@Override
-				protected void channelRead0(ChannelHandlerContext ctx, IPacket<?> msg) throws Exception {
-					PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
-					msg.writePacketData(buf);
+				protected void channelRead0(ChannelHandlerContext ctx, Packet<?> msg) throws Exception {
+					PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+					msg.write(buf);
 					LOGGER.debug("{} {}:\n{}", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
 					ctx.fireChannelRead(msg);
 				}
 			});
 			pipeline.addBefore("splitter", "prepender", new ChannelOutboundHandlerAdapter() {
-				final String prefix = (direction == PacketDirection.SERVERBOUND ? "SERVER: S->C" : "CLIENT: C->S");
+				final String prefix = (direction == NetworkSide.SERVERBOUND ? "SERVER: S->C" : "CLIENT: C->S");
 
 				@Override
 				public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-					if (msg instanceof IPacket<?>) {
-						PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
-						((IPacket<?>) msg).writePacketData(buf);
+					if (msg instanceof Packet<?>) {
+						PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+						((Packet<?>) msg).write(buf);
 						LOGGER.debug("{} {}:\n{}", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
 					}
 					ctx.write(msg, promise);
 				}
 			});
 		} else {
-			pipeline.replace("splitter", "splitter", new NettyVarint21FrameDecoder() {
-				final String prefix = (direction == PacketDirection.SERVERBOUND ? "SERVER: C->S" : "CLIENT: S->C");
+			pipeline.replace("splitter", "splitter", new SplitterHandler() {
+				final String prefix = (direction == NetworkSide.SERVERBOUND ? "SERVER: C->S" : "CLIENT: S->C");
 
 				@Override
 				protected void decode(ChannelHandlerContext context, ByteBuf input, List<Object> output) throws Exception {
@@ -86,8 +84,8 @@ public class PacketLoggingHandler {
 					}
 				}
 			});
-			pipeline.replace("prepender", "prepender", new NettyVarint21FrameEncoder() {
-				final String prefix = (direction == PacketDirection.SERVERBOUND ? "SERVER: S->C" : "CLIENT: C->S");
+			pipeline.replace("prepender", "prepender", new SizePrepender() {
+				final String prefix = (direction == NetworkSide.SERVERBOUND ? "SERVER: S->C" : "CLIENT: C->S");
 
 				@Override
 				protected void encode(ChannelHandlerContext context, ByteBuf input, ByteBuf output) throws Exception {

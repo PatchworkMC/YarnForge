@@ -1,0 +1,45 @@
+--- a/net/minecraft/client/render/entity/ItemFrameEntityRenderer.java
++++ b/net/minecraft/client/render/entity/ItemFrameEntityRenderer.java
+@@ -52,7 +52,7 @@
+       if (!flag) {
+          BlockRenderManager blockrendererdispatcher = this.client.getBlockRenderManager();
+          BakedModelManager modelmanager = blockrendererdispatcher.getModels().getModelManager();
+-         ModelIdentifier modelresourcelocation = entityIn.getHeldItemStack().getItem() == Items.FILLED_MAP ? MAP_FRAME : NORMAL_FRAME;
++         ModelIdentifier modelresourcelocation = entityIn.getHeldItemStack().getItem() instanceof FilledMapItem ? MAP_FRAME : NORMAL_FRAME;
+          matrixStackIn.push();
+          matrixStackIn.translate(-0.5D, -0.5D, -0.5D);
+          blockrendererdispatcher.getModelRenderer().render(matrixStackIn.peek(), bufferIn.getBuffer(TexturedRenderLayers.getEntitySolid()), (BlockState)null, modelmanager.getModel(modelresourcelocation), 1.0F, 1.0F, 1.0F, packedLightIn, OverlayTexture.DEFAULT_UV);
+@@ -61,21 +61,21 @@
+ 
+       ItemStack itemstack = entityIn.getHeldItemStack();
+       if (!itemstack.isEmpty()) {
+-         boolean flag1 = itemstack.getItem() == Items.FILLED_MAP;
++         MapState mapdata = FilledMapItem.getOrCreateMapState(itemstack, entityIn.world);
+          if (flag) {
+             matrixStackIn.translate(0.0D, 0.0D, 0.5D);
+          } else {
+             matrixStackIn.translate(0.0D, 0.0D, 0.4375D);
+          }
+ 
+-         int i = flag1 ? entityIn.getRotation() % 4 * 2 : entityIn.getRotation();
++         int i = mapdata != null ? entityIn.getRotation() % 4 * 2 : entityIn.getRotation();
+          matrixStackIn.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion((float)i * 360.0F / 8.0F));
+-         if (flag1) {
++         if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderItemInFrameEvent(entityIn, this, matrixStackIn, bufferIn, packedLightIn))) {
++         if (mapdata != null) {
+             matrixStackIn.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion(180.0F));
+             float f = 0.0078125F;
+             matrixStackIn.scale(0.0078125F, 0.0078125F, 0.0078125F);
+             matrixStackIn.translate(-64.0D, -64.0D, 0.0D);
+-            MapState mapdata = FilledMapItem.getOrCreateMapState(itemstack, entityIn.world);
+             matrixStackIn.translate(0.0D, 0.0D, -1.0D);
+             if (mapdata != null) {
+                this.client.gameRenderer.getMapRenderer().draw(matrixStackIn, bufferIn, mapdata, true, packedLightIn);
+@@ -84,6 +84,7 @@
+             matrixStackIn.scale(0.5F, 0.5F, 0.5F);
+             this.itemRenderer.renderItem(itemstack, ModelTransformation.Mode.FIXED, packedLightIn, OverlayTexture.DEFAULT_UV, matrixStackIn, bufferIn);
+          }
++         }
+       }
+ 
+       matrixStackIn.pop();

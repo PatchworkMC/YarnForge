@@ -1,0 +1,48 @@
+--- a/net/minecraft/screen/slot/Slot.java
++++ b/net/minecraft/screen/slot/Slot.java
+@@ -79,7 +79,7 @@
+    @Nullable
+    @Environment(EnvType.CLIENT)
+    public Pair<Identifier, Identifier> getBackgroundSprite() {
+-      return null;
++      return backgroundPair;
+    }
+ 
+    public ItemStack takeStack(int amount) {
+@@ -94,4 +94,36 @@
+    public boolean doDrawHoveringEffect() {
+       return true;
+    }
++
++   /**
++    * Retrieves the index in the inventory for this slot, this value should typically not
++    * be used, but can be useful for some occasions.
++    *
++    * @return Index in associated inventory for this slot.
++    */
++   public int getSlotIndex() {
++      return index;
++   }
++
++   /**
++    * Checks if the other slot is in the same inventory, by comparing the inventory reference.
++    * @param other
++    * @return true if the other slot is in the same inventory
++    */
++   public boolean isSameInventory(Slot other) {
++      return this.inventory == other.inventory;
++   }
++
++   private Pair<Identifier, Identifier> backgroundPair;
++   /**
++    * Sets the background atlas and sprite location.
++    *
++    * @param atlas The atlas name
++    * @param sprite The sprite located on that atlas.
++    * @return this, to allow chaining.
++    */
++   public Slot setBackground(Identifier atlas, Identifier sprite) {
++       this.backgroundPair = Pair.of(atlas, sprite);
++       return this;
++   }
+ }

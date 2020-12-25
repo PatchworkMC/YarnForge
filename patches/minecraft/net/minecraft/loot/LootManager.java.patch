@@ -1,0 +1,13 @@
+--- a/net/minecraft/loot/LootManager.java
++++ b/net/minecraft/loot/LootManager.java
+@@ -38,8 +38,8 @@
+       }
+ 
+       objectIn.forEach((p_237403_1_, p_237403_2_) -> {
+-         try {
+-            LootTable loottable = GSON.fromJson(p_237403_2_, LootTable.class);
++         try (net.minecraft.resource.Resource res = resourceManagerIn.getResource(getPreparedPath(p_237403_1_));){
++            LootTable loottable = net.minecraftforge.common.ForgeHooks.loadLootTable(GSON, p_237403_1_, p_237403_2_, res == null || !res.getResourcePackName().equals("Default"), this);
+             builder.put(p_237403_1_, loottable);
+          } catch (Exception exception) {
+             LOGGER.error("Couldn't parse loot table {}", p_237403_1_, exception);

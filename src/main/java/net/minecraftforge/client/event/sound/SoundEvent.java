@@ -19,44 +19,44 @@
 
 package net.minecraftforge.client.event.sound;
 
+import net.minecraft.client.sound.SoundInstance;
+import net.minecraft.client.sound.SoundSystem;
+import net.minecraft.client.sound.Source;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraft.client.audio.ISound;
-import net.minecraft.client.audio.SoundEngine;
-import net.minecraft.client.audio.SoundSource;
 
 public class SoundEvent extends net.minecraftforge.eventbus.api.Event
 {
-    private final SoundEngine manager;
-    public SoundEvent(SoundEngine manager)
+    private final SoundSystem manager;
+    public SoundEvent(SoundSystem manager)
     {
         this.manager = manager;
     }
 
-    public SoundEngine getManager()
+    public SoundSystem getManager()
     {
         return manager;
     }
 
     public static class SoundSourceEvent extends SoundEvent
     {
-        private final ISound sound;
-        private final SoundSource source;
+        private final SoundInstance sound;
+        private final Source source;
         private final String name;
 
-        public SoundSourceEvent(SoundEngine manager, ISound sound, SoundSource source)
+        public SoundSourceEvent(SoundSystem manager, SoundInstance sound, Source source)
         {
             super(manager);
-            this.name = sound.getSoundLocation().getPath();
+            this.name = sound.getId().getPath();
             this.sound = sound;
             this.source = source;
         }
 
-        public ISound getSound()
+        public SoundInstance getSound()
         {
             return sound;
         }
 
-        public SoundSource getSource()
+        public Source getSource()
         {
             return source;
         }

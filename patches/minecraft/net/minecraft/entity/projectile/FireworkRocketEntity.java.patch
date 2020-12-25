@@ -1,16 +1,16 @@
 --- a/net/minecraft/entity/projectile/FireworkRocketEntity.java
 +++ b/net/minecraft/entity/projectile/FireworkRocketEntity.java
-@@ -156,6 +156,13 @@
+@@ -157,6 +157,13 @@
  
     }
  
 +   @Override
-+   protected void func_70227_a(RayTraceResult result) {
-+      if (result.func_216346_c() == RayTraceResult.Type.MISS || !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, result)) {
-+         super.func_70227_a(result);
++   protected void onCollision(HitResult result) {
++      if (result.getType() == HitResult.Type.MISS || !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, result)) {
++         super.onCollision(result);
 +      }
 +   }
 +
-    private void func_213893_k() {
-       this.field_70170_p.func_72960_a(this, (byte)17);
-       this.func_191510_k();
+    private void explodeAndRemove() {
+       this.world.sendEntityStatus(this, (byte)17);
+       this.explode();

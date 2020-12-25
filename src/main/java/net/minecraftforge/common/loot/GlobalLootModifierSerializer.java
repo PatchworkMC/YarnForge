@@ -20,10 +20,9 @@
 package net.minecraftforge.common.loot;
 
 import com.google.gson.JsonObject;
-
-import net.minecraft.loot.ConditionArraySerializer;
-import net.minecraft.loot.conditions.ILootCondition;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.loot.condition.LootCondition;
+import net.minecraft.predicate.entity.AdvancementEntityPredicateSerializer;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.registries.GameData;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
@@ -34,7 +33,7 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
  * @param <T> the Type to deserialize
  */
 public abstract class GlobalLootModifierSerializer<T extends IGlobalLootModifier> implements IForgeRegistryEntry<GlobalLootModifierSerializer<?>> {
-    private ResourceLocation registryName = null;
+    private Identifier registryName = null;
     
     public final GlobalLootModifierSerializer<T> setRegistryName(String name) {
         if (getRegistryName() != null)
@@ -46,12 +45,12 @@ public abstract class GlobalLootModifierSerializer<T extends IGlobalLootModifier
     
     //Helpers
     @Override
-    public final GlobalLootModifierSerializer<T> setRegistryName(ResourceLocation name){ return setRegistryName(name.toString()); }
+    public final GlobalLootModifierSerializer<T> setRegistryName(Identifier name){ return setRegistryName(name.toString()); }
 
     public final GlobalLootModifierSerializer<T> setRegistryName(String modID, String name){ return setRegistryName(modID + ":" + name); }
 
     @Override
-    public final ResourceLocation getRegistryName() {
+    public final Identifier getRegistryName() {
         return registryName;
     }
     
@@ -63,7 +62,7 @@ public abstract class GlobalLootModifierSerializer<T extends IGlobalLootModifier
      * @param json The full json object (including ILootConditions)
      * @param conditionsIn An already deserialized list of ILootConditions
      */
-    public abstract T read(ResourceLocation location, JsonObject object, ILootCondition[] ailootcondition);
+    public abstract T read(Identifier location, JsonObject object, LootCondition[] ailootcondition);
 
     /**
      * Write the serializer to json.
@@ -77,9 +76,9 @@ public abstract class GlobalLootModifierSerializer<T extends IGlobalLootModifier
      * Helper to create the json object from the conditions.
      * Add any extra properties to the returned json.
      */
-    public JsonObject makeConditions(ILootCondition[] conditions) {
+    public JsonObject makeConditions(LootCondition[] conditions) {
         JsonObject json = new JsonObject();
-        json.add("conditions", ConditionArraySerializer.field_235679_a_.func_235681_a_(conditions));
+        json.add("conditions", AdvancementEntityPredicateSerializer.INSTANCE.conditionsToJson(conditions));
         return json;
     }
 

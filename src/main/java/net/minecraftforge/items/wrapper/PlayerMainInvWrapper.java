@@ -19,10 +19,9 @@
 
 package net.minecraftforge.items.wrapper;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-
+import net.minecraft.server.network.ServerPlayerEntity;
 import javax.annotation.Nonnull;
 
 /**
@@ -35,7 +34,7 @@ public class PlayerMainInvWrapper extends RangedWrapper
 
     public PlayerMainInvWrapper(PlayerInventory inv)
     {
-        super(new InvWrapper(inv), 0, inv.mainInventory.size());
+        super(new InvWrapper(inv), 0, inv.main.size());
         inventoryPlayer = inv;
     }
 
@@ -50,12 +49,12 @@ public class PlayerMainInvWrapper extends RangedWrapper
             ItemStack inSlot = getStackInSlot(slot);
             if(!inSlot.isEmpty())
             {
-                if (getInventoryPlayer().player.world.isRemote)
+                if (getInventoryPlayer().player.world.isClient)
                 {
-                    inSlot.setAnimationsToGo(5);
+                    inSlot.setCooldown(5);
                 }
                 else if(getInventoryPlayer().player instanceof ServerPlayerEntity) {
-                    getInventoryPlayer().player.openContainer.detectAndSendChanges();
+                    getInventoryPlayer().player.currentScreenHandler.sendContentUpdates();
                 }
             }
         }

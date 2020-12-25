@@ -1,0 +1,17 @@
+--- a/net/minecraft/world/RaycastContext.java
++++ b/net/minecraft/world/RaycastContext.java
+@@ -18,12 +18,12 @@
+    private final RaycastContext.FluidHandling fluid;
+    private final ShapeContext entityPosition;
+ 
+-   public RaycastContext(Vec3d startVecIn, Vec3d endVecIn, RaycastContext.ShapeType blockModeIn, RaycastContext.FluidHandling fluidModeIn, Entity entityIn) {
++   public RaycastContext(Vec3d startVecIn, Vec3d endVecIn, RaycastContext.ShapeType blockModeIn, RaycastContext.FluidHandling fluidModeIn, @javax.annotation.Nullable Entity entityIn) {
+       this.start = startVecIn;
+       this.end = endVecIn;
+       this.shapeType = blockModeIn;
+       this.fluid = fluidModeIn;
+-      this.entityPosition = ShapeContext.of(entityIn);
++      this.entityPosition = entityIn == null ? ShapeContext.absent() : ShapeContext.of(entityIn);
+    }
+ 
+    public Vec3d getEnd() {

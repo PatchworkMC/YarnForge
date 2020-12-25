@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/gui/screen/recipebook/RecipeBookWidget.java
++++ b/net/minecraft/client/gui/screen/recipebook/RecipeBookWidget.java
+@@ -97,7 +97,7 @@
+       this.setBookButtonTexture();
+       this.tabButtons.clear();
+ 
+-      for(RecipeBookGroup recipebookcategories : RecipeBookGroup.method_30285(this.craftingScreenHandler.getCategory())) {
++      for(RecipeBookGroup recipebookcategories : this.craftingScreenHandler.getRecipeBookCategories()) {
+          this.tabButtons.add(new RecipeGroupButtonWidget(recipebookcategories));
+       }
+ 
+@@ -436,7 +436,7 @@
+ 
+          languagemanager.setLanguage(language);
+          this.client.options.language = language.getCode();
+-         this.client.reloadResources();
++         net.minecraftforge.client.ForgeHooksClient.refreshResources(this.client, net.minecraftforge.resource.VanillaResourceType.LANGUAGES);
+          this.client.options.write();
+       }
+ 

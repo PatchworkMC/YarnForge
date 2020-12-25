@@ -1,0 +1,44 @@
+--- a/net/minecraft/data/server/EntityLootTableGenerator.java
++++ b/net/minecraft/data/server/EntityLootTableGenerator.java
+@@ -50,7 +50,7 @@
+       return LootTable.builder().pool(LootPool.builder().rolls(ConstantLootTableRange.create(1)).with(ItemEntry.builder(wool))).pool(LootPool.builder().rolls(ConstantLootTableRange.create(1)).with(LootTableEntry.builder(EntityType.SHEEP.getLootTableId())));
+    }
+ 
+-   public void accept(BiConsumer<Identifier, LootTable.Builder> p_accept_1_) {
++   protected void addTables() {
+       this.register(EntityType.ARMOR_STAND, LootTable.builder());
+       this.register(EntityType.BAT, LootTable.builder());
+       this.register(EntityType.BEE, LootTable.builder());
+@@ -141,11 +141,15 @@
+       this.register(EntityType.PIGLIN, LootTable.builder());
+       this.register(EntityType.PIGLIN_BRUTE, LootTable.builder());
+       this.register(EntityType.ZOMBIE_VILLAGER, LootTable.builder().pool(LootPool.builder().rolls(ConstantLootTableRange.create(1)).with(ItemEntry.builder(Items.ROTTEN_FLESH).apply(SetCountLootFunction.builder(UniformLootTableRange.between(0.0F, 2.0F))).apply(LootingEnchantLootFunction.builder(UniformLootTableRange.between(0.0F, 1.0F))))).pool(LootPool.builder().rolls(ConstantLootTableRange.create(1)).with(ItemEntry.builder(Items.IRON_INGOT)).with(ItemEntry.builder(Items.CARROT)).with(ItemEntry.builder(Items.POTATO)).conditionally(KilledByPlayerLootCondition.builder()).conditionally(RandomChanceWithLootingLootCondition.builder(0.025F, 0.01F))));
++   }
++
++   public void accept(BiConsumer<Identifier, LootTable.Builder> p_accept_1_) {
++      this.addTables();
+       Set<Identifier> set = Sets.newHashSet();
+ 
+-      for(EntityType<?> entitytype : Registry.ENTITY_TYPE) {
++      for(EntityType<?> entitytype : getKnownEntities()) {
+          Identifier resourcelocation = entitytype.getLootTableId();
+-         if (!ENTITY_TYPES_IN_MISC_GROUP_TO_CHECK.contains(entitytype) && entitytype.getSpawnGroup() == SpawnGroup.MISC) {
++         if (isNonLiving(entitytype)) {
+             if (resourcelocation != LootTables.EMPTY && this.lootTables.remove(resourcelocation) != null) {
+                throw new IllegalStateException(String.format("Weird loottable '%s' for '%s', not a LivingEntity so should not have loot", resourcelocation, Registry.ENTITY_TYPE.getId(entitytype)));
+             }
+@@ -162,6 +166,14 @@
+       this.lootTables.forEach(p_accept_1_::accept);
+    }
+ 
++   protected Iterable<EntityType<?>> getKnownEntities() {
++      return Registry.ENTITY_TYPE;
++   }
++
++   protected boolean isNonLiving(EntityType<?> entitytype) {
++      return !ENTITY_TYPES_IN_MISC_GROUP_TO_CHECK.contains(entitytype) && entitytype.getSpawnGroup() == SpawnGroup.MISC;
++   }
++
+    protected void register(EntityType<?> type, LootTable.Builder table) {
+       this.register(type.getLootTableId(), table);
+    }

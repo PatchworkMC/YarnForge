@@ -22,31 +22,29 @@ package net.minecraftforge.client.model;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.util.math.AffineTransformation;
+import net.minecraft.client.util.math.Vector3f;
+import net.minecraft.client.util.math.Vector4f;
 import com.google.common.collect.Lists;
-
-import net.minecraft.util.math.vector.TransformationMatrix;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.util.math.vector.Vector4f;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class QuadTransformer
 {
-    private static final int POSITION = findPositionOffset(DefaultVertexFormats.BLOCK);
-    private static final int NORMAL = findNormalOffset(DefaultVertexFormats.BLOCK);
-    private final TransformationMatrix transform;
+    private static final int POSITION = findPositionOffset(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+    private static final int NORMAL = findNormalOffset(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+    private final AffineTransformation transform;
 
-    public QuadTransformer(TransformationMatrix transform)
+    public QuadTransformer(AffineTransformation transform)
     {
         this.transform = transform;
     }
 
     private void processVertices(int[] inData, int[] outData)
     {
-        int stride = DefaultVertexFormats.BLOCK.getSize();
+        int stride = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSize();
         int count = (inData.length * 4) / stride;
         for (int i=0;i<count;i++)
         {
@@ -57,7 +55,7 @@ public class QuadTransformer
 
             Vector4f pos = new Vector4f(x, y, z, 1);
             transform.transformPosition(pos);
-            pos.perspectiveDivide();
+            pos.normalizeProjectiveCoordinates();
 
             putAtByteOffset(outData, offset, Float.floatToRawIntBits(pos.getX()));
             putAtByteOffset(outData,offset + 4, Float.floatToRawIntBits(pos.getY()));
@@ -128,7 +126,7 @@ public class QuadTransformer
         for (index = 0; index < fmt.getElements().size(); index++)
         {
             VertexFormatElement el = fmt.getElements().get(index);
-            if (el.getUsage() == VertexFormatElement.Usage.POSITION)
+            if (el.getType() == VertexFormatElement.Type.POSITION)
             {
                 element = el;
                 break;
@@ -136,7 +134,7 @@ public class QuadTransformer
         }
         if (index == fmt.getElements().size() || element == null)
             throw new RuntimeException("Expected vertex format to have a POSITION attribute");
-        if (element.getType() != VertexFormatElement.Type.FLOAT)
+        if (element.getFormat() != VertexFormatElement.Format.FLOAT)
             throw new RuntimeException("Expected POSITION attribute to have data type FLOAT");
         if (element.getSize() < 3)
             throw new RuntimeException("Expected POSITION attribute to have at least 3 dimensions");
@@ -150,7 +148,7 @@ public class QuadTransformer
         for (index = 0; index < fmt.getElements().size(); index++)
         {
             VertexFormatElement el = fmt.getElements().get(index);
-            if (el.getUsage() == VertexFormatElement.Usage.NORMAL)
+            if (el.getType() == VertexFormatElement.Type.NORMAL)
             {
                 element = el;
                 break;
@@ -158,7 +156,7 @@ public class QuadTransformer
         }
         if (index == fmt.getElements().size() || element == null)
             throw new IllegalStateException("BLOCK format does not have normals?");
-        if (element.getType() != VertexFormatElement.Type.BYTE)
+        if (element.getFormat() != VertexFormatElement.Format.BYTE)
             throw new RuntimeException("Expected NORMAL attribute to have data type BYTE");
         if (element.getSize() < 3)
             throw new RuntimeException("Expected NORMAL attribute to have at least 3 dimensions");
@@ -176,7 +174,7 @@ public class QuadTransformer
         int[] outData = Arrays.copyOf(inData, inData.length);
         processVertices(inData, outData);
 
-        return new BakedQuad(outData, input.getTintIndex(), input.getFace(), input.getSprite(), input.applyDiffuseLighting());
+        return new BakedQuad(outData, input.getColorIndex(), input.getFace(), input.a(), input.hasShade());
     }
 
     /**
@@ -208,7 +206,7 @@ public class QuadTransformer
             int[] outData = Arrays.copyOf(inData, inData.length);
             processVertices(inData, outData);
 
-            outputs.add(new BakedQuad(outData, input.getTintIndex(), input.getFace(), input.getSprite(), input.applyDiffuseLighting()));
+            outputs.add(new BakedQuad(outData, input.getColorIndex(), input.getFace(), input.a(), input.hasShade()));
         }
         return outputs;
     }

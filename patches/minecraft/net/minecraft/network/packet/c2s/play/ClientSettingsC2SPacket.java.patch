@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/packet/c2s/play/ClientSettingsC2SPacket.java
++++ b/net/minecraft/network/packet/c2s/play/ClientSettingsC2SPacket.java
+@@ -69,4 +69,8 @@
+    public Arm getMainArm() {
+       return this.mainArm;
+    }
++
++   public String getLanguage() {
++      return this.language;
++   }
+ }

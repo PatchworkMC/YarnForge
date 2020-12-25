@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/resource/language/I18n.java
++++ b/net/minecraft/client/resource/language/I18n.java
+@@ -13,6 +13,7 @@
+ 
+    static void method_29391(Language p_239502_0_) {
+       field_25290 = p_239502_0_;
++      net.minecraftforge.fml.ForgeI18n.loadLanguageData(p_239502_0_.getLanguageData());
+    }
+ 
+    public static String translate(String translateKey, Object... parameters) {

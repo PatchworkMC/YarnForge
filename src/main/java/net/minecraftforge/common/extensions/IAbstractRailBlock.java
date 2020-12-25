@@ -21,10 +21,10 @@ package net.minecraftforge.common.extensions;
 
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.item.minecart.AbstractMinecartEntity;
-import net.minecraft.state.properties.RailShape;
+import net.minecraft.block.enums.RailShape;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -44,7 +44,7 @@ public interface IAbstractRailBlock
      * @param pos Block's position in world
      * @return True if the rail can make corners.
      */
-    boolean isFlexibleRail(BlockState state, IBlockReader world, BlockPos pos);
+    boolean isFlexibleRail(BlockState state, BlockView world, BlockPos pos);
 
     /**
      * Returns true if the rail can make up and down slopes.
@@ -53,7 +53,7 @@ public interface IAbstractRailBlock
      * @param pos Block's position in world
      * @return True if the rail can make slopes.
      */
-    default boolean canMakeSlopes(BlockState state, IBlockReader world, BlockPos pos)
+    default boolean canMakeSlopes(BlockState state, BlockView world, BlockPos pos)
     {
         return true;
     }
@@ -70,7 +70,7 @@ public interface IAbstractRailBlock
     * @param cart The cart asking for the metadata, null if it is not called by EntityMinecart.
     * @return The direction.
     */
-    RailShape getRailDirection(BlockState state, IBlockReader world, BlockPos pos, @Nullable AbstractMinecartEntity cart);
+    RailShape getRailDirection(BlockState state, BlockView world, BlockPos pos, @Nullable AbstractMinecartEntity cart);
 
     /**
      * Returns the max speed of the rail at the specified position.
@@ -79,7 +79,7 @@ public interface IAbstractRailBlock
      * @param pos Block's position in world
      * @return The max speed of the current rail.
      */
-    default float getRailMaxSpeed(BlockState state, World world, BlockPos pos, net.minecraft.entity.item.minecart.AbstractMinecartEntity cart)
+    default float getRailMaxSpeed(BlockState state, World world, BlockPos pos, net.minecraft.entity.vehicle.AbstractMinecartEntity cart)
     {
         return 0.4f;
     }
@@ -91,5 +91,5 @@ public interface IAbstractRailBlock
       * @param cart The cart on the rail.
       * @param pos Block's position in world
       */
-    default void onMinecartPass(BlockState state, World world, BlockPos pos, net.minecraft.entity.item.minecart.AbstractMinecartEntity cart){}
+    default void onMinecartPass(BlockState state, World world, BlockPos pos, net.minecraft.entity.vehicle.AbstractMinecartEntity cart){}
 }

@@ -1,0 +1,18 @@
+--- a/net/minecraft/client/network/ClientLoginNetworkHandler.java
++++ b/net/minecraft/client/network/ClientLoginNetworkHandler.java
+@@ -117,6 +117,7 @@
+       this.statusConsumer.accept(new TranslatableText("connect.joining"));
+       this.profile = packetIn.getProfile();
+       this.connection.setState(NetworkState.PLAY);
++      net.minecraftforge.fml.network.NetworkHooks.handleClientLoginSuccess(this.connection);
+       this.connection.setPacketListener(new ClientPlayNetworkHandler(this.client, this.parentGui, this.connection, this.profile));
+    }
+ 
+@@ -145,6 +146,7 @@
+    }
+ 
+    public void onQueryRequest(LoginQueryRequestS2CPacket packetIn) {
++      if (net.minecraftforge.fml.network.NetworkHooks.onCustomPayload(packetIn, this.connection)) return;
+       this.statusConsumer.accept(new TranslatableText("connect.negotiating"));
+       this.connection.send(new LoginQueryResponseC2SPacket(packetIn.getQueryId(), (PacketByteBuf)null));
+    }

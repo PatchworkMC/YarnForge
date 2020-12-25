@@ -1,0 +1,12 @@
+--- a/net/minecraft/client/resource/language/TranslationStorage.java
++++ b/net/minecraft/client/resource/language/TranslationStorage.java
+@@ -79,4 +79,9 @@
+    public OrderedText reorder(StringVisitable p_241870_1_) {
+       return ReorderingUtil.reorder(p_241870_1_, this.rightToLeft);
+    }
++
++   @Override
++   public Map<String, String> getLanguageData() {
++      return translations;
++   }
+ }

@@ -1,0 +1,20 @@
+--- a/net/minecraft/block/TrapdoorBlock.java
++++ b/net/minecraft/block/TrapdoorBlock.java
+@@ -145,4 +145,17 @@
+ 
+       return super.getStateForNeighborUpdate(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
++
++   //Forge Start
++   @Override
++   public boolean isLadder(BlockState state, net.minecraft.world.WorldView world, BlockPos pos, net.minecraft.entity.LivingEntity entity) {
++      if (state.get(OPEN)) {
++         BlockState down = world.getBlockState(pos.down());
++         if (down.getBlock() == net.minecraft.block.Blocks.LADDER)
++            return down.get(LadderBlock.FACING) == state.get(FACING);
++      }
++      return false;
++   }
++   //Forge End
++
+ }

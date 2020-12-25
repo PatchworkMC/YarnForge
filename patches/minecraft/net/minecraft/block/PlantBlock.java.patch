@@ -1,0 +1,32 @@
+--- a/net/minecraft/block/PlantBlock.java
++++ b/net/minecraft/block/PlantBlock.java
+@@ -7,7 +7,7 @@
+ import net.minecraft.world.WorldAccess;
+ import net.minecraft.world.WorldView;
+ 
+-public class PlantBlock extends Block {
++public class PlantBlock extends Block implements net.minecraftforge.common.IPlantable {
+    public PlantBlock(AbstractBlock.Settings properties) {
+       super(properties);
+    }
+@@ -22,6 +22,8 @@
+ 
+    public boolean canPlaceAt(BlockState state, WorldView worldIn, BlockPos pos) {
+       BlockPos blockpos = pos.down();
++      if (state.getBlock() == this) //Forge: This function is called during world gen and placement, before this block is set, so if we are not 'here' then assume it's the pre-check.
++         return worldIn.getBlockState(blockpos).canSustainPlant(worldIn, blockpos, Direction.UP, this);
+       return this.canPlantOnTop(worldIn.getBlockState(blockpos), worldIn, blockpos);
+    }
+ 
+@@ -32,4 +34,11 @@
+    public boolean canPathfindThrough(BlockState state, BlockView worldIn, BlockPos pos, NavigationType type) {
+       return type == NavigationType.AIR && !this.collidable ? true : super.canPathfindThrough(state, worldIn, pos, type);
+    }
++
++   @Override
++   public BlockState getPlant(BlockView world, BlockPos pos) {
++      BlockState state = world.getBlockState(pos);
++      if (state.getBlock() != this) return getDefaultState();
++      return state;
++   }
+ }

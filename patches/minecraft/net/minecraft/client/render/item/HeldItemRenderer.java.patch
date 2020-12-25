@@ -1,0 +1,83 @@
+--- a/net/minecraft/client/render/item/HeldItemRenderer.java
++++ b/net/minecraft/client/render/item/HeldItemRenderer.java
+@@ -212,7 +212,7 @@
+       boolean flag1 = true;
+       if (playerEntityIn.isUsingItem()) {
+          ItemStack itemstack = playerEntityIn.getActiveItem();
+-         if (itemstack.getItem() == Items.BOW || itemstack.getItem() == Items.CROSSBOW) {
++         if (itemstack.getItem() instanceof net.minecraft.item.RangedWeaponItem) {
+             flag = playerEntityIn.getActiveHand() == Hand.MAIN_HAND;
+             flag1 = !flag;
+          }
+@@ -220,18 +220,18 @@
+          Hand hand1 = playerEntityIn.getActiveHand();
+          if (hand1 == Hand.MAIN_HAND) {
+             ItemStack itemstack1 = playerEntityIn.getOffHandStack();
+-            if (itemstack1.getItem() == Items.CROSSBOW && CrossbowItem.isCharged(itemstack1)) {
++            if (itemstack1.getItem() instanceof CrossbowItem && CrossbowItem.isCharged(itemstack1)) {
+                flag1 = false;
+             }
+          }
+       } else {
+          ItemStack itemstack2 = playerEntityIn.getMainHandStack();
+          ItemStack itemstack3 = playerEntityIn.getOffHandStack();
+-         if (itemstack2.getItem() == Items.CROSSBOW && CrossbowItem.isCharged(itemstack2)) {
++         if (itemstack2.getItem() instanceof CrossbowItem && CrossbowItem.isCharged(itemstack2)) {
+             flag1 = !flag;
+          }
+ 
+-         if (itemstack3.getItem() == Items.CROSSBOW && CrossbowItem.isCharged(itemstack3)) {
++         if (itemstack3.getItem() instanceof CrossbowItem && CrossbowItem.isCharged(itemstack3)) {
+             flag = !itemstack2.isEmpty();
+             flag1 = !flag;
+          }
+@@ -244,12 +244,14 @@
+       if (flag) {
+          float f5 = hand == Hand.MAIN_HAND ? f : 0.0F;
+          float f2 = 1.0F - MathHelper.lerp(partialTicks, this.prevEquipProgressMainHand, this.equipProgressMainHand);
++         if(!net.minecraftforge.client.ForgeHooksClient.renderSpecificFirstPersonHand(Hand.MAIN_HAND, matrixStackIn, bufferIn, combinedLightIn, partialTicks, f1, f5, f2, this.mainHand))
+          this.renderFirstPersonItem(playerEntityIn, partialTicks, f1, Hand.MAIN_HAND, f5, this.mainHand, f2, matrixStackIn, bufferIn, combinedLightIn);
+       }
+ 
+       if (flag1) {
+          float f6 = hand == Hand.OFF_HAND ? f : 0.0F;
+          float f7 = 1.0F - MathHelper.lerp(partialTicks, this.prevEquipProgressOffHand, this.equipProgressOffHand);
++         if(!net.minecraftforge.client.ForgeHooksClient.renderSpecificFirstPersonHand(Hand.OFF_HAND, matrixStackIn, bufferIn, combinedLightIn, partialTicks, f1, f6, f7, this.offHand))
+          this.renderFirstPersonItem(playerEntityIn, partialTicks, f1, Hand.OFF_HAND, f6, this.offHand, f7, matrixStackIn, bufferIn, combinedLightIn);
+       }
+ 
+@@ -264,13 +266,13 @@
+          if (flag && !player.isInvisible()) {
+             this.renderArmHoldingItem(matrixStackIn, bufferIn, combinedLightIn, equippedProgress, swingProgress, handside);
+          }
+-      } else if (stack.getItem() == Items.FILLED_MAP) {
++      } else if (stack.getItem() instanceof FilledMapItem) {
+          if (flag && this.offHand.isEmpty()) {
+             this.renderMapInBothHands(matrixStackIn, bufferIn, combinedLightIn, pitch, equippedProgress, swingProgress);
+          } else {
+             this.renderMapInOneHand(matrixStackIn, bufferIn, combinedLightIn, equippedProgress, handside, swingProgress, stack);
+          }
+-      } else if (stack.getItem() == Items.CROSSBOW) {
++      } else if (stack.getItem() instanceof CrossbowItem) {
+          boolean flag1 = CrossbowItem.isCharged(stack);
+          boolean flag2 = handside == Arm.RIGHT;
+          int i = flag2 ? 1 : -1;
+@@ -414,8 +416,16 @@
+          this.equipProgressOffHand = MathHelper.clamp(this.equipProgressOffHand - 0.4F, 0.0F, 1.0F);
+       } else {
+          float f = clientplayerentity.getAttackCooldownProgress(1.0F);
+-         this.equipProgressMainHand += MathHelper.clamp((this.mainHand == itemstack ? f * f * f : 0.0F) - this.equipProgressMainHand, -0.4F, 0.4F);
+-         this.equipProgressOffHand += MathHelper.clamp((float)(this.offHand == itemstack1 ? 1 : 0) - this.equipProgressOffHand, -0.4F, 0.4F);
++         boolean requipM = net.minecraftforge.client.ForgeHooksClient.shouldCauseReequipAnimation(this.mainHand, itemstack, clientplayerentity.inventory.selectedSlot);
++         boolean requipO = net.minecraftforge.client.ForgeHooksClient.shouldCauseReequipAnimation(this.offHand, itemstack1, -1);
++
++         if (!requipM && this.mainHand != itemstack)
++            this.mainHand = itemstack;
++         if (!requipO && this.offHand != itemstack1)
++            this.offHand = itemstack1;
++
++         this.equipProgressMainHand += MathHelper.clamp((!requipM ? f * f * f : 0.0F) - this.equipProgressMainHand, -0.4F, 0.4F);
++         this.equipProgressOffHand += MathHelper.clamp((float)(!requipO ? 1 : 0) - this.equipProgressOffHand, -0.4F, 0.4F);
+       }
+ 
+       if (this.equipProgressMainHand < 0.1F) {

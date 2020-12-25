@@ -1,0 +1,56 @@
+--- a/net/minecraft/client/network/ClientPlayerEntity.java
++++ b/net/minecraft/client/network/ClientPlayerEntity.java
+@@ -135,6 +135,7 @@
+    }
+ 
+    public boolean damage(DamageSource source, float amount) {
++      net.minecraftforge.common.ForgeHooks.onPlayerAttack(this, source, amount);
+       return false;
+    }
+ 
+@@ -458,6 +459,11 @@
+    }
+ 
+    public void playSound(SoundEvent soundIn, float volume, float pitch) {
++      net.minecraftforge.event.entity.PlaySoundAtEntityEvent event = net.minecraftforge.event.ForgeEventFactory.onPlaySoundAtEntity(this, soundIn, this.getSoundCategory(), volume, pitch);
++      if (event.isCanceled() || event.getSound() == null) return;
++      soundIn = event.getSound();
++      volume = event.getVolume();
++      pitch = event.getPitch();
+       this.world.playSound(this.getX(), this.getY(), this.getZ(), soundIn, this.getSoundCategory(), volume, pitch, false);
+    }
+ 
+@@ -596,6 +602,7 @@
+       boolean flag2 = this.isWalking();
+       this.inSneakingPose = !this.abilities.flying && !this.isSwimming() && this.wouldPoseNotCollide(EntityPose.CROUCHING) && (this.isSneaking() || !this.isSleeping() && !this.wouldPoseNotCollide(EntityPose.STANDING));
+       this.input.tick(this.shouldSlowDown());
++      net.minecraftforge.client.ForgeHooksClient.onInputUpdate(this, this.input);
+       this.client.getTutorialManager().onMovement(this.input);
+       if (this.isUsingItem() && !this.hasVehicle()) {
+          this.input.movementSideways *= 0.2F;
+@@ -668,7 +675,7 @@
+ 
+       if (this.input.jumping && !flag7 && !flag && !this.abilities.flying && !this.hasVehicle() && !this.isClimbing()) {
+          ItemStack itemstack = this.getEquippedStack(EquipmentSlot.CHEST);
+-         if (itemstack.getItem() == Items.ELYTRA && ElytraItem.isUsable(itemstack) && this.checkFallFlying()) {
++         if (itemstack.canElytraFly(this) && this.checkFallFlying()) {
+             this.networkHandler.sendPacket(new ClientCommandC2SPacket(this, ClientCommandC2SPacket.Mode.START_FALL_FLYING));
+          }
+       }
+@@ -976,4 +983,16 @@
+          return super.method_30951(partialTicks);
+       }
+    }
++
++   public void updateSyncFields(ClientPlayerEntity old) {
++      this.lastX = old.lastX;
++      this.lastBaseY = old.lastBaseY;
++      this.lastZ = old.lastZ;
++      this.lastYaw = old.lastYaw;
++      this.lastPitch = old.lastPitch;
++      this.lastOnGround = old.lastOnGround;
++      this.lastSneaking = old.lastSneaking;
++      this.lastSprinting = old.lastSprinting;
++      this.ticksSinceLastPositionPacketSent = old.ticksSinceLastPositionPacketSent;
++   }
+ }

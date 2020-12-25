@@ -1,0 +1,105 @@
+--- a/net/minecraft/client/render/block/BlockModelRenderer.java
++++ b/net/minecraft/client/render/block/BlockModelRenderer.java
+@@ -40,13 +40,18 @@
+       this.colorMap = blockColorsIn;
+    }
+ 
++   @Deprecated //Forge: Model data argument
+    public boolean render(BlockRenderView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, MatrixStack matrixIn, VertexConsumer buffer, boolean checkSides, Random randomIn, long rand, int combinedOverlayIn) {
+-      boolean flag = MinecraftClient.isAmbientOcclusionEnabled() && stateIn.getLuminance() == 0 && modelIn.useAmbientOcclusion();
++       return renderModel(worldIn, modelIn, stateIn, posIn, matrixIn, buffer, checkSides, randomIn, rand, combinedOverlayIn, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public boolean renderModel(BlockRenderView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, MatrixStack matrixIn, VertexConsumer buffer, boolean checkSides, Random randomIn, long rand, int combinedOverlayIn, net.minecraftforge.client.model.data.IModelData modelData) {
++      boolean flag = MinecraftClient.isAmbientOcclusionEnabled() && stateIn.getLightValue(worldIn, posIn) == 0 && modelIn.useAmbientOcclusion();
+       Vec3d vector3d = stateIn.getModelOffset(worldIn, posIn);
+       matrixIn.translate(vector3d.x, vector3d.y, vector3d.z);
++      modelData = modelIn.getModelData(worldIn, posIn, stateIn, modelData);
+ 
+       try {
+-         return flag ? this.renderSmooth(worldIn, modelIn, stateIn, posIn, matrixIn, buffer, checkSides, randomIn, rand, combinedOverlayIn) : this.renderFlat(worldIn, modelIn, stateIn, posIn, matrixIn, buffer, checkSides, randomIn, rand, combinedOverlayIn);
++         return flag ? this.renderModelSmooth(worldIn, modelIn, stateIn, posIn, matrixIn, buffer, checkSides, randomIn, rand, combinedOverlayIn, modelData) : this.renderModelFlat(worldIn, modelIn, stateIn, posIn, matrixIn, buffer, checkSides, randomIn, rand, combinedOverlayIn, modelData);
+       } catch (Throwable throwable) {
+          CrashReport crashreport = CrashReport.create(throwable, "Tesselating block model");
+          CrashReportSection crashreportcategory = crashreport.addElement("Block model being tesselated");
+@@ -56,7 +61,11 @@
+       }
+    }
+ 
++   @Deprecated //Forge: Model data argument
+    public boolean renderSmooth(BlockRenderView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, MatrixStack matrixStackIn, VertexConsumer buffer, boolean checkSides, Random randomIn, long rand, int combinedOverlayIn) {
++       return renderModelSmooth(worldIn, modelIn, stateIn, posIn, matrixStackIn, buffer, checkSides, randomIn, rand, combinedOverlayIn, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public boolean renderModelSmooth(BlockRenderView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, MatrixStack matrixStackIn, VertexConsumer buffer, boolean checkSides, Random randomIn, long rand, int combinedOverlayIn, net.minecraftforge.client.model.data.IModelData modelData) {
+       boolean flag = false;
+       float[] afloat = new float[Direction.values().length * 2];
+       BitSet bitset = new BitSet(3);
+@@ -64,7 +73,7 @@
+ 
+       for(Direction direction : Direction.values()) {
+          randomIn.setSeed(rand);
+-         List<BakedQuad> list = modelIn.getQuads(stateIn, direction, randomIn);
++         List<BakedQuad> list = modelIn.getQuads(stateIn, direction, randomIn, modelData);
+          if (!list.isEmpty() && (!checkSides || Block.shouldDrawSide(stateIn, worldIn, posIn, direction))) {
+             this.renderQuadsSmooth(worldIn, stateIn, posIn, matrixStackIn, buffer, list, afloat, bitset, blockmodelrenderer$ambientocclusionface, combinedOverlayIn);
+             flag = true;
+@@ -72,7 +81,7 @@
+       }
+ 
+       randomIn.setSeed(rand);
+-      List<BakedQuad> list1 = modelIn.getQuads(stateIn, (Direction)null, randomIn);
++      List<BakedQuad> list1 = modelIn.getQuads(stateIn, (Direction)null, randomIn, modelData);
+       if (!list1.isEmpty()) {
+          this.renderQuadsSmooth(worldIn, stateIn, posIn, matrixStackIn, buffer, list1, afloat, bitset, blockmodelrenderer$ambientocclusionface, combinedOverlayIn);
+          flag = true;
+@@ -81,13 +90,17 @@
+       return flag;
+    }
+ 
++   @Deprecated //Forge: Model data argument
+    public boolean renderFlat(BlockRenderView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, MatrixStack matrixStackIn, VertexConsumer buffer, boolean checkSides, Random randomIn, long rand, int combinedOverlayIn) {
++       return renderModelFlat(worldIn, modelIn, stateIn, posIn, matrixStackIn, buffer, checkSides, randomIn, rand, combinedOverlayIn, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public boolean renderModelFlat(BlockRenderView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, MatrixStack matrixStackIn, VertexConsumer buffer, boolean checkSides, Random randomIn, long rand, int combinedOverlayIn, net.minecraftforge.client.model.data.IModelData modelData) {
+       boolean flag = false;
+       BitSet bitset = new BitSet(3);
+ 
+       for(Direction direction : Direction.values()) {
+          randomIn.setSeed(rand);
+-         List<BakedQuad> list = modelIn.getQuads(stateIn, direction, randomIn);
++         List<BakedQuad> list = modelIn.getQuads(stateIn, direction, randomIn, modelData);
+          if (!list.isEmpty() && (!checkSides || Block.shouldDrawSide(stateIn, worldIn, posIn, direction))) {
+             int i = WorldRenderer.getLightmapCoordinates(worldIn, stateIn, posIn.offset(direction));
+             this.renderQuadsFlat(worldIn, stateIn, posIn, i, combinedOverlayIn, false, matrixStackIn, buffer, list, bitset);
+@@ -96,7 +109,7 @@
+       }
+ 
+       randomIn.setSeed(rand);
+-      List<BakedQuad> list1 = modelIn.getQuads(stateIn, (Direction)null, randomIn);
++      List<BakedQuad> list1 = modelIn.getQuads(stateIn, (Direction)null, randomIn, modelData);
+       if (!list1.isEmpty()) {
+          this.renderQuadsFlat(worldIn, stateIn, posIn, -1, combinedOverlayIn, true, matrixStackIn, buffer, list1, bitset);
+          flag = true;
+@@ -212,17 +225,21 @@
+ 
+    }
+ 
++   @Deprecated //Forge: Model data argument
+    public void render(MatrixStack.Entry matrixEntry, VertexConsumer buffer, @Nullable BlockState state, BakedModel modelIn, float red, float green, float blue, int combinedLightIn, int combinedOverlayIn) {
++      renderModel(matrixEntry, buffer, state, modelIn, red, green, blue, combinedLightIn, combinedOverlayIn, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
++   }
++   public void renderModel(MatrixStack.Entry matrixEntry, VertexConsumer buffer, @Nullable BlockState state, BakedModel modelIn, float red, float green, float blue, int combinedLightIn, int combinedOverlayIn, net.minecraftforge.client.model.data.IModelData modelData) {
+       Random random = new Random();
+       long i = 42L;
+ 
+       for(Direction direction : Direction.values()) {
+          random.setSeed(42L);
+-         renderQuad(matrixEntry, buffer, red, green, blue, modelIn.getQuads(state, direction, random), combinedLightIn, combinedOverlayIn);
++         renderQuad(matrixEntry, buffer, red, green, blue, modelIn.getQuads(state, direction, random, modelData), combinedLightIn, combinedOverlayIn);
+       }
+ 
+       random.setSeed(42L);
+-      renderQuad(matrixEntry, buffer, red, green, blue, modelIn.getQuads(state, (Direction)null, random), combinedLightIn, combinedOverlayIn);
++      renderQuad(matrixEntry, buffer, red, green, blue, modelIn.getQuads(state, (Direction)null, random, modelData), combinedLightIn, combinedOverlayIn);
+    }
+ 
+    private static void renderQuad(MatrixStack.Entry matrixEntry, VertexConsumer buffer, float red, float green, float blue, List<BakedQuad> listQuads, int combinedLightIn, int combinedOverlayIn) {

@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/dedicated/AbstractPropertiesHandler.java
++++ b/net/minecraft/server/dedicated/AbstractPropertiesHandler.java
+@@ -39,7 +39,7 @@
+ 
+    public void saveProperties(Path pathIn) {
+       try (OutputStream outputstream = Files.newOutputStream(pathIn)) {
+-         this.properties.store(outputstream, "Minecraft server properties");
++         net.minecraftforge.common.util.SortedProperties.store(properties, outputstream, "Minecraft server properties");
+       } catch (IOException ioexception) {
+          LOGGER.error("Failed to store properties to file: " + pathIn);
+       }

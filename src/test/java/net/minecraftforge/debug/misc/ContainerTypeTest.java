@@ -19,24 +19,24 @@
 
 package net.minecraftforge.debug.misc;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.Slot;
+import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.extensions.IForgeContainerType;
 import net.minecraftforge.event.RegistryEvent;
@@ -51,17 +51,17 @@ import net.minecraftforge.registries.ObjectHolder;
 public class ContainerTypeTest
 {
     @ObjectHolder("containertypetest:container")
-    public static final ContainerType<TestContainer> TYPE = null;
-    public class TestContainer extends Container
+    public static final ScreenHandlerType<TestContainer> TYPE = null;
+    public class TestContainer extends ScreenHandler
     {
         private final String text;
         
-        protected TestContainer(int windowId, PlayerInventory playerInv, PacketBuffer extraData)
+        protected TestContainer(int windowId, PlayerInventory playerInv, PacketByteBuf extraData)
         {
-            this(windowId, new Inventory(9), extraData.readString(128));
+            this(windowId, new SimpleInventory(9), extraData.readString(128));
         }
         
-        public TestContainer(int windowId, Inventory inv, String text)
+        public TestContainer(int windowId, SimpleInventory inv, String text)
         {
             super(TYPE, windowId);
             this.text = text;
@@ -72,67 +72,67 @@ public class ContainerTypeTest
         }
 
         @Override
-        public boolean canInteractWith(PlayerEntity playerIn)
+        public boolean canUse(PlayerEntity playerIn)
         {
             return true;
         }
     }
     
-    public class TestGui extends ContainerScreen<TestContainer>
+    public class TestGui extends HandledScreen<TestContainer>
     {
-        public TestGui(TestContainer container, PlayerInventory inv, ITextComponent name)
+        public TestGui(TestContainer container, PlayerInventory inv, Text name)
         {
             super(container, inv, name);
         }
 
         @Override
-        protected void drawGuiContainerBackgroundLayer(MatrixStack mStack, float partialTicks, int mouseX, int mouseY)
+        protected void drawBackground(MatrixStack mStack, float partialTicks, int mouseX, int mouseY)
         {
-            drawString(mStack, this.font, getContainer().text, mouseX, mouseY, -1);
+            drawStringWithShadow(mStack, this.textRenderer, getScreenHandler().text, mouseX, mouseY, -1);
         }
     }
 
     public ContainerTypeTest()
     {
-        FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(ContainerType.class, this::registerContainers);
+        FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(ScreenHandlerType.class, this::registerContainers);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         MinecraftForge.EVENT_BUS.addListener(this::onRightClick);
     }
 
-    private void registerContainers(final RegistryEvent.Register<ContainerType<?>> event)
+    private void registerContainers(final RegistryEvent.Register<ScreenHandlerType<?>> event)
     {
         event.getRegistry().register(IForgeContainerType.create(TestContainer::new).setRegistryName("container"));
     }
     
     private void setup(FMLClientSetupEvent event)
     {
-        ScreenManager.registerFactory(TYPE, TestGui::new);
+        HandledScreens.register(TYPE, TestGui::new);
     }
     
     private void onRightClick(PlayerInteractEvent.RightClickBlock event)
     {
-        if (!event.getWorld().isRemote && event.getHand() == Hand.MAIN_HAND)
+        if (!event.getWorld().isClient && event.getHand() == Hand.MAIN_HAND)
         {
             if (event.getWorld().getBlockState(event.getPos()).getBlock() == Blocks.SPONGE)
             {
                 String text = "Hello World!";
-                NetworkHooks.openGui((ServerPlayerEntity) event.getPlayer(), new INamedContainerProvider()
+                NetworkHooks.openGui((ServerPlayerEntity) event.getPlayer(), new NamedScreenHandlerFactory()
                 {
                     @Override
-                    public Container createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_)
+                    public ScreenHandler createMenu(int p_createMenu_1_, PlayerInventory p_createMenu_2_, PlayerEntity p_createMenu_3_)
                     {
-                        Inventory inv = new Inventory(9);
-                        for (int i = 0; i < inv.getSizeInventory(); i++)
+                        SimpleInventory inv = new SimpleInventory(9);
+                        for (int i = 0; i < inv.size(); i++)
                         {
-                            inv.setInventorySlotContents(i, new ItemStack(Items.DIAMOND));
+                            inv.setStack(i, new ItemStack(Items.DIAMOND));
                         }
                         return new TestContainer(p_createMenu_1_, inv, text);
                     }
                     
                     @Override
-                    public ITextComponent getDisplayName()
+                    public Text getDisplayName()
                     {
-                        return new StringTextComponent("Test");
+                        return new LiteralText("Test");
                     }
                 }, extraData -> {
                     extraData.writeString(text);

@@ -1,0 +1,75 @@
+--- a/net/minecraft/world/SpawnHelper.java
++++ b/net/minecraft/world/SpawnHelper.java
+@@ -81,7 +81,7 @@
+          } while(mobentity.isPersistent() || mobentity.cannotDespawn());
+ 
+          final Entity entity_f = entity;
+-         SpawnGroup entityclassification = entity.getType().getSpawnGroup();
++         SpawnGroup entityclassification = entity.getClassification(true);
+          if (entityclassification != SpawnGroup.MISC) {
+             BlockPos blockpos = entity.getBlockPos();
+             long i = ChunkPos.toLong(blockpos.getX() >> 4, blockpos.getZ() >> 4);
+@@ -168,13 +168,15 @@
+                         }
+ 
+                         mobentity.refreshPositionAndAngles(d0, (double)i, d1, p_234966_1_.random.nextFloat() * 360.0F, 0.0F);
+-                        if (isValidSpawn(p_234966_1_, mobentity, d2)) {
++                        int canSpawn = net.minecraftforge.common.ForgeHooks.canEntitySpawn(mobentity, p_234966_1_, d0, i, d1, null, SpawnReason.NATURAL);
++                        if (canSpawn != -1 && (canSpawn == 1 || isValidSpawn(p_234966_1_, mobentity, d2))) {
++                           if (!net.minecraftforge.event.ForgeEventFactory.doSpecialSpawn(mobentity, p_234966_1_, (float)d0, (float)i, (float)d1, null, SpawnReason.NATURAL))
+                            ilivingentitydata = mobentity.initialize(p_234966_1_, p_234966_1_.getLocalDifficulty(mobentity.getBlockPos()), SpawnReason.NATURAL, ilivingentitydata, (CompoundTag)null);
+                            ++j;
+                            ++l1;
+                            p_234966_1_.spawnEntityAndPassengers(mobentity);
+                            p_234966_5_.run(mobentity, p_234966_2_);
+-                           if (j >= mobentity.getLimitPerChunk()) {
++                           if (j >= net.minecraftforge.event.ForgeEventFactory.getMaxSpawnPackSize(mobentity)) {
+                               return;
+                            }
+ 
+@@ -252,6 +254,7 @@
+          return null;
+       } else {
+          List<SpawnSettings.SpawnEntry> list = method_29950(p_234977_0_, p_234977_1_, p_234977_2_, p_234977_3_, p_234977_5_, biome);
++         list = net.minecraftforge.event.ForgeEventFactory.getPotentialSpawns(p_234977_0_, p_234977_3_, p_234977_5_, list);
+          return list.isEmpty() ? null : WeightedPicker.getRandom(p_234977_4_, list);
+       }
+    }
+@@ -291,6 +294,13 @@
+       if (placeType == SpawnRestriction.Location.NO_RESTRICTIONS) {
+          return true;
+       } else if (entityTypeIn != null && worldIn.getWorldBorder().contains(pos)) {
++         return placeType.canSpawnAt(worldIn, pos, entityTypeIn);
++      }
++      return false;
++   }
++
++   public static boolean canSpawnAtBody(SpawnRestriction.Location placeType, WorldView worldIn, BlockPos pos, @Nullable EntityType<?> entityTypeIn) {
++      {
+          BlockState blockstate = worldIn.getBlockState(pos);
+          FluidState fluidstate = worldIn.getFluidState(pos);
+          BlockPos blockpos = pos.up();
+@@ -303,14 +313,12 @@
+          case ON_GROUND:
+          default:
+             BlockState blockstate1 = worldIn.getBlockState(blockpos1);
+-            if (!blockstate1.allowsSpawning(worldIn, blockpos1, entityTypeIn)) {
++            if (!blockstate1.canCreatureSpawn(worldIn, blockpos1, placeType, entityTypeIn)) {
+                return false;
+             } else {
+                return isClearForSpawn(worldIn, pos, blockstate, fluidstate, entityTypeIn) && isClearForSpawn(worldIn, blockpos, worldIn.getBlockState(blockpos), worldIn.getFluidState(blockpos), entityTypeIn);
+             }
+          }
+-      } else {
+-         return false;
+       }
+    }
+ 
+@@ -354,6 +362,7 @@
+                      entity.refreshPositionAndAngles(d0, (double)blockpos.getY(), d1, diameterX.nextFloat() * 360.0F, 0.0F);
+                      if (entity instanceof MobEntity) {
+                         MobEntity mobentity = (MobEntity)entity;
++                        if (net.minecraftforge.common.ForgeHooks.canEntitySpawn(mobentity, worldIn, d0, blockpos.getY(), d1, null, SpawnReason.CHUNK_GENERATION) == -1) continue;
+                         if (mobentity.canSpawn(worldIn, SpawnReason.CHUNK_GENERATION) && mobentity.canSpawn(worldIn)) {
+                            ilivingentitydata = mobentity.initialize(worldIn, worldIn.getLocalDifficulty(mobentity.getBlockPos()), SpawnReason.CHUNK_GENERATION, ilivingentitydata, (CompoundTag)null);
+                            worldIn.spawnEntityAndPassengers(mobentity);

@@ -19,9 +19,9 @@
 
 package net.minecraftforge.debug.client.rendering;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Items;
-import net.minecraft.util.ActionResultType;
+import net.minecraft.util.ActionResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -39,12 +39,12 @@ public class RenderLocalPlayerTest
     {
         if (ENABLED && event.getItemStack().getItem() == Items.STICK)
         {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.getRenderViewEntity() == mc.player)
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.getCameraEntity() == mc.player)
             {
-                mc.setRenderViewEntity(event.getTarget());
+                mc.setCameraEntity(event.getTarget());
 
-                event.setCancellationResult(ActionResultType.SUCCESS);
+                event.setCancellationResult(ActionResult.SUCCESS);
                 event.setCanceled(true);
             }
         }
@@ -55,12 +55,12 @@ public class RenderLocalPlayerTest
     {
         if (ENABLED && event.getItemStack().getItem() == Items.STICK)
         {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.getRenderViewEntity() != mc.player)
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc.getCameraEntity() != mc.player)
             {
-                mc.setRenderViewEntity(mc.player);
+                mc.setCameraEntity(mc.player);
 
-                event.setCancellationResult(ActionResultType.SUCCESS);
+                event.setCancellationResult(ActionResult.SUCCESS);
                 event.setCanceled(true);
             }
         }

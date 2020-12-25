@@ -1,0 +1,46 @@
+--- a/net/minecraft/entity/mob/PiglinBrain.java
++++ b/net/minecraft/entity/mob/PiglinBrain.java
+@@ -53,7 +53,6 @@
+ import net.minecraft.entity.ai.brain.task.WantNewItemTask;
+ import net.minecraft.entity.player.PlayerEntity;
+ import net.minecraft.item.ArmorItem;
+-import net.minecraft.item.ArmorMaterials;
+ import net.minecraft.item.Item;
+ import net.minecraft.item.ItemStack;
+ import net.minecraft.item.Items;
+@@ -236,7 +235,7 @@
+       ItemStack itemstack = p_234477_0_.getStackInHand(Hand.OFF_HAND);
+       p_234477_0_.setStackInHand(Hand.OFF_HAND, ItemStack.EMPTY);
+       if (p_234477_0_.isAdult()) {
+-         boolean flag = acceptsForBarter(itemstack.getItem());
++         boolean flag = itemstack.isPiglinCurrency();
+          if (p_234477_1_ && flag) {
+             doBarter(p_234477_0_, getBarteredItem(p_234477_0_));
+          } else if (!flag) {
+@@ -322,7 +321,7 @@
+          return false;
+       } else if (hasBeenHitByPlayer(p_234474_0_) && p_234474_0_.getBrain().hasMemoryModule(MemoryModuleType.ATTACK_TARGET)) {
+          return false;
+-      } else if (acceptsForBarter(item)) {
++      } else if (p_234474_1_.isPiglinCurrency()) {
+          return doesNotHaveGoldInOffHand(p_234474_0_);
+       } else {
+          boolean flag = p_234474_0_.canInsertIntoInventory(p_234474_1_);
+@@ -422,7 +421,7 @@
+    }
+ 
+    protected static boolean isWillingToTrade(PiglinEntity p_234489_0_, ItemStack p_234489_1_) {
+-      return !hasBeenHitByPlayer(p_234489_0_) && !isAdmiringItem(p_234489_0_) && p_234489_0_.isAdult() && acceptsForBarter(p_234489_1_.getItem());
++      return !hasBeenHitByPlayer(p_234489_0_) && !isAdmiringItem(p_234489_0_) && p_234489_0_.isAdult() && p_234489_1_.isPiglinCurrency();
+    }
+ 
+    protected static void onAttacked(PiglinEntity p_234468_0_, LivingEntity p_234468_1_) {
+@@ -523,7 +522,7 @@
+    public static boolean wearsGoldArmor(LivingEntity p_234460_0_) {
+       for(ItemStack itemstack : p_234460_0_.getArmorItems()) {
+          Item item = itemstack.getItem();
+-         if (item instanceof ArmorItem && ((ArmorItem)item).getMaterial() == ArmorMaterials.GOLD) {
++         if (itemstack.makesPiglinsNeutral(p_234460_0_)) {
+             return true;
+          }
+       }

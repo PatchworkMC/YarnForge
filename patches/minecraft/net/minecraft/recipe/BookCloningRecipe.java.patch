@@ -1,0 +1,13 @@
+--- a/net/minecraft/recipe/BookCloningRecipe.java
++++ b/net/minecraft/recipe/BookCloningRecipe.java
+@@ -79,8 +79,8 @@
+ 
+       for(int i = 0; i < nonnulllist.size(); ++i) {
+          ItemStack itemstack = inv.getStack(i);
+-         if (itemstack.getItem().hasRecipeRemainder()) {
+-            nonnulllist.set(i, new ItemStack(itemstack.getItem().getRecipeRemainder()));
++         if (itemstack.hasContainerItem()) {
++            nonnulllist.set(i, itemstack.getContainerItem());
+          } else if (itemstack.getItem() instanceof WrittenBookItem) {
+             ItemStack itemstack1 = itemstack.copy();
+             itemstack1.setCount(1);

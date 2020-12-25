@@ -1,0 +1,19 @@
+--- a/net/minecraft/util/Rarity.java
++++ b/net/minecraft/util/Rarity.java
+@@ -1,6 +1,6 @@
+ package net.minecraft.util;
+ 
+-public enum Rarity {
++public enum Rarity implements net.minecraftforge.common.IExtensibleEnum {
+    COMMON(Formatting.WHITE),
+    UNCOMMON(Formatting.YELLOW),
+    RARE(Formatting.AQUA),
+@@ -11,4 +11,8 @@
+    private Rarity(Formatting p_i48837_3_) {
+       this.formatting = p_i48837_3_;
+    }
++
++   public static Rarity create(String name, Formatting p_i48837_3_) {
++      throw new IllegalStateException("Enum not extended");
++   }
+ }

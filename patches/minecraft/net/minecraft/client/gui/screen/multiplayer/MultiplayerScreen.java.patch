@@ -1,0 +1,14 @@
+--- a/net/minecraft/client/gui/screen/multiplayer/MultiplayerScreen.java
++++ b/net/minecraft/client/gui/screen/multiplayer/MultiplayerScreen.java
+@@ -248,6 +248,11 @@
+ 
+    }
+ 
++   @Override
++   public void onClose() {
++      this.client.openScreen(this.parent);
++   }
++
+    public MultiplayerServerListPinger getServerListPinger() {
+       return this.serverListPinger;
+    }

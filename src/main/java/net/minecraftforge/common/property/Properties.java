@@ -19,8 +19,8 @@
 
 package net.minecraftforge.common.property;
 
-import net.minecraft.client.renderer.model.IModelTransform;
-import net.minecraft.state.BooleanProperty;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.state.property.BooleanProperty;
 import net.minecraftforge.client.model.data.ModelProperty;
 
 public class Properties
@@ -28,10 +28,10 @@ public class Properties
     /**
      * Property indicating if the model should be rendered in the static renderer or in the TESR. AnimationTESR sets it to false.
      */
-    public static final BooleanProperty StaticProperty = BooleanProperty.create("static");
+    public static final BooleanProperty StaticProperty = BooleanProperty.of("static");
 
     /**
      * Property holding the IModelState used for animating the model in the TESR.
      */
-    public static final ModelProperty<IModelTransform> AnimationProperty = new ModelProperty<IModelTransform>();
+    public static final ModelProperty<ModelBakeSettings> AnimationProperty = new ModelProperty<ModelBakeSettings>();
 }

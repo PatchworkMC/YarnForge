@@ -19,8 +19,8 @@
 
 package net.minecraftforge.client.event;
 
-import net.minecraft.util.text.ChatType;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.MessageType;
+import net.minecraft.text.Text;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
@@ -35,29 +35,29 @@ import java.util.UUID;
 @Cancelable
 public class ClientChatReceivedEvent extends Event
 {
-    private ITextComponent message;
-    private final ChatType type;
+    private Text message;
+    private final MessageType type;
     @Nullable
     private final UUID senderUUID;
 
-    public ClientChatReceivedEvent(ChatType type, ITextComponent message, @Nullable UUID senderUUID)
+    public ClientChatReceivedEvent(MessageType type, Text message, @Nullable UUID senderUUID)
     {
         this.type = type;
         this.message = message;
         this.senderUUID = senderUUID;
     }
 
-    public ITextComponent getMessage()
+    public Text getMessage()
     {
         return message;
     }
 
-    public void setMessage(ITextComponent message)
+    public void setMessage(Text message)
     {
         this.message = message;
     }
 
-    public ChatType getType()
+    public MessageType getType()
     {
         return type;
     }

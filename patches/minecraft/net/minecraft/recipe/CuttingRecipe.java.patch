@@ -1,0 +1,11 @@
+--- a/net/minecraft/recipe/CuttingRecipe.java
++++ b/net/minecraft/recipe/CuttingRecipe.java
+@@ -60,7 +60,7 @@
+       return this.output.copy();
+    }
+ 
+-   public static class Serializer<T extends CuttingRecipe> implements RecipeSerializer<T> {
++   public static class Serializer<T extends CuttingRecipe> extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<T> {
+       final CuttingRecipe.Serializer.RecipeFactory<T> recipeFactory;
+ 
+       protected Serializer(CuttingRecipe.Serializer.RecipeFactory<T> factory) {

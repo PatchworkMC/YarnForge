@@ -20,9 +20,8 @@
 package net.minecraftforge.client.extensions;
 
 import javax.annotation.Nonnull;
-
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.util.InputMappings;
+import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import net.minecraftforge.client.settings.IKeyConflictContext;
 import net.minecraftforge.client.settings.KeyModifier;
 
@@ -30,19 +29,19 @@ public interface IForgeKeybinding
 {
     default KeyBinding getKeyBinding() { return (KeyBinding) this; }
     
-    @Nonnull InputMappings.Input getKey();
+    @Nonnull InputUtil.Key getKey();
 
     /**
      * Checks that the key conflict context and modifier are active, and that the keyCode matches this binding.
      */
-    default boolean isActiveAndMatches(InputMappings.Input keyCode)
+    default boolean isActiveAndMatches(InputUtil.Key keyCode)
     {
-        return keyCode != InputMappings.INPUT_INVALID && keyCode.equals(getKey()) && getKeyConflictContext().isActive() && getKeyModifier().isActive(getKeyConflictContext());
+        return keyCode != InputUtil.UNKNOWN_KEY && keyCode.equals(getKey()) && getKeyConflictContext().isActive() && getKeyModifier().isActive(getKeyConflictContext());
     }
     
     default void setToDefault()
     {
-        setKeyModifierAndCode(getKeyModifierDefault(), getKeyBinding().getDefault());
+        setKeyModifierAndCode(getKeyModifierDefault(), getKeyBinding().getDefaultKey());
     }
 
     void setKeyConflictContext(IKeyConflictContext keyConflictContext);
@@ -53,7 +52,7 @@ public interface IForgeKeybinding
 
     KeyModifier getKeyModifier();
 
-    void setKeyModifierAndCode(KeyModifier keyModifier, InputMappings.Input keyCode);
+    void setKeyModifierAndCode(KeyModifier keyModifier, InputUtil.Key keyCode);
 
     default boolean isConflictContextAndModifierActive()
     {

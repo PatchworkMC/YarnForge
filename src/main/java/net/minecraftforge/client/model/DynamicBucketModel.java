@@ -24,18 +24,25 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.vector.Quaternion;
-import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.ModelRotation;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.util.math.AffineTransformation;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Quaternion;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.geometry.IModelGeometry;
 import net.minecraftforge.fluids.FluidUtil;
@@ -94,22 +101,22 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
     }
 
     @Override
-    public IBakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ItemOverrideList overrides, ResourceLocation modelLocation)
+    public BakedModel bake(IModelConfiguration owner, ModelLoader bakery, Function<SpriteIdentifier, Sprite> spriteGetter, ModelBakeSettings modelTransform, ModelOverrideList overrides, Identifier modelLocation)
     {
-        RenderMaterial particleLocation = owner.isTexturePresent("particle") ? owner.resolveTexture("particle") : null;
-        RenderMaterial baseLocation = owner.isTexturePresent("base") ? owner.resolveTexture("base") : null;
-        RenderMaterial fluidMaskLocation = owner.isTexturePresent("fluid") ? owner.resolveTexture("fluid") : null;
-        RenderMaterial coverLocation = owner.isTexturePresent("cover") ? owner.resolveTexture("cover") : null;
+        SpriteIdentifier particleLocation = owner.isTexturePresent("particle") ? owner.resolveTexture("particle") : null;
+        SpriteIdentifier baseLocation = owner.isTexturePresent("base") ? owner.resolveTexture("base") : null;
+        SpriteIdentifier fluidMaskLocation = owner.isTexturePresent("fluid") ? owner.resolveTexture("fluid") : null;
+        SpriteIdentifier coverLocation = owner.isTexturePresent("cover") ? owner.resolveTexture("cover") : null;
 
-        IModelTransform transformsFromModel = owner.getCombinedTransform();
+        ModelBakeSettings transformsFromModel = owner.getCombinedTransform();
 
-        TextureAtlasSprite fluidSprite = fluid != Fluids.EMPTY ? spriteGetter.apply(ForgeHooksClient.getBlockMaterial(fluid.getAttributes().getStillTexture())) : null;
-        TextureAtlasSprite coverSprite = (coverLocation != null && (!coverIsMask || baseLocation != null)) ? spriteGetter.apply(coverLocation) : null;
+        Sprite fluidSprite = fluid != Fluids.EMPTY ? spriteGetter.apply(ForgeHooksClient.getBlockMaterial(fluid.getAttributes().getStillTexture())) : null;
+        Sprite coverSprite = (coverLocation != null && (!coverIsMask || baseLocation != null)) ? spriteGetter.apply(coverLocation) : null;
 
-        ImmutableMap<TransformType, TransformationMatrix> transformMap =
+        ImmutableMap<Mode, AffineTransformation> transformMap =
                 PerspectiveMapWrapper.getTransforms(new ModelTransformComposition(transformsFromModel, modelTransform));
 
-        TextureAtlasSprite particleSprite = particleLocation != null ? spriteGetter.apply(particleLocation) : null;
+        Sprite particleSprite = particleLocation != null ? spriteGetter.apply(particleLocation) : null;
 
         if (particleSprite == null) particleSprite = fluidSprite;
         if (particleSprite == null && !coverIsMask) particleSprite = coverSprite;
@@ -118,11 +125,11 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
         if (flipGas && fluid != Fluids.EMPTY && fluid.getAttributes().isLighterThanAir())
         {
             modelTransform = new SimpleModelTransform(
-                    modelTransform.getRotation().blockCornerToCenter().composeVanilla(
-                            new TransformationMatrix(null, new Quaternion(0, 0, 1, 0), null, null)).blockCenterToCorner());
+                    modelTransform.getRotation().blockCornerToCenter().multiply(
+                            new AffineTransformation(null, new Quaternion(0, 0, 1, 0), null, null)).blockCenterToCorner());
         }
 
-        TransformationMatrix transform = modelTransform.getRotation();
+        AffineTransformation transform = modelTransform.getRotation();
 
         ItemMultiLayerBakedModel.Builder builder = ItemMultiLayerBakedModel.builder(owner, particleSprite, new ContainedFluidOverrideHandler(overrides, bakery, owner, this), transformMap);
 
@@ -134,7 +141,7 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
 
         if (fluidMaskLocation != null && fluidSprite != null)
         {
-            TextureAtlasSprite templateSprite = spriteGetter.apply(fluidMaskLocation);
+            Sprite templateSprite = spriteGetter.apply(fluidMaskLocation);
             if (templateSprite != null)
             {
                 // build liquid layer (inside)
@@ -149,7 +156,7 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
         {
             if (coverSprite != null && baseLocation != null)
             {
-                TextureAtlasSprite baseSprite = spriteGetter.apply(baseLocation);
+                Sprite baseSprite = spriteGetter.apply(baseLocation);
                 builder.addQuads(ItemLayerModel.getLayerRenderType(false), ItemTextureQuadConverter.convertTexture(transform, coverSprite, baseSprite, NORTH_Z_COVER, Direction.NORTH, 0xFFFFFFFF, 2));
                 builder.addQuads(ItemLayerModel.getLayerRenderType(false), ItemTextureQuadConverter.convertTexture(transform, coverSprite, baseSprite, SOUTH_Z_COVER, Direction.SOUTH, 0xFFFFFFFF, 2));
             }
@@ -169,9 +176,9 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
     }
 
     @Override
-    public Collection<RenderMaterial> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
+    public Collection<SpriteIdentifier> getTextures(IModelConfiguration owner, Function<Identifier, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
     {
-        Set<RenderMaterial> texs = Sets.newHashSet();
+        Set<SpriteIdentifier> texs = Sets.newHashSet();
 
         if (owner.isTexturePresent("particle")) texs.add(owner.resolveTexture("particle"));
         if (owner.isTexturePresent("base")) texs.add(owner.resolveTexture("base"));
@@ -192,13 +199,13 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
         }
 
         @Override
-        public void onResourceManagerReload(IResourceManager resourceManager)
+        public void apply(ResourceManager resourceManager)
         {
             // no need to clear cache since we create a new model instance
         }
 
         @Override
-        public void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate)
+        public void onResourceManagerReload(ResourceManager resourceManager, Predicate<IResourceType> resourcePredicate)
         {
             // no need to clear cache since we create a new model instance
         }
@@ -209,7 +216,7 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
             if (!modelContents.has("fluid"))
                 throw new RuntimeException("Bucket model requires 'fluid' value.");
 
-            ResourceLocation fluidName = new ResourceLocation(modelContents.get("fluid").getAsString());
+            Identifier fluidName = new Identifier(modelContents.get("fluid").getAsString());
 
             Fluid fluid = ForgeRegistries.FLUIDS.getValue(fluidName);
 
@@ -242,15 +249,15 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
         }
     }
 
-    private static final class ContainedFluidOverrideHandler extends ItemOverrideList
+    private static final class ContainedFluidOverrideHandler extends ModelOverrideList
     {
-        private final Map<String, IBakedModel> cache = Maps.newHashMap(); // contains all the baked models since they'll never change
-        private final ItemOverrideList nested;
-        private final ModelBakery bakery;
+        private final Map<String, BakedModel> cache = Maps.newHashMap(); // contains all the baked models since they'll never change
+        private final ModelOverrideList nested;
+        private final ModelLoader bakery;
         private final IModelConfiguration owner;
         private final DynamicBucketModel parent;
 
-        private ContainedFluidOverrideHandler(ItemOverrideList nested, ModelBakery bakery, IModelConfiguration owner, DynamicBucketModel parent)
+        private ContainedFluidOverrideHandler(ModelOverrideList nested, ModelLoader bakery, IModelConfiguration owner, DynamicBucketModel parent)
         {
             this.nested = nested;
             this.bakery = bakery;
@@ -259,9 +266,9 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
         }
 
         @Override
-        public IBakedModel getOverrideModel(IBakedModel originalModel, ItemStack stack, @Nullable ClientWorld world, @Nullable LivingEntity entity)
+        public BakedModel apply(BakedModel originalModel, ItemStack stack, @Nullable ClientWorld world, @Nullable LivingEntity entity)
         {
-            IBakedModel overriden = nested.getOverrideModel(originalModel, stack, world, entity);
+            BakedModel overriden = nested.apply(originalModel, stack, world, entity);
             if (overriden != originalModel) return overriden;
             return FluidUtil.getFluidContained(stack)
                     .map(fluidStack -> {
@@ -271,7 +278,7 @@ public final class DynamicBucketModel implements IModelGeometry<DynamicBucketMod
                         if (!cache.containsKey(name))
                         {
                             DynamicBucketModel unbaked = this.parent.withFluid(fluid);
-                            IBakedModel bakedModel = unbaked.bake(owner, bakery, ModelLoader.defaultTextureGetter(), ModelRotation.X0_Y0, this, new ResourceLocation("forge:bucket_override"));
+                            BakedModel bakedModel = unbaked.bake(owner, bakery, net.minecraftforge.client.model.ModelLoader.defaultTextureGetter(), ModelRotation.X0_Y0, this, new Identifier("forge:bucket_override"));
                             cache.put(name, bakedModel);
                             return bakedModel;
                         }

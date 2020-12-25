@@ -20,14 +20,15 @@
 package net.minecraftforge.common.model.animation;
 
 import java.io.IOException;
-
-import net.minecraft.util.math.vector.TransformationMatrix;
-import net.minecraft.client.renderer.model.IModelTransform;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.util.IStringSerializable;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.util.ModelIdentifier;
+import net.minecraft.client.util.math.AffineTransformation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.animation.Event;
@@ -65,7 +66,7 @@ public final class Clips
     /**
      * Clip that does nothing.
      */
-    public static enum IdentityClip implements IClip, IStringSerializable
+    public static enum IdentityClip implements IClip, StringIdentifiable
     {
         INSTANCE;
 
@@ -82,7 +83,7 @@ public final class Clips
         }
 
         @Override
-        public String getString()
+        public String asString()
         {
             return "identity";
         }
@@ -91,10 +92,10 @@ public final class Clips
     /**
      * Retrieves the clip from the model.
      */
-    @OnlyIn(Dist.CLIENT)
-    public static IClip getModelClipNode(ResourceLocation modelLocation, String clipName)
+    @Environment(EnvType.CLIENT)
+    public static IClip getModelClipNode(Identifier modelLocation, String clipName)
     {
-        IUnbakedModel model = ModelLoader.defaultModelGetter().apply(modelLocation);
+        UnbakedModel model = ModelLoader.defaultModelGetter().apply(modelLocation);
         Optional<? extends IClip> clip = model.getClip(clipName);
         if (clip.isPresent())
         {
@@ -111,10 +112,10 @@ public final class Clips
     public static final class ModelClip implements IClip
     {
         private final IClip childClip;
-        private final ResourceLocation modelLocation;
+        private final Identifier modelLocation;
         private final String clipName;
 
-        public ModelClip(IClip childClip, ResourceLocation modelLocation, String clipName)
+        public ModelClip(IClip childClip, Identifier modelLocation, String clipName)
         {
             this.childClip = childClip;
             this.modelLocation = modelLocation;
@@ -174,7 +175,7 @@ public final class Clips
             {
                 private final IJointClip parent = childClip.apply(joint);
                 @Override
-                public TransformationMatrix apply(float time)
+                public AffineTransformation apply(float time)
                 {
                     return parent.apply(TimeClip.this.time.apply(time));
                 }
@@ -291,7 +292,7 @@ public final class Clips
         return new IJointClip()
         {
             @Override
-            public TransformationMatrix apply(float time)
+            public AffineTransformation apply(float time)
             {
                 float clipTime = input.apply(time);
                 return TransformationHelper.slerp(fromClip.apply(clipTime), toClip.apply(clipTime), MathHelper.clamp(progress.apply(time), 0, 1));
@@ -302,30 +303,30 @@ public final class Clips
     /**
      * IModelState wrapper for a Clip, sampled at specified time.
      */
-    public static Pair<IModelTransform, Iterable<Event>> apply(final IClip clip, final float lastPollTime, final float time)
+    public static Pair<ModelBakeSettings, Iterable<Event>> apply(final IClip clip, final float lastPollTime, final float time)
     {
-        return Pair.of(new IModelTransform()
+        return Pair.of(new ModelBakeSettings()
         {
             @Override
-            public TransformationMatrix getRotation()
+            public AffineTransformation getRotation()
             {
-                return TransformationMatrix.identity();
+                return AffineTransformation.identity();
             }
 
             @Override
-            public TransformationMatrix getPartTransformation(Object part)
+            public AffineTransformation getPartTransformation(Object part)
             {
                 if(!(part instanceof IJoint))
                 {
-                    return TransformationMatrix.identity();
+                    return AffineTransformation.identity();
                 }
                 IJoint joint = (IJoint)part;
                 // TODO: Cache clip application?
-                TransformationMatrix jointTransform = clip.apply(joint).apply(time).compose(joint.getInvBindPose());
+                AffineTransformation jointTransform = clip.apply(joint).apply(time).compose(joint.getInvBindPose());
                 Optional<? extends IJoint> parent = joint.getParent();
                 while(parent.isPresent())
                 {
-                    TransformationMatrix parentTransform = clip.apply(parent.get()).apply(time);
+                    AffineTransformation parentTransform = clip.apply(parent.get()).apply(time);
                     jointTransform = parentTransform.compose(jointTransform);
                     parent = parent.get().getParent();
                 }
@@ -374,7 +375,7 @@ public final class Clips
       * Reference to another clip.
       * Should only exist during debugging.
       */
-    public static final class ClipReference implements IClip, IStringSerializable
+    public static final class ClipReference implements IClip, StringIdentifiable
     {
         private final String clipName;
         private final Function<String, IClip> clipResolver;
@@ -416,7 +417,7 @@ public final class Clips
         }
 
         @Override
-        public String getString()
+        public String asString()
         {
             return clipName;
         }
@@ -473,9 +474,9 @@ public final class Clips
                 public void write(JsonWriter out, IClip clip) throws IOException
                 {
                     // IdentityClip + ClipReference
-                    if(clip instanceof IStringSerializable)
+                    if(clip instanceof StringIdentifiable)
                     {
-                        out.value("#" + ((IStringSerializable)clip).getString());
+                        out.value("#" + ((StringIdentifiable)clip).asString());
                         return;
                     }
                     else if(clip instanceof TimeClip)
@@ -567,14 +568,14 @@ public final class Clips
                                 int at = string.lastIndexOf('@');
                                 String location = string.substring(0, at);
                                 String clipName = string.substring(at + 1, string.length());
-                                ResourceLocation model;
+                                Identifier model;
                                 if(location.indexOf('#') != -1)
                                 {
-                                    model = new ModelResourceLocation(location);
+                                    model = new ModelIdentifier(location);
                                 }
                                 else
                                 {
-                                    model = new ResourceLocation(location);
+                                    model = new Identifier(location);
                                 }
                                 return getModelClipNode(model, clipName);
                             }

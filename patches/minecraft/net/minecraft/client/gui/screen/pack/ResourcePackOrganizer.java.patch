@@ -1,0 +1,22 @@
+--- a/net/minecraft/client/gui/screen/pack/ResourcePackOrganizer.java
++++ b/net/minecraft/client/gui/screen/pack/ResourcePackOrganizer.java
+@@ -136,6 +136,11 @@
+       public void moveTowardEnd() {
+          this.move(1);
+       }
++
++      @Override
++      public boolean notHidden() {
++          return !profile.isHidden();
++      }
+    }
+ 
+    @Environment(EnvType.CLIENT)
+@@ -231,5 +236,7 @@
+       boolean canMoveTowardStart();
+ 
+       boolean canMoveTowardEnd();
++
++      default boolean notHidden() { return true; }
+    }
+ }

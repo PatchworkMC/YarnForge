@@ -33,32 +33,32 @@ import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.block.PortalSize;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.WorldView;
+import net.minecraft.world.dimension.AreaHelper;
 
 public class BlockEvent extends Event {
 	private static final boolean DEBUG = Boolean.parseBoolean(System.getProperty("forge.debugBlockEvent", "false"));
 
-	private final IWorld world;
+	private final WorldAccess world;
 	private final BlockPos pos;
 	private final BlockState state;
 
-	public BlockEvent(IWorld world, BlockPos pos, BlockState state) {
+	public BlockEvent(WorldAccess world, BlockPos pos, BlockState state) {
 		this.pos = pos;
 		this.world = world;
 		this.state = state;
 	}
 
-	public IWorld getWorld() {
+	public WorldAccess getWorld() {
 		return world;
 	}
 
@@ -88,8 +88,8 @@ public class BlockEvent extends Event {
 			{
 				this.exp = 0;
 			} else {
-				int bonusLevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, player.getHeldItemMainhand());
-				int silklevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, player.getHeldItemMainhand());
+				int bonusLevel = EnchantmentHelper.getLevel(Enchantments.FORTUNE, player.getMainHandStack());
+				int silklevel = EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, player.getMainHandStack());
 				this.exp = state.getExpDrop(world, pos, bonusLevel, silklevel);
 			}
 		}
@@ -235,17 +235,17 @@ public class BlockEvent extends Event {
 	 */
 	@HasResult
 	public static class CreateFluidSourceEvent extends Event {
-		private final IWorldReader world;
+		private final WorldView world;
 		private final BlockPos pos;
 		private final BlockState state;
 
-		public CreateFluidSourceEvent(IWorldReader world, BlockPos pos, BlockState state) {
+		public CreateFluidSourceEvent(WorldView world, BlockPos pos, BlockState state) {
 			this.world = world;
 			this.pos = pos;
 			this.state = state;
 		}
 
-		public IWorldReader getWorld() {
+		public WorldView getWorld() {
 			return world;
 		}
 
@@ -272,7 +272,7 @@ public class BlockEvent extends Event {
 		private BlockState newState;
 		private final BlockState origState;
 
-		public FluidPlaceBlockEvent(IWorld world, BlockPos pos, BlockPos liquidPos, BlockState state) {
+		public FluidPlaceBlockEvent(WorldAccess world, BlockPos pos, BlockPos liquidPos, BlockState state) {
 			super(world, pos, state);
 			this.liquidPos = liquidPos;
 			this.newState = state;
@@ -388,14 +388,14 @@ public class BlockEvent extends Event {
 	 */
 	@Cancelable
 	public static class PortalSpawnEvent extends BlockEvent {
-		private final PortalSize size;
+		private final AreaHelper size;
 
-		public PortalSpawnEvent(IWorld world, BlockPos pos, BlockState state, PortalSize size) {
+		public PortalSpawnEvent(WorldAccess world, BlockPos pos, BlockState state, AreaHelper size) {
 			super(world, pos, state);
 			this.size = size;
 		}
 
-		public PortalSize getPortalSize() {
+		public AreaHelper getPortalSize() {
 			return size;
 		}
 	}
@@ -415,7 +415,7 @@ public class BlockEvent extends Event {
 		private final ToolType toolType;
 		private BlockState state;
 
-		public BlockToolInteractEvent(IWorld world, BlockPos pos, BlockState originalState, PlayerEntity player, ItemStack stack, ToolType toolType) {
+		public BlockToolInteractEvent(WorldAccess world, BlockPos pos, BlockState originalState, PlayerEntity player, ItemStack stack, ToolType toolType) {
 			super(world, pos, originalState);
 			this.player = player;
 			this.stack = stack;

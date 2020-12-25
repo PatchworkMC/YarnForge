@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/vehicle/MinecartEntity.java
++++ b/net/minecraft/entity/vehicle/MinecartEntity.java
+@@ -16,6 +16,8 @@
+    }
+ 
+    public ActionResult interact(PlayerEntity player, Hand hand) {
++      ActionResult ret = super.interact(player, hand);
++      if (ret.isAccepted()) return ret;
+       if (player.shouldCancelInteraction()) {
+          return ActionResult.PASS;
+       } else if (this.hasPassengers()) {

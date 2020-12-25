@@ -29,17 +29,14 @@ import java.util.Set;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-
-import net.minecraft.data.IDataProvider;
-import net.minecraft.resources.FilePack;
-import net.minecraft.resources.FolderPack;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.resources.IResourcePack;
-import net.minecraft.resources.ResourcePackType;
-import net.minecraft.resources.SimpleReloadableResourceManager;
-import net.minecraft.resources.VanillaPack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resource.DefaultResourcePack;
+import net.minecraft.resource.DirectoryResourcePack;
+import net.minecraft.resource.ReloadableResourceManagerImpl;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourcePack;
+import net.minecraft.resource.ZipResourcePack;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.client.model.generators.ModelBuilder;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
@@ -57,7 +54,7 @@ public class ExistingFileHelper {
 
     public interface IResourceType {
 
-        ResourcePackType getPackType();
+        net.minecraft.resource.ResourceType getPackType();
 
         String getSuffix();
 
@@ -66,16 +63,16 @@ public class ExistingFileHelper {
 
     public static class ResourceType implements IResourceType {
 
-        final ResourcePackType packType;
+        final net.minecraft.resource.ResourceType packType;
         final String suffix, prefix;
-        public ResourceType(ResourcePackType type, String suffix, String prefix) {
+        public ResourceType(net.minecraft.resource.ResourceType type, String suffix, String prefix) {
             this.packType = type;
             this.suffix = suffix;
             this.prefix = prefix;
         }
 
         @Override
-        public ResourcePackType getPackType() { return packType; }
+        public net.minecraft.resource.ResourceType getPackType() { return packType; }
 
         @Override
         public String getSuffix() { return suffix; }
@@ -84,9 +81,9 @@ public class ExistingFileHelper {
         public String getPrefix() { return prefix; }
     }
 
-    private final SimpleReloadableResourceManager clientResources, serverData;
+    private final ReloadableResourceManagerImpl clientResources, serverData;
     private final boolean enable;
-    private final Multimap<ResourcePackType, ResourceLocation> generated = HashMultimap.create();
+    private final Multimap<net.minecraft.resource.ResourceType, Identifier> generated = HashMultimap.create();
 
     @Deprecated//TODO: Remove in 1.17
     public ExistingFileHelper(Collection<Path> existingPacks, boolean enable) {
@@ -106,33 +103,33 @@ public class ExistingFileHelper {
      * @param enable
      */
     public ExistingFileHelper(Collection<Path> existingPacks, Set<String> existingMods, boolean enable) {
-        this.clientResources = new SimpleReloadableResourceManager(ResourcePackType.CLIENT_RESOURCES);
-        this.serverData = new SimpleReloadableResourceManager(ResourcePackType.SERVER_DATA);
-        this.clientResources.addResourcePack(new VanillaPack("minecraft", "realms"));
-        this.serverData.addResourcePack(new VanillaPack("minecraft"));
+        this.clientResources = new ReloadableResourceManagerImpl(net.minecraft.resource.ResourceType.CLIENT_RESOURCES);
+        this.serverData = new ReloadableResourceManagerImpl(net.minecraft.resource.ResourceType.SERVER_DATA);
+        this.clientResources.addPack(new DefaultResourcePack("minecraft", "realms"));
+        this.serverData.addPack(new DefaultResourcePack("minecraft"));
         for (Path existing : existingPacks) {
             File file = existing.toFile();
-            IResourcePack pack = file.isDirectory() ? new FolderPack(file) : new FilePack(file);
-            this.clientResources.addResourcePack(pack);
-            this.serverData.addResourcePack(pack);
+            ResourcePack pack = file.isDirectory() ? new DirectoryResourcePack(file) : new ZipResourcePack(file);
+            this.clientResources.addPack(pack);
+            this.serverData.addPack(pack);
         }
         for (String existingMod : existingMods) {
             ModFileInfo modFileInfo = ModList.get().getModFileById(existingMod);
             if (modFileInfo != null) {
-                IResourcePack pack = new ModFileResourcePack(modFileInfo.getFile());
-                this.clientResources.addResourcePack(pack);
-                this.serverData.addResourcePack(pack);
+                ResourcePack pack = new ModFileResourcePack(modFileInfo.getFile());
+                this.clientResources.addPack(pack);
+                this.serverData.addPack(pack);
             }
         }
         this.enable = enable;
     }
 
-    private IResourceManager getManager(ResourcePackType packType) {
-        return packType == ResourcePackType.CLIENT_RESOURCES ? clientResources : serverData;
+    private ResourceManager getManager(net.minecraft.resource.ResourceType packType) {
+        return packType == net.minecraft.resource.ResourceType.CLIENT_RESOURCES ? clientResources : serverData;
     }
 
-    private ResourceLocation getLocation(ResourceLocation base, String suffix, String prefix) {
-        return new ResourceLocation(base.getNamespace(), prefix + "/" + base.getPath() + suffix);
+    private Identifier getLocation(Identifier base, String suffix, String prefix) {
+        return new Identifier(base.getNamespace(), prefix + "/" + base.getPath() + suffix);
     }
 
     /**
@@ -144,11 +141,11 @@ public class ExistingFileHelper {
      * @return {@code true} if the resource exists in any pack, {@code false}
      *         otherwise
      */
-    public boolean exists(ResourceLocation loc, ResourcePackType packType) {
+    public boolean exists(Identifier loc, net.minecraft.resource.ResourceType packType) {
         if (!enable) {
             return true;
         }
-        return generated.get(packType).contains(loc) || getManager(packType).hasResource(loc);
+        return generated.get(packType).contains(loc) || getManager(packType).containsResource(loc);
     }
 
     /**
@@ -164,7 +161,7 @@ public class ExistingFileHelper {
      * @return {@code true} if the resource exists in any pack, {@code false}
      *         otherwise
      */
-    public boolean exists(ResourceLocation loc, IResourceType type) {
+    public boolean exists(Identifier loc, IResourceType type) {
         return exists(getLocation(loc, type.getSuffix(), type.getPrefix()), type.getPackType());
     }
 
@@ -180,7 +177,7 @@ public class ExistingFileHelper {
      * @return {@code true} if the resource exists in any pack, {@code false}
      *         otherwise
      */
-    public boolean exists(ResourceLocation loc, ResourcePackType packType, String pathSuffix, String pathPrefix) {
+    public boolean exists(Identifier loc, net.minecraft.resource.ResourceType packType, String pathSuffix, String pathPrefix) {
         return exists(getLocation(loc, pathSuffix, pathPrefix), packType);
     }
 
@@ -203,7 +200,7 @@ public class ExistingFileHelper {
      * @param type a {@link IResourceType} describing how to form the path to the
      *             resource
      */
-    public void trackGenerated(ResourceLocation loc, IResourceType type) {
+    public void trackGenerated(Identifier loc, IResourceType type) {
         this.generated.put(type.getPackType(), getLocation(loc, type.getSuffix(), type.getPrefix()));
     }
 
@@ -226,17 +223,17 @@ public class ExistingFileHelper {
      * @param pathPrefix a string to append before the path, before a slash, e.g.
      *                   {@code "models"}
      */
-    public void trackGenerated(ResourceLocation loc, ResourcePackType packType, String pathSuffix, String pathPrefix) {
+    public void trackGenerated(Identifier loc, net.minecraft.resource.ResourceType packType, String pathSuffix, String pathPrefix) {
         this.generated.put(packType, getLocation(loc, pathSuffix, pathPrefix));
     }
 
     @VisibleForTesting
-    public IResource getResource(ResourceLocation loc, ResourcePackType packType, String pathSuffix, String pathPrefix) throws IOException {
+    public Resource getResource(Identifier loc, net.minecraft.resource.ResourceType packType, String pathSuffix, String pathPrefix) throws IOException {
         return getResource(getLocation(loc, pathSuffix, pathPrefix), packType);
     }
 
     @VisibleForTesting
-    public IResource getResource(ResourceLocation loc, ResourcePackType packType) throws IOException {
+    public Resource getResource(Identifier loc, net.minecraft.resource.ResourceType packType) throws IOException {
         return getManager(packType).getResource(loc);
     }
 

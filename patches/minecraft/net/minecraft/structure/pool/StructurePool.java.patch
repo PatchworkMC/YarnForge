@@ -1,0 +1,32 @@
+--- a/net/minecraft/structure/pool/StructurePool.java
++++ b/net/minecraft/structure/pool/StructurePool.java
+@@ -104,11 +104,11 @@
+       return this.elements.size();
+    }
+ 
+-   public static enum Projection implements StringIdentifiable {
++   public static enum Projection implements StringIdentifiable, net.minecraftforge.common.IExtensibleEnum {
+       TERRAIN_MATCHING("terrain_matching", ImmutableList.of(new GravityStructureProcessor(Heightmap.Type.WORLD_SURFACE_WG, -1))),
+       RIGID("rigid", ImmutableList.of());
+ 
+-      public static final Codec<StructurePool.Projection> field_24956 = StringIdentifiable.createCodec(StructurePool.Projection::values, StructurePool.Projection::getById);
++      public static final Codec<StructurePool.Projection> field_24956 = net.minecraftforge.common.IExtensibleEnum.createCodecForExtensibleEnum(StructurePool.Projection::values, StructurePool.Projection::getById);
+       private static final Map<String, StructurePool.Projection> PROJECTIONS_BY_ID = Arrays.stream(values()).collect(Collectors.toMap(StructurePool.Projection::getId, (p_214935_0_) -> {
+          return p_214935_0_;
+       }));
+@@ -135,5 +135,15 @@
+       public String asString() {
+          return this.id;
+       }
++
++      public static Projection create(String enumName, String nameIn, ImmutableList<StructureProcessor> structureProcessorsIn) {
++         throw new IllegalStateException("Enum not extended");
++      }
++
++      @Override
++      @Deprecated
++      public void init() {
++         PROJECTIONS_BY_ID.put(getId(), this);
++      }
+    }
+ }

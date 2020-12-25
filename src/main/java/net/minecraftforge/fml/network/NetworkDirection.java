@@ -26,44 +26,43 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceArrayMap;
+import net.minecraft.network.Packet;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.packet.c2s.login.LoginQueryResponseC2SPacket;
+import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
+import net.minecraft.network.packet.s2c.login.LoginQueryRequestS2CPacket;
+import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.unsafe.UnsafeHacks;
 import org.apache.commons.lang3.tuple.Pair;
 
-import net.minecraft.network.IPacket;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.login.client.CCustomPayloadLoginPacket;
-import net.minecraft.network.login.server.SCustomPayloadLoginPacket;
-import net.minecraft.network.play.client.CCustomPayloadPacket;
-import net.minecraft.network.play.server.SCustomPayloadPlayPacket;
-import net.minecraft.util.ResourceLocation;
-
 public enum NetworkDirection {
-	PLAY_TO_SERVER(NetworkEvent.ClientCustomPayloadEvent::new, LogicalSide.CLIENT, CCustomPayloadPacket.class, 1),
-	PLAY_TO_CLIENT(NetworkEvent.ServerCustomPayloadEvent::new, LogicalSide.SERVER, SCustomPayloadPlayPacket.class, 0),
-	LOGIN_TO_SERVER(NetworkEvent.ClientCustomPayloadLoginEvent::new, LogicalSide.CLIENT, CCustomPayloadLoginPacket.class, 3),
-	LOGIN_TO_CLIENT(NetworkEvent.ServerCustomPayloadLoginEvent::new, LogicalSide.SERVER, SCustomPayloadLoginPacket.class, 2);
+	PLAY_TO_SERVER(NetworkEvent.ClientCustomPayloadEvent::new, LogicalSide.CLIENT, CustomPayloadC2SPacket.class, 1),
+	PLAY_TO_CLIENT(NetworkEvent.ServerCustomPayloadEvent::new, LogicalSide.SERVER, CustomPayloadS2CPacket.class, 0),
+	LOGIN_TO_SERVER(NetworkEvent.ClientCustomPayloadLoginEvent::new, LogicalSide.CLIENT, LoginQueryResponseC2SPacket.class, 3),
+	LOGIN_TO_CLIENT(NetworkEvent.ServerCustomPayloadLoginEvent::new, LogicalSide.SERVER, LoginQueryRequestS2CPacket.class, 2);
 
 	private final BiFunction<ICustomPacket<?>, Supplier<NetworkEvent.Context>, NetworkEvent> eventSupplier;
 	private final LogicalSide logicalSide;
-	private final Class<? extends IPacket> packetClass;
+	private final Class<? extends Packet> packetClass;
 	private final int otherWay;
 
-	private static final Reference2ReferenceArrayMap<Class<? extends IPacket>, NetworkDirection> packetLookup;
+	private static final Reference2ReferenceArrayMap<Class<? extends Packet>, NetworkDirection> packetLookup;
 
 	static {
 		packetLookup = Stream.of(values()).
 			collect(Collectors.toMap(NetworkDirection::getPacketClass, Function.identity(), (m1, m2) -> m1, Reference2ReferenceArrayMap::new));
 	}
 
-	NetworkDirection(BiFunction<ICustomPacket<?>, Supplier<NetworkEvent.Context>, NetworkEvent> eventSupplier, LogicalSide logicalSide, Class<? extends IPacket> clazz, int i) {
+	NetworkDirection(BiFunction<ICustomPacket<?>, Supplier<NetworkEvent.Context>, NetworkEvent> eventSupplier, LogicalSide logicalSide, Class<? extends Packet> clazz, int i) {
 		this.eventSupplier = eventSupplier;
 		this.logicalSide = logicalSide;
 		this.packetClass = clazz;
 		this.otherWay = i;
 	}
 
-	private Class<? extends IPacket> getPacketClass() {
+	private Class<? extends Packet> getPacketClass() {
 		return packetClass;
 	}
 
@@ -86,7 +85,7 @@ public enum NetworkDirection {
 	public LogicalSide getReceptionSide() { return reply().logicalSide; }
 
 	@SuppressWarnings("unchecked")
-	public <T extends IPacket<?>> ICustomPacket<T> buildPacket(Pair<PacketBuffer, Integer> packetData, ResourceLocation channelName) {
+	public <T extends Packet<?>> ICustomPacket<T> buildPacket(Pair<PacketByteBuf, Integer> packetData, Identifier channelName) {
 		ICustomPacket<T> packet = (ICustomPacket<T>) UnsafeHacks.newInstance(getPacketClass());
 		packet.setName(channelName);
 		packet.setData(packetData.getLeft());

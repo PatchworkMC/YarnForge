@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/ai/brain/Activity.java
++++ b/net/minecraft/entity/ai/brain/Activity.java
+@@ -2,7 +2,7 @@
+ 
+ import net.minecraft.util.registry.Registry;
+ 
+-public class Activity {
++public class Activity extends net.minecraftforge.registries.ForgeRegistryEntry<Activity> {
+    public static final Activity CORE = register("core");
+    public static final Activity IDLE = register("idle");
+    public static final Activity WORK = register("work");

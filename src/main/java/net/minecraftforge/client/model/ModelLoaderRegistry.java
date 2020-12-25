@@ -25,17 +25,30 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ItemModelGenerator;
+import net.minecraft.client.render.model.json.JsonUnbakedModel;
+import net.minecraft.client.render.model.json.ModelElement;
+import net.minecraft.client.render.model.json.ModelElementFace;
+import net.minecraft.client.render.model.json.ModelElementTexture;
+import net.minecraft.client.render.model.json.ModelOverride;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.render.model.json.Transformation;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.MissingTextureSprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.IReloadableResourceManager;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.Direction;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.client.texture.MissingSprite;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.util.math.AffineTransformation;
+import net.minecraft.resource.ReloadableResourceManager;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
+import net.minecraft.util.math.Direction;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.geometry.IModelGeometry;
 import net.minecraftforge.client.model.geometry.ISimpleModelGeometry;
@@ -58,19 +71,19 @@ public class ModelLoaderRegistry
     public static final String WHITE_TEXTURE = "forge:white";
 
     private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
-    private static final Map<ResourceLocation, IModelLoader<?>> loaders = Maps.newHashMap();
+    private static final Map<Identifier, IModelLoader<?>> loaders = Maps.newHashMap();
     private static volatile boolean registryFrozen = false;
 
     // Forge built-in loaders
     public static void init()
     {
-        registerLoader(new ResourceLocation("minecraft","elements"), VanillaProxy.Loader.INSTANCE);
-        registerLoader(new ResourceLocation("forge","obj"), OBJLoader.INSTANCE);
-        registerLoader(new ResourceLocation("forge","bucket"), DynamicBucketModel.Loader.INSTANCE);
-        registerLoader(new ResourceLocation("forge","composite"), CompositeModel.Loader.INSTANCE);
-        registerLoader(new ResourceLocation("forge","multi-layer"), MultiLayerModel.Loader.INSTANCE);
-        registerLoader(new ResourceLocation("forge","item-layers"), ItemLayerModel.Loader.INSTANCE);
-        registerLoader(new ResourceLocation("forge", "separate-perspective"), SeparatePerspectiveModel.Loader.INSTANCE);
+        registerLoader(new Identifier("minecraft","elements"), VanillaProxy.Loader.INSTANCE);
+        registerLoader(new Identifier("forge","obj"), OBJLoader.INSTANCE);
+        registerLoader(new Identifier("forge","bucket"), DynamicBucketModel.Loader.INSTANCE);
+        registerLoader(new Identifier("forge","composite"), CompositeModel.Loader.INSTANCE);
+        registerLoader(new Identifier("forge","multi-layer"), MultiLayerModel.Loader.INSTANCE);
+        registerLoader(new Identifier("forge","item-layers"), ItemLayerModel.Loader.INSTANCE);
+        registerLoader(new Identifier("forge", "separate-perspective"), SeparatePerspectiveModel.Loader.INSTANCE);
 
         // TODO: Implement as new model loaders
         //registerLoader(new ResourceLocation("forge:b3d"), new ModelLoaderAdapter(B3DLoader.INSTANCE));
@@ -94,7 +107,7 @@ public class ModelLoaderRegistry
      * Makes system aware of your loader.
      * <b>Must be called from within {@link ModelRegistryEvent}</b>
      */
-    public static void registerLoader(ResourceLocation id, IModelLoader<?> loader)
+    public static void registerLoader(Identifier id, IModelLoader<?> loader)
     {
         if (registryFrozen)
             throw new IllegalStateException("Can not register model loaders after models have started loading. Please use ModelRegistryEvent to register your loaders.");
@@ -102,18 +115,18 @@ public class ModelLoaderRegistry
         synchronized(loaders)
         {
             loaders.put(id, loader);
-            ((IReloadableResourceManager) Minecraft.getInstance().getResourceManager()).addReloadListener(loader);
+            ((ReloadableResourceManager) MinecraftClient.getInstance().getResourceManager()).registerListener(loader);
         }
     }
 
-    public static IModelGeometry<?> getModel(ResourceLocation loaderId, JsonDeserializationContext deserializationContext, JsonObject data)
+    public static IModelGeometry<?> getModel(Identifier loaderId, JsonDeserializationContext deserializationContext, JsonObject data)
     {
         try
         {
             if (!loaders.containsKey(loaderId))
             {
                 throw new IllegalStateException(String.format("Model loader '%s' not found. Registered loaders: %s", loaderId,
-                        loaders.keySet().stream().map(ResourceLocation::toString).collect(Collectors.joining(", "))));
+                        loaders.keySet().stream().map(Identifier::toString).collect(Collectors.joining(", "))));
             }
 
             IModelLoader<?> loader = loaders.get(loaderId);
@@ -133,7 +146,7 @@ public class ModelLoaderRegistry
             return null;
         }
 
-        ResourceLocation loader = new ResourceLocation(JSONUtils.getString(object,"loader"));
+        Identifier loader = new Identifier(JsonHelper.getString(object,"loader"));
         return getModel(loader, deserializationContext, object);
     }
 
@@ -153,7 +166,7 @@ public class ModelLoaderRegistry
     private static final Pattern FILESYSTEM_PATH_TO_RESLOC =
             Pattern.compile("(?:.*[\\\\/]assets[\\\\/](?<namespace>[a-z_-]+)[\\\\/]textures[\\\\/])?(?<path>[a-z_\\\\/-]+)\\.png");
 
-    public static RenderMaterial resolveTexture(@Nullable String tex, IModelConfiguration owner)
+    public static SpriteIdentifier resolveTexture(@Nullable String tex, IModelConfiguration owner)
     {
         if (tex == null)
             return blockMaterial(WHITE_TEXTURE);
@@ -168,7 +181,7 @@ public class ModelLoaderRegistry
             String namespace = match.group("namespace");
             String path = match.group("path").replace("\\", "/");
             if (namespace != null)
-                return blockMaterial(new ResourceLocation(namespace, path));
+                return blockMaterial(new Identifier(namespace, path));
             return blockMaterial(path);
         }
 
@@ -176,19 +189,19 @@ public class ModelLoaderRegistry
     }
 
     @SuppressWarnings("deprecation")
-    public static RenderMaterial blockMaterial(String location)
+    public static SpriteIdentifier blockMaterial(String location)
     {
-        return new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(location));
+        return new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, new Identifier(location));
     }
 
     @SuppressWarnings("deprecation")
-    public static RenderMaterial blockMaterial(ResourceLocation location)
+    public static SpriteIdentifier blockMaterial(Identifier location)
     {
-        return new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, location);
+        return new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, location);
     }
 
     @Nullable
-    public static IModelTransform deserializeModelTransforms(JsonDeserializationContext deserializationContext, JsonObject modelData)
+    public static ModelBakeSettings deserializeModelTransforms(JsonDeserializationContext deserializationContext, JsonObject modelData)
     {
         if (!modelData.has("transform"))
             return null;
@@ -196,13 +209,13 @@ public class ModelLoaderRegistry
         return deserializeTransform(deserializationContext, modelData.get("transform")).orElse(null);
     }
 
-    public static Optional<IModelTransform> deserializeTransform(JsonDeserializationContext context, JsonElement transformData)
+    public static Optional<ModelBakeSettings> deserializeTransform(JsonDeserializationContext context, JsonElement transformData)
     {
         if (!transformData.isJsonObject())
         {
             try
             {
-                TransformationMatrix base = context.deserialize(transformData, TransformationMatrix.class);
+                AffineTransformation base = context.deserialize(transformData, AffineTransformation.class);
                 return Optional.of(new SimpleModelTransform(ImmutableMap.of(), base.blockCenterToCorner()));
             }
             catch (JsonParseException e)
@@ -213,20 +226,20 @@ public class ModelLoaderRegistry
         else
         {
             JsonObject transform = transformData.getAsJsonObject();
-            EnumMap<ItemCameraTransforms.TransformType, TransformationMatrix> transforms = Maps.newEnumMap(ItemCameraTransforms.TransformType.class);
+            EnumMap<ModelTransformation.Mode, AffineTransformation> transforms = Maps.newEnumMap(ModelTransformation.Mode.class);
 
-            deserializeTRSR(context, transforms, transform, "thirdperson", ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND);
-            deserializeTRSR(context, transforms, transform, "thirdperson_righthand", ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND);
-            deserializeTRSR(context, transforms, transform, "thirdperson_lefthand", ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND);
+            deserializeTRSR(context, transforms, transform, "thirdperson", ModelTransformation.Mode.THIRD_PERSON_RIGHT_HAND);
+            deserializeTRSR(context, transforms, transform, "thirdperson_righthand", ModelTransformation.Mode.THIRD_PERSON_RIGHT_HAND);
+            deserializeTRSR(context, transforms, transform, "thirdperson_lefthand", ModelTransformation.Mode.THIRD_PERSON_LEFT_HAND);
 
-            deserializeTRSR(context, transforms, transform, "firstperson", ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND);
-            deserializeTRSR(context, transforms, transform, "firstperson_righthand", ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND);
-            deserializeTRSR(context, transforms, transform, "firstperson_lefthand", ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND);
+            deserializeTRSR(context, transforms, transform, "firstperson", ModelTransformation.Mode.FIRST_PERSON_RIGHT_HAND);
+            deserializeTRSR(context, transforms, transform, "firstperson_righthand", ModelTransformation.Mode.FIRST_PERSON_RIGHT_HAND);
+            deserializeTRSR(context, transforms, transform, "firstperson_lefthand", ModelTransformation.Mode.FIRST_PERSON_LEFT_HAND);
 
-            deserializeTRSR(context, transforms, transform, "head", ItemCameraTransforms.TransformType.HEAD);
-            deserializeTRSR(context, transforms, transform, "gui", ItemCameraTransforms.TransformType.GUI);
-            deserializeTRSR(context, transforms, transform, "ground", ItemCameraTransforms.TransformType.GROUND);
-            deserializeTRSR(context, transforms, transform, "fixed", ItemCameraTransforms.TransformType.FIXED);
+            deserializeTRSR(context, transforms, transform, "head", ModelTransformation.Mode.HEAD);
+            deserializeTRSR(context, transforms, transform, "gui", ModelTransformation.Mode.GUI);
+            deserializeTRSR(context, transforms, transform, "ground", ModelTransformation.Mode.GROUND);
+            deserializeTRSR(context, transforms, transform, "fixed", ModelTransformation.Mode.FIXED);
 
             int k = transform.entrySet().size();
             if(transform.has("matrix")) k--;
@@ -239,40 +252,40 @@ public class ModelLoaderRegistry
             {
                 throw new JsonParseException("transform: allowed keys: 'thirdperson', 'firstperson', 'gui', 'head', 'matrix', 'translation', 'rotation', 'scale', 'post-rotation', 'origin'");
             }
-            TransformationMatrix base = TransformationMatrix.identity();
+            AffineTransformation base = AffineTransformation.identity();
             if(!transform.entrySet().isEmpty())
             {
-                base = context.deserialize(transform, TransformationMatrix.class);
+                base = context.deserialize(transform, AffineTransformation.class);
             }
-            IModelTransform state = new SimpleModelTransform(Maps.immutableEnumMap(transforms), base);
+            ModelBakeSettings state = new SimpleModelTransform(Maps.immutableEnumMap(transforms), base);
             return Optional.of(state);
         }
     }
 
-    private static void deserializeTRSR(JsonDeserializationContext context, EnumMap<ItemCameraTransforms.TransformType, TransformationMatrix> transforms, JsonObject transform, String name, ItemCameraTransforms.TransformType itemCameraTransform)
+    private static void deserializeTRSR(JsonDeserializationContext context, EnumMap<ModelTransformation.Mode, AffineTransformation> transforms, JsonObject transform, String name, ModelTransformation.Mode itemCameraTransform)
     {
         if(transform.has(name))
         {
-            TransformationMatrix t = context.deserialize(transform.remove(name), TransformationMatrix.class);
+            AffineTransformation t = context.deserialize(transform.remove(name), AffineTransformation.class);
             transforms.put(itemCameraTransform, t.blockCenterToCorner());
         }
     }
 
-    public static IBakedModel bakeHelper(BlockModel blockModel, ModelBakery modelBakery, BlockModel otherModel, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation, boolean guiLight3d)
+    public static BakedModel bakeHelper(JsonUnbakedModel blockModel, ModelLoader modelBakery, JsonUnbakedModel otherModel, Function<SpriteIdentifier, Sprite> spriteGetter, ModelBakeSettings modelTransform, Identifier modelLocation, boolean guiLight3d)
     {
-        IBakedModel model;
+        BakedModel model;
         IModelGeometry<?> customModel = blockModel.customData.getCustomGeometry();
-        IModelTransform customModelState = blockModel.customData.getCustomModelState();
+        ModelBakeSettings customModelState = blockModel.customData.getCustomModelState();
         if (customModelState != null)
-            modelTransform = new ModelTransformComposition(modelTransform, customModelState, modelTransform.isUvLock());
+            modelTransform = new ModelTransformComposition(modelTransform, customModelState, modelTransform.isShaded());
 
         if (customModel != null)
             model = customModel.bake(blockModel.customData, modelBakery, spriteGetter, modelTransform, blockModel.getOverrides(modelBakery, otherModel, spriteGetter), modelLocation);
         else
         {
             // handle vanilla item models here, since vanilla has a shortcut for them
-            if (blockModel.getRootModel() == ModelBakery.MODEL_GENERATED) {
-                model = ITEM_MODEL_GENERATOR.makeItemModel(spriteGetter, blockModel).bakeModel(modelBakery, blockModel, spriteGetter, modelTransform, modelLocation, guiLight3d);
+            if (blockModel.getRootModel() == ModelLoader.GENERATION_MARKER) {
+                model = ITEM_MODEL_GENERATOR.create(spriteGetter, blockModel).bake(modelBakery, blockModel, spriteGetter, modelTransform, modelLocation, guiLight3d);
             }
             else
             {
@@ -288,41 +301,41 @@ public class ModelLoaderRegistry
 
     public static class VanillaProxy implements ISimpleModelGeometry<VanillaProxy>
     {
-        private final List<BlockPart> elements;
+        private final List<ModelElement> elements;
 
-        public VanillaProxy(List<BlockPart> list)
+        public VanillaProxy(List<ModelElement> list)
         {
             this.elements = list;
         }
 
         @Override
-        public void addQuads(IModelConfiguration owner, IModelBuilder<?> modelBuilder, ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation)
+        public void addQuads(IModelConfiguration owner, IModelBuilder<?> modelBuilder, ModelLoader bakery, Function<SpriteIdentifier, Sprite> spriteGetter, ModelBakeSettings modelTransform, Identifier modelLocation)
         {
-            for(BlockPart blockpart : elements) {
-                for(Direction direction : blockpart.mapFaces.keySet()) {
-                    BlockPartFace blockpartface = blockpart.mapFaces.get(direction);
-                    TextureAtlasSprite textureatlassprite1 = spriteGetter.apply(owner.resolveTexture(blockpartface.texture));
+            for(ModelElement blockpart : elements) {
+                for(Direction direction : blockpart.faces.keySet()) {
+                    ModelElementFace blockpartface = blockpart.faces.get(direction);
+                    Sprite textureatlassprite1 = spriteGetter.apply(owner.resolveTexture(blockpartface.textureId));
                     if (blockpartface.cullFace == null) {
-                        modelBuilder.addGeneralQuad(BlockModel.makeBakedQuad(blockpart, blockpartface, textureatlassprite1, direction, modelTransform, modelLocation));
+                        modelBuilder.addGeneralQuad(JsonUnbakedModel.makeBakedQuad(blockpart, blockpartface, textureatlassprite1, direction, modelTransform, modelLocation));
                     } else {
                         modelBuilder.addFaceQuad(
                                 modelTransform.getRotation().rotateTransform(blockpartface.cullFace),
-                                BlockModel.makeBakedQuad(blockpart, blockpartface, textureatlassprite1, direction, modelTransform, modelLocation));
+                                JsonUnbakedModel.makeBakedQuad(blockpart, blockpartface, textureatlassprite1, direction, modelTransform, modelLocation));
                     }
                 }
             }
         }
 
         @Override
-        public Collection<RenderMaterial> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
+        public Collection<SpriteIdentifier> getTextures(IModelConfiguration owner, Function<Identifier, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors)
         {
-            Set<RenderMaterial> textures = Sets.newHashSet();
+            Set<SpriteIdentifier> textures = Sets.newHashSet();
 
-            for(BlockPart part : elements) {
-                for(BlockPartFace face : part.mapFaces.values()) {
-                    RenderMaterial texture = owner.resolveTexture(face.texture);
-                    if (Objects.equals(texture, MissingTextureSprite.getLocation().toString())) {
-                        missingTextureErrors.add(Pair.of(face.texture, owner.getModelName()));
+            for(ModelElement part : elements) {
+                for(ModelElementFace face : part.faces.values()) {
+                    SpriteIdentifier texture = owner.resolveTexture(face.textureId);
+                    if (Objects.equals(texture, MissingSprite.getMissingSpriteId().toString())) {
+                        missingTextureErrors.add(Pair.of(face.textureId, owner.getModelName()));
                     }
 
                     textures.add(texture);
@@ -341,7 +354,7 @@ public class ModelLoaderRegistry
             }
 
             @Override
-            public void onResourceManagerReload(IResourceManager resourceManager)
+            public void apply(ResourceManager resourceManager)
             {
 
             }
@@ -349,15 +362,15 @@ public class ModelLoaderRegistry
             @Override
             public VanillaProxy read(JsonDeserializationContext deserializationContext, JsonObject modelContents)
             {
-                List<BlockPart> list = this.getModelElements(deserializationContext, modelContents);
+                List<ModelElement> list = this.getModelElements(deserializationContext, modelContents);
                 return new VanillaProxy(list);
             }
 
-            private List<BlockPart> getModelElements(JsonDeserializationContext deserializationContext, JsonObject object) {
-                List<BlockPart> list = Lists.newArrayList();
+            private List<ModelElement> getModelElements(JsonDeserializationContext deserializationContext, JsonObject object) {
+                List<ModelElement> list = Lists.newArrayList();
                 if (object.has("elements")) {
-                    for(JsonElement jsonelement : JSONUtils.getJsonArray(object, "elements")) {
-                        list.add(deserializationContext.deserialize(jsonelement, BlockPart.class));
+                    for(JsonElement jsonelement : JsonHelper.getArray(object, "elements")) {
+                        list.add(deserializationContext.deserialize(jsonelement, ModelElement.class));
                     }
                 }
 
@@ -366,31 +379,31 @@ public class ModelLoaderRegistry
         }
     }
 
-    public static class ExpandedBlockModelDeserializer extends BlockModel.Deserializer
+    public static class ExpandedBlockModelDeserializer extends JsonUnbakedModel.Deserializer
     {
         public static final Gson INSTANCE = (new GsonBuilder())
-                .registerTypeAdapter(BlockModel.class, new ExpandedBlockModelDeserializer())
-                .registerTypeAdapter(BlockPart.class, new BlockPart.Deserializer())
-                .registerTypeAdapter(BlockPartFace.class, new BlockPartFace.Deserializer())
-                .registerTypeAdapter(BlockFaceUV.class, new BlockFaceUV.Deserializer())
-                .registerTypeAdapter(ItemTransformVec3f.class, new ItemTransformVec3f.Deserializer())
-                .registerTypeAdapter(ItemCameraTransforms.class, new ItemCameraTransforms.Deserializer())
-                .registerTypeAdapter(ItemOverride.class, new ItemOverride.Deserializer())
-                .registerTypeAdapter(TransformationMatrix.class, new TransformationHelper.Deserializer())
+                .registerTypeAdapter(JsonUnbakedModel.class, new ExpandedBlockModelDeserializer())
+                .registerTypeAdapter(ModelElement.class, new ModelElement.Deserializer())
+                .registerTypeAdapter(ModelElementFace.class, new ModelElementFace.Deserializer())
+                .registerTypeAdapter(ModelElementTexture.class, new ModelElementTexture.Deserializer())
+                .registerTypeAdapter(Transformation.class, new Transformation.Deserializer())
+                .registerTypeAdapter(ModelTransformation.class, new ModelTransformation.Deserializer())
+                .registerTypeAdapter(ModelOverride.class, new ModelOverride.Deserializer())
+                .registerTypeAdapter(AffineTransformation.class, new TransformationHelper.Deserializer())
                 .create();
 
-        public BlockModel deserialize(JsonElement element, Type targetType, JsonDeserializationContext deserializationContext) throws JsonParseException {
-            BlockModel model = super.deserialize(element, targetType, deserializationContext);
+        public JsonUnbakedModel deserialize(JsonElement element, Type targetType, JsonDeserializationContext deserializationContext) throws JsonParseException {
+            JsonUnbakedModel model = super.deserialize(element, targetType, deserializationContext);
             JsonObject jsonobject = element.getAsJsonObject();
             IModelGeometry<?> geometry = deserializeGeometry(deserializationContext, jsonobject);
 
-            List<BlockPart> elements = model.getElements();
+            List<ModelElement> elements = model.getElements();
             if (geometry != null) {
                 elements.clear();
                 model.customData.setCustomGeometry(geometry);
             }
 
-            IModelTransform modelState = deserializeModelTransforms(deserializationContext, jsonobject);
+            ModelBakeSettings modelState = deserializeModelTransforms(deserializationContext, jsonobject);
             if (modelState != null)
             {
                 model.customData.setCustomModelState(modelState);
@@ -398,7 +411,7 @@ public class ModelLoaderRegistry
 
             if (jsonobject.has("visibility"))
             {
-                JsonObject visibility = JSONUtils.getJsonObject(jsonobject, "visibility");
+                JsonObject visibility = JsonHelper.getObject(jsonobject, "visibility");
                 for(Map.Entry<String, JsonElement> part : visibility.entrySet())
                 {
                     model.customData.visibilityData.setVisibilityState(part.getKey(), part.getValue().getAsBoolean());

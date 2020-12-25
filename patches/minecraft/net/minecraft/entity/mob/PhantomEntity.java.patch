@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/mob/PhantomEntity.java
++++ b/net/minecraft/entity/mob/PhantomEntity.java
+@@ -214,7 +214,7 @@
+             this.delay = 60;
+             List<PlayerEntity> list = PhantomEntity.this.world.getPlayers(this.PLAYERS_IN_RANGE_PREDICATE, PhantomEntity.this, PhantomEntity.this.getBoundingBox().expand(16.0D, 64.0D, 16.0D));
+             if (!list.isEmpty()) {
+-               list.sort(Comparator.comparing(Entity::getY).reversed());
++               list.sort(Comparator.<Entity, Double>comparing(Entity::getY).reversed());
+ 
+                for(PlayerEntity playerentity : list) {
+                   if (PhantomEntity.this.isTarget(playerentity, TargetPredicate.DEFAULT)) {

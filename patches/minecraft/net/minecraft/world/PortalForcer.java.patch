@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/PortalForcer.java
++++ b/net/minecraft/world/PortalForcer.java
+@@ -18,7 +18,7 @@
+ import net.minecraft.world.poi.PointOfInterestStorage;
+ import net.minecraft.world.poi.PointOfInterestType;
+ 
+-public class PortalForcer {
++public class PortalForcer implements net.minecraftforge.common.util.ITeleporter {
+    protected final ServerWorld world;
+ 
+    public PortalForcer(ServerWorld worldIn) {

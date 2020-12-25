@@ -1,0 +1,22 @@
+--- a/net/minecraft/world/WorldView.java
++++ b/net/minecraft/world/WorldView.java
+@@ -70,7 +70,7 @@
+    }
+ 
+    default boolean isAir(BlockPos pos) {
+-      return this.getBlockState(pos).isAir();
++      return this.getBlockState(pos).isAir(this, pos);
+    }
+ 
+    default boolean isSkyVisibleAllowingSea(BlockPos pos) {
+@@ -159,6 +159,10 @@
+       return this.isChunkLoaded(pos.getX() >> 4, pos.getZ() >> 4);
+    }
+ 
++   default boolean isAreaLoaded(BlockPos center, int range) {
++      return this.isRegionLoaded(center.add(-range, -range, -range), center.add(range, range, range));
++   }
++
+    @Deprecated
+    default boolean isRegionLoaded(BlockPos from, BlockPos to) {
+       return this.isRegionLoaded(from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ());

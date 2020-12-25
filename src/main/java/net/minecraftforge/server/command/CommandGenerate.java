@@ -24,39 +24,39 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
 import net.minecraft.command.CommandException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.BlockPosArgument;
-import net.minecraft.command.arguments.DimensionArgument;
+import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.DimensionArgumentType;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.WorldWorkerManager;
 
 class CommandGenerate
 {
-    static ArgumentBuilder<CommandSource, ?> register()
+    static ArgumentBuilder<ServerCommandSource, ?> register()
     {
-        return Commands.literal("generate")
+        return CommandManager.literal("generate")
             .requires(cs->cs.hasPermissionLevel(4)) //permission
-            .then(Commands.argument("pos", BlockPosArgument.blockPos())
-                .then(Commands.argument("count", IntegerArgumentType.integer(1))
-                    .then(Commands.argument("dim", DimensionArgument.getDimension())
-                        .then(Commands.argument("interval", IntegerArgumentType.integer())
-                            .executes(ctx -> execute(ctx.getSource(), BlockPosArgument.getBlockPos(ctx, "pos"), getInt(ctx, "count"), DimensionArgument.getDimensionArgument(ctx, "dim"), getInt(ctx, "interval")))
+            .then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
+                .then(CommandManager.argument("count", IntegerArgumentType.integer(1))
+                    .then(CommandManager.argument("dim", DimensionArgumentType.dimension())
+                        .then(CommandManager.argument("interval", IntegerArgumentType.integer())
+                            .executes(ctx -> execute(ctx.getSource(), BlockPosArgumentType.getBlockPos(ctx, "pos"), getInt(ctx, "count"), DimensionArgumentType.getDimensionArgument(ctx, "dim"), getInt(ctx, "interval")))
                         )
-                        .executes(ctx -> execute(ctx.getSource(), BlockPosArgument.getBlockPos(ctx, "pos"), getInt(ctx, "count"), DimensionArgument.getDimensionArgument(ctx, "dim"), -1))
+                        .executes(ctx -> execute(ctx.getSource(), BlockPosArgumentType.getBlockPos(ctx, "pos"), getInt(ctx, "count"), DimensionArgumentType.getDimensionArgument(ctx, "dim"), -1))
                     )
-                    .executes(ctx -> execute(ctx.getSource(), BlockPosArgument.getBlockPos(ctx, "pos"), getInt(ctx, "count"), ctx.getSource().getWorld(), -1))
+                    .executes(ctx -> execute(ctx.getSource(), BlockPosArgumentType.getBlockPos(ctx, "pos"), getInt(ctx, "count"), ctx.getSource().getWorld(), -1))
                 )
             );
     }
 
-    private static int getInt(CommandContext<CommandSource> ctx, String name)
+    private static int getInt(CommandContext<ServerCommandSource> ctx, String name)
     {
         return IntegerArgumentType.getInteger(ctx, name);
     }
 
-    private static int execute(CommandSource source, BlockPos pos, int count, ServerWorld dim, int interval) throws CommandException
+    private static int execute(ServerCommandSource source, BlockPos pos, int count, ServerWorld dim, int interval) throws CommandException
     {
         BlockPos chunkpos = new BlockPos(pos.getX() >> 4, 0, pos.getZ() >> 4);
 

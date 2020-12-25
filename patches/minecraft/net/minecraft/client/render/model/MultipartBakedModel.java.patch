@@ -1,0 +1,79 @@
+--- a/net/minecraft/client/render/model/MultipartBakedModel.java
++++ b/net/minecraft/client/render/model/MultipartBakedModel.java
+@@ -22,7 +22,7 @@
+ import org.apache.commons.lang3.tuple.Pair;
+ 
+ @Environment(EnvType.CLIENT)
+-public class MultipartBakedModel implements BakedModel {
++public class MultipartBakedModel implements net.minecraftforge.client.model.data.IDynamicBakedModel {
+    private final List<Pair<Predicate<BlockState>, BakedModel>> components;
+    protected final boolean ambientOcclusion;
+    protected final boolean depthGui;
+@@ -31,10 +31,12 @@
+    protected final ModelTransformation transformations;
+    protected final ModelOverrideList itemPropertyOverrides;
+    private final Map<BlockState, BitSet> stateCache = new Object2ObjectOpenCustomHashMap<>(Util.identityHashStrategy());
++   private final BakedModel defaultModel;
+ 
+    public MultipartBakedModel(List<Pair<Predicate<BlockState>, BakedModel>> selectors) {
+       this.components = selectors;
+       BakedModel ibakedmodel = selectors.iterator().next().getRight();
++      this.defaultModel = ibakedmodel;
+       this.ambientOcclusion = ibakedmodel.useAmbientOcclusion();
+       this.depthGui = ibakedmodel.hasDepth();
+       this.sideLit = ibakedmodel.isSideLit();
+@@ -43,7 +45,8 @@
+       this.itemPropertyOverrides = ibakedmodel.getOverrides();
+    }
+ 
+-   public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand) {
++   // FORGE: Implement our overloads (here and below) so child models can have custom logic 
++   public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, net.minecraftforge.client.model.data.IModelData modelData) {
+       if (state == null) {
+          return Collections.emptyList();
+       } else {
+@@ -66,7 +69,7 @@
+ 
+          for(int j = 0; j < bitset.length(); ++j) {
+             if (bitset.get(j)) {
+-               list.addAll(this.components.get(j).getRight().getQuads(state, side, new Random(k)));
++               list.addAll(this.components.get(j).getRight().getQuads(state, side, new Random(k), modelData));
+             }
+          }
+ 
+@@ -78,6 +81,10 @@
+       return this.ambientOcclusion;
+    }
+ 
++   public boolean isAmbientOcclusion(BlockState state) {
++      return this.defaultModel.isAmbientOcclusion(state);
++   }
++
+    public boolean hasDepth() {
+       return this.depthGui;
+    }
+@@ -90,14 +97,24 @@
+       return false;
+    }
+ 
++   @Deprecated
+    public Sprite getSprite() {
+       return this.sprite;
+    }
+ 
++   public Sprite getParticleTexture(net.minecraftforge.client.model.data.IModelData modelData) {
++      return this.defaultModel.getParticleTexture(modelData);
++   }
++
++   @Deprecated
+    public ModelTransformation getTransformation() {
+       return this.transformations;
+    }
+ 
++   public BakedModel handlePerspective(net.minecraft.client.render.model.json.ModelTransformation.Mode transformType, net.minecraft.client.util.math.MatrixStack matrixStack) {
++      return this.defaultModel.handlePerspective(transformType, matrixStack);
++   }
++
+    public ModelOverrideList getOverrides() {
+       return this.itemPropertyOverrides;
+    }

@@ -20,10 +20,9 @@
 package net.minecraftforge.common;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.IStringSerializable;
-
 import java.util.function.Function;
 import java.util.function.Supplier;
+import net.minecraft.util.StringIdentifiable;
 
 /**
  * To be implemented on vanilla enums that should be enhanced with ASM to be
@@ -57,7 +56,7 @@ public interface IExtensibleEnum
     /**
      * Use this instead of {@link IStringSerializable#createEnumCodec(Supplier, Function)} for extensible enums because this not cache the enum values on construction
      */
-    static <E extends Enum<E> & IStringSerializable> Codec<E> createCodecForExtensibleEnum(Supplier<E[]> valuesSupplier, Function<? super String, ? extends E> enumValueFromNameFunction) {
-        return IStringSerializable.createCodec(Enum::ordinal, (id) -> valuesSupplier.get()[id], enumValueFromNameFunction);
+    static <E extends Enum<E> & StringIdentifiable> Codec<E> createCodecForExtensibleEnum(Supplier<E[]> valuesSupplier, Function<? super String, ? extends E> enumValueFromNameFunction) {
+        return StringIdentifiable.createCodec(Enum::ordinal, (id) -> valuesSupplier.get()[id], enumValueFromNameFunction);
     }
 }

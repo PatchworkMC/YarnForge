@@ -1,0 +1,30 @@
+--- a/net/minecraft/advancement/PlayerAdvancementTracker.java
++++ b/net/minecraft/advancement/PlayerAdvancementTracker.java
+@@ -164,6 +164,10 @@
+       }
+ 
+       this.rewardEmptyAdvancements(manager);
++
++      if (net.minecraftforge.common.ForgeConfig.SERVER.fixAdvancementLoading.get())
++         net.minecraftforge.common.AdvancementLoadFix.loadVisibility(this, this.visibleAdvancements, this.visibilityUpdates, this.advancementToProgress, this.progressUpdates, this::canSee);
++      else
+       this.updateCompleted();
+       this.beginTrackingAllAdvancements(manager);
+    }
+@@ -197,6 +201,8 @@
+    }
+ 
+    public boolean grantCriterion(Advancement advancementIn, String criterionKey) {
++      // Forge: don't grant advancements for fake players
++      if (this.owner instanceof net.minecraftforge.common.util.FakePlayer) return false;
+       boolean flag = false;
+       AdvancementProgress advancementprogress = this.getProgress(advancementIn);
+       boolean flag1 = advancementprogress.isDone();
+@@ -209,6 +215,7 @@
+             if (advancementIn.getDisplay() != null && advancementIn.getDisplay().shouldAnnounceToChat() && this.owner.world.getGameRules().getBoolean(GameRules.ANNOUNCE_ADVANCEMENTS)) {
+                this.field_25325.broadcastChatMessage(new TranslatableText("chat.type.advancement." + advancementIn.getDisplay().getFrame().getId(), this.owner.getDisplayName(), advancementIn.toHoverableText()), MessageType.SYSTEM, Util.NIL_UUID);
+             }
++            net.minecraftforge.common.ForgeHooks.onAdvancement(this.owner, advancementIn);
+          }
+       }
+ 

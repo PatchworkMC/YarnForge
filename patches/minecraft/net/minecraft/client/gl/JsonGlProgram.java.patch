@@ -1,0 +1,22 @@
+--- a/net/minecraft/client/gl/JsonGlProgram.java
++++ b/net/minecraft/client/gl/JsonGlProgram.java
+@@ -51,7 +51,8 @@
+    private final GlShader fragmentShader;
+ 
+    public JsonGlProgram(ResourceManager p_i50988_1_, String p_i50988_2_) throws IOException {
+-      Identifier resourcelocation = new Identifier("shaders/program/" + p_i50988_2_ + ".json");
++      Identifier rl = Identifier.tryParse(p_i50988_2_);
++      Identifier resourcelocation = new Identifier(rl.getNamespace(), "shaders/program/" + rl.getPath() + ".json");
+       this.name = p_i50988_2_;
+       Resource iresource = null;
+ 
+@@ -149,7 +150,8 @@
+    public static GlShader getShader(ResourceManager p_216542_0_, GlShader.Type p_216542_1_, String p_216542_2_) throws IOException {
+       GlShader shaderloader = p_216542_1_.getLoadedShaders().get(p_216542_2_);
+       if (shaderloader == null) {
+-         Identifier resourcelocation = new Identifier("shaders/program/" + p_216542_2_ + p_216542_1_.getFileExtension());
++         Identifier rl = Identifier.tryParse(p_216542_2_);
++         Identifier resourcelocation = new Identifier(rl.getNamespace(), "shaders/program/" + rl.getPath() + p_216542_1_.getFileExtension());
+          Resource iresource = p_216542_0_.getResource(resourcelocation);
+ 
+          try {

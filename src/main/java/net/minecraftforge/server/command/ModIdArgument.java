@@ -25,8 +25,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
-import net.minecraft.command.ISuggestionProvider;
+import net.minecraft.command.CommandSource;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 
@@ -49,7 +48,7 @@ public class ModIdArgument implements ArgumentType<String> {
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context, final SuggestionsBuilder builder) {
-        return ISuggestionProvider.suggest(ModList.get().applyForEachModContainer(ModContainer::getModId), builder);
+        return CommandSource.suggestMatching(ModList.get().applyForEachModContainer(ModContainer::getModId), builder);
     }
 
     @Override

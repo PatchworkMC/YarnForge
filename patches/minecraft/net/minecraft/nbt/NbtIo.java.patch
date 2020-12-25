@@ -1,0 +1,16 @@
+--- a/net/minecraft/nbt/NbtIo.java
++++ b/net/minecraft/nbt/NbtIo.java
+@@ -106,10 +106,12 @@
+ 
+    private static Tag read(DataInput input, int depth, PositionTracker accounter) throws IOException {
+       byte b0 = input.readByte();
++      accounter.add(8); // Forge: Count everything!
+       if (b0 == 0) {
+          return EndTag.INSTANCE;
+       } else {
+-         input.readUTF();
++         accounter.readUTF(input.readUTF()); //Forge: Count this string.
++         accounter.add(32); //Forge: 4 extra bytes for the object allocation.
+ 
+          try {
+             return TagReaders.of(b0).read(input, depth, accounter);

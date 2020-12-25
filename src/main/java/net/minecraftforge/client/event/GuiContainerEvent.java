@@ -19,8 +19,8 @@
 
 package net.minecraftforge.client.event;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraftforge.eventbus.api.Event;
 
 /**
@@ -29,14 +29,14 @@ import net.minecraftforge.eventbus.api.Event;
 public class GuiContainerEvent extends Event
 {
 
-    private final ContainerScreen guiContainer;
+    private final HandledScreen guiContainer;
 
-    public GuiContainerEvent(ContainerScreen guiContainer)
+    public GuiContainerEvent(HandledScreen guiContainer)
     {
         this.guiContainer = guiContainer;
     }
 
-    public ContainerScreen getGuiContainer()
+    public HandledScreen getGuiContainer()
     {
         return guiContainer;
     }
@@ -61,7 +61,7 @@ public class GuiContainerEvent extends Event
          * @param mouseX       The current X position of the players mouse.
          * @param mouseY       The current Y position of the players mouse.
          */
-        public DrawForeground(ContainerScreen guiContainer, MatrixStack mStack, int mouseX, int mouseY)
+        public DrawForeground(HandledScreen guiContainer, MatrixStack mStack, int mouseX, int mouseY)
         {
             super(guiContainer);
             this.mStack = mStack;
@@ -103,7 +103,7 @@ public class GuiContainerEvent extends Event
          * @param mouseX       The current X position of the players mouse.
          * @param mouseY       The current Y position of the players mouse.
          */
-        public DrawBackground(ContainerScreen guiContainer, MatrixStack mStack, int mouseX, int mouseY)
+        public DrawBackground(HandledScreen guiContainer, MatrixStack mStack, int mouseX, int mouseY)
         {
             super(guiContainer);
             this.mStack = mStack;

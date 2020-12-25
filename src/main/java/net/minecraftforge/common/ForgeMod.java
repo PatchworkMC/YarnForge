@@ -19,14 +19,6 @@
 
 package net.minecraftforge.common;
 
-import net.minecraft.command.arguments.ArgumentSerializer;
-import net.minecraft.command.arguments.ArgumentTypes;
-import net.minecraft.command.arguments.IArgumentSerializer;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.RangedAttribute;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.world.storage.IServerConfiguration;
-import net.minecraft.world.storage.SaveFormat;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -47,12 +39,19 @@ import net.minecraftforge.versions.mcp.MCPVersion;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+import net.minecraft.command.argument.ArgumentTypes;
+import net.minecraft.command.argument.serialize.ArgumentSerializer;
+import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.attribute.ClampedEntityAttribute;
+import net.minecraft.entity.attribute.EntityAttribute;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.SaveProperties;
+import net.minecraft.world.level.storage.LevelStorage;
 import net.minecraftforge.common.crafting.CompoundIngredient;
 import net.minecraftforge.common.crafting.ConditionalRecipe;
 import net.minecraftforge.common.crafting.CraftingHelper;
@@ -90,13 +89,13 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Marker FORGEMOD = MarkerManager.getMarker("FORGEMOD");
 
-    private static final DeferredRegister<Attribute> ATTRIBUTES = DeferredRegister.create(Attribute.class, "forge");
+    private static final DeferredRegister<EntityAttribute> ATTRIBUTES = DeferredRegister.create(EntityAttribute.class, "forge");
 
-    public static final RegistryObject<Attribute> SWIM_SPEED = ATTRIBUTES.register("swim_speed", () -> new RangedAttribute("forge.swimSpeed", 1.0D, 0.0D, 1024.0D).setShouldWatch(true));
-    public static final RegistryObject<Attribute> NAMETAG_DISTANCE = ATTRIBUTES.register("nametag_distance", () -> new RangedAttribute("forge.nameTagDistance", 64.0D, 0.0D, 64.0).setShouldWatch(true));
-    public static final RegistryObject<Attribute> ENTITY_GRAVITY = ATTRIBUTES.register("entity_gravity", () -> new RangedAttribute("forge.entity_gravity", 0.08D, -8.0D, 8.0D).setShouldWatch(true));
+    public static final RegistryObject<EntityAttribute> SWIM_SPEED = ATTRIBUTES.register("swim_speed", () -> new ClampedEntityAttribute("forge.swimSpeed", 1.0D, 0.0D, 1024.0D).setTracked(true));
+    public static final RegistryObject<EntityAttribute> NAMETAG_DISTANCE = ATTRIBUTES.register("nametag_distance", () -> new ClampedEntityAttribute("forge.nameTagDistance", 64.0D, 0.0D, 64.0).setTracked(true));
+    public static final RegistryObject<EntityAttribute> ENTITY_GRAVITY = ATTRIBUTES.register("entity_gravity", () -> new ClampedEntityAttribute("forge.entity_gravity", 0.08D, -8.0D, 8.0D).setTracked(true));
 
-    public static final RegistryObject<Attribute> REACH_DISTANCE = ATTRIBUTES.register("reach_distance", () -> new RangedAttribute("generic.reachDistance", 5.0D, 0.0D, 1024.0D).setShouldWatch(true));
+    public static final RegistryObject<EntityAttribute> REACH_DISTANCE = ATTRIBUTES.register("reach_distance", () -> new ClampedEntityAttribute("generic.reachDistance", 5.0D, 0.0D, 1024.0D).setTracked(true));
 
     private static ForgeMod INSTANCE;
     public static ForgeMod getInstance()
@@ -153,8 +152,8 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void registerArgumentTypes()
     {
-        ArgumentTypes.register("forge:enum", EnumArgument.class, (IArgumentSerializer) new EnumArgument.Serializer());
-        ArgumentTypes.register("forge:modid", ModIdArgument.class, new ArgumentSerializer<>(ModIdArgument::modIdArgument));
+        ArgumentTypes.register("forge:enum", EnumArgument.class, (ArgumentSerializer) new EnumArgument.Serializer());
+        ArgumentTypes.register("forge:modid", ModIdArgument.class, new ConstantArgumentSerializer<>(ModIdArgument::modIdArgument));
     }
 
     public void loadComplete(FMLLoadCompleteEvent event)
@@ -169,10 +168,10 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
     }
 
     @Override
-    public CompoundNBT getDataForWriting(SaveFormat.LevelSave levelSave, IServerConfiguration serverInfo)
+    public CompoundTag getDataForWriting(LevelStorage.Session levelSave, SaveProperties serverInfo)
     {
-        CompoundNBT forgeData = new CompoundNBT();
-        CompoundNBT dims = new CompoundNBT();
+        CompoundTag forgeData = new CompoundTag();
+        CompoundTag dims = new CompoundTag();
         //TODO Dimensions
 //        DimensionManager.writeRegistry(dims);
         if (!dims.isEmpty())
@@ -181,7 +180,7 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
     }
 
     @Override
-    public void readData(SaveFormat.LevelSave levelSave, IServerConfiguration serverInfo, CompoundNBT tag)
+    public void readData(LevelStorage.Session levelSave, SaveProperties serverInfo, CompoundTag tag)
     {
         //TODO Dimensions
 //        if (tag.contains("dims", 10))
@@ -206,10 +205,10 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
         if (event.includeServer())
         {
             ForgeBlockTagsProvider blockTags = new ForgeBlockTagsProvider(gen, event.getExistingFileHelper());
-            gen.addProvider(blockTags);
-            gen.addProvider(new ForgeItemTagsProvider(gen, blockTags, event.getExistingFileHelper()));
-            gen.addProvider(new ForgeRecipeProvider(gen));
-            gen.addProvider(new ForgeLootTableProvider(gen));
+            gen.install(blockTags);
+            gen.install(new ForgeItemTagsProvider(gen, blockTags, event.getExistingFileHelper()));
+            gen.install(new ForgeRecipeProvider(gen));
+            gen.install(new ForgeLootTableProvider(gen));
         }
     }
 
@@ -219,7 +218,7 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
         List<String> removedSounds = Arrays.asList("entity.parrot.imitate.panda", "entity.parrot.imitate.zombie_pigman", "entity.parrot.imitate.enderman", "entity.parrot.imitate.polar_bear", "entity.parrot.imitate.wolf");
         for (RegistryEvent.MissingMappings.Mapping<SoundEvent> mapping : event.getAllMappings())
         {
-            ResourceLocation regName = mapping.key;
+            Identifier regName = mapping.key;
             if (regName != null && regName.getNamespace().equals("minecraft"))
             {
                 String path = regName.getPath();
@@ -233,7 +232,7 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
     }
 
     @SubscribeEvent //ModBus, can't use addListener due to nested genetics.
-    public void registerRecipeSerialziers(RegistryEvent.Register<IRecipeSerializer<?>> event)
+    public void registerRecipeSerialziers(RegistryEvent.Register<RecipeSerializer<?>> event)
     {
         CraftingHelper.register(AndCondition.Serializer.INSTANCE);
         CraftingHelper.register(FalseCondition.Serializer.INSTANCE);
@@ -244,11 +243,11 @@ public class ForgeMod implements WorldPersistenceHooks.WorldPersistenceHook
         CraftingHelper.register(TrueCondition.Serializer.INSTANCE);
         CraftingHelper.register(TagEmptyCondition.Serializer.INSTANCE);
 
-        CraftingHelper.register(new ResourceLocation("forge", "compound"), CompoundIngredient.Serializer.INSTANCE);
-        CraftingHelper.register(new ResourceLocation("forge", "nbt"), NBTIngredient.Serializer.INSTANCE);
-        CraftingHelper.register(new ResourceLocation("minecraft", "item"), VanillaIngredientSerializer.INSTANCE);
+        CraftingHelper.register(new Identifier("forge", "compound"), CompoundIngredient.Serializer.INSTANCE);
+        CraftingHelper.register(new Identifier("forge", "nbt"), NBTIngredient.Serializer.INSTANCE);
+        CraftingHelper.register(new Identifier("minecraft", "item"), VanillaIngredientSerializer.INSTANCE);
 
-        event.getRegistry().register(new ConditionalRecipe.Serializer<IRecipe<?>>().setRegistryName(new ResourceLocation("forge", "conditional")));
+        event.getRegistry().register(new ConditionalRecipe.Serializer<Recipe<?>>().setRegistryName(new Identifier("forge", "conditional")));
 
     }
 }

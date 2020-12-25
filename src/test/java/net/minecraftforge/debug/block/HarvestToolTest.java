@@ -21,7 +21,7 @@ package net.minecraftforge.debug.block;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.text.LiteralText;
 import net.minecraftforge.common.ToolType;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -36,9 +36,9 @@ public class HarvestToolTest
     {
         PlayerEntity player = event.getPlayer();
         BlockState state = event.getState();
-        for (ToolType toolType : player.getHeldItemMainhand().getToolTypes()) {
+        for (ToolType toolType : player.getMainHandStack().getToolTypes()) {
             if (state.isToolEffective(toolType)) {
-                player.sendMessage(new StringTextComponent(String.format("Tool was effective. tool type: %s | harvest level: %d", toolType.getName(), state.getHarvestLevel())), player.getUniqueID());
+                player.sendSystemMessage(new LiteralText(String.format("Tool was effective. tool type: %s | harvest level: %d", toolType.getName(), state.getHarvestLevel())), player.getUuid());
                 break;
             }
         }

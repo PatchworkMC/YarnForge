@@ -1,0 +1,10 @@
+--- a/net/minecraft/advancement/Advancement.java
++++ b/net/minecraft/advancement/Advancement.java
+@@ -312,6 +312,7 @@
+       }
+ 
+       public static Advancement.Task fromJson(JsonObject json, AdvancementEntityPredicateDeserializer conditionParser) {
++         if ((json = net.minecraftforge.common.crafting.ConditionalAdvancement.processConditional(json)) == null) return null;
+          Identifier resourcelocation = json.has("parent") ? new Identifier(JsonHelper.getString(json, "parent")) : null;
+          AdvancementDisplay displayinfo = json.has("display") ? AdvancementDisplay.fromJson(JsonHelper.getObject(json, "display")) : null;
+          AdvancementRewards advancementrewards = json.has("rewards") ? AdvancementRewards.fromJson(JsonHelper.getObject(json, "rewards")) : AdvancementRewards.NONE;

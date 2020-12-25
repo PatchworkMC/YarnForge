@@ -1,0 +1,39 @@
+--- a/net/minecraft/client/render/entity/LivingEntityRenderer.java
++++ b/net/minecraft/client/render/entity/LivingEntityRenderer.java
+@@ -50,14 +50,17 @@
+    }
+ 
+    public void render(T entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, VertexConsumerProvider bufferIn, int packedLightIn) {
++      if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Pre<T, M>(entityIn, this, partialTicks, matrixStackIn, bufferIn, packedLightIn))) return;
+       matrixStackIn.push();
+       this.model.handSwingProgress = this.getHandSwingProgress(entityIn, partialTicks);
+-      this.model.riding = entityIn.hasVehicle();
++
++      boolean shouldSit = entityIn.hasVehicle() && (entityIn.getVehicle() != null && entityIn.getVehicle().shouldRiderSit());
++      this.model.riding = shouldSit;
+       this.model.child = entityIn.isBaby();
+       float f = MathHelper.lerpAngleDegrees(partialTicks, entityIn.prevBodyYaw, entityIn.bodyYaw);
+       float f1 = MathHelper.lerpAngleDegrees(partialTicks, entityIn.prevHeadYaw, entityIn.headYaw);
+       float f2 = f1 - f;
+-      if (entityIn.hasVehicle() && entityIn.getVehicle() instanceof LivingEntity) {
++      if (shouldSit && entityIn.getVehicle() instanceof LivingEntity) {
+          LivingEntity livingentity = (LivingEntity)entityIn.getVehicle();
+          f = MathHelper.lerpAngleDegrees(partialTicks, livingentity.prevBodyYaw, livingentity.bodyYaw);
+          f2 = f1 - f;
+@@ -94,7 +97,7 @@
+       matrixStackIn.translate(0.0D, (double)-1.501F, 0.0D);
+       float f8 = 0.0F;
+       float f5 = 0.0F;
+-      if (!entityIn.hasVehicle() && entityIn.isAlive()) {
++      if (!shouldSit && entityIn.isAlive()) {
+          f8 = MathHelper.lerp(partialTicks, entityIn.lastLimbDistance, entityIn.limbDistance);
+          f5 = entityIn.limbAngle - entityIn.limbDistance * (1.0F - partialTicks);
+          if (entityIn.isBaby()) {
+@@ -127,6 +130,7 @@
+ 
+       matrixStackIn.pop();
+       super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Post<T, M>(entityIn, this, partialTicks, matrixStackIn, bufferIn, packedLightIn));
+    }
+ 
+    @Nullable

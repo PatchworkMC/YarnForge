@@ -36,10 +36,12 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import net.minecraft.client.renderer.model.IModelTransform;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.animation.Event;
@@ -77,13 +79,13 @@ public final class AnimationStateMachine implements IAnimationStateMachine
     private transient IClip currentState;
     private transient float lastPollTime;
 
-    private static final LoadingCache<Triple<? extends IClip, Float, Float>, Pair<IModelTransform, Iterable<Event>>> clipCache = CacheBuilder.newBuilder()
+    private static final LoadingCache<Triple<? extends IClip, Float, Float>, Pair<ModelBakeSettings, Iterable<Event>>> clipCache = CacheBuilder.newBuilder()
         .maximumSize(100)
         .expireAfterWrite(100, TimeUnit.MILLISECONDS)
-        .build(new CacheLoader<Triple<? extends IClip, Float, Float>, Pair<IModelTransform, Iterable<Event>>>()
+        .build(new CacheLoader<Triple<? extends IClip, Float, Float>, Pair<ModelBakeSettings, Iterable<Event>>>()
         {
             @Override
-            public Pair<IModelTransform, Iterable<Event>> load(Triple<? extends IClip, Float, Float> key) throws Exception
+            public Pair<ModelBakeSettings, Iterable<Event>> load(Triple<? extends IClip, Float, Float> key) throws Exception
             {
                 return Clips.apply(key.getLeft(), key.getMiddle(), key.getRight());
             }
@@ -132,13 +134,13 @@ public final class AnimationStateMachine implements IAnimationStateMachine
     }
 
     @Override
-    public Pair<IModelTransform, Iterable<Event>> apply(float time)
+    public Pair<ModelBakeSettings, Iterable<Event>> apply(float time)
     {
         if(lastPollTime == Float.NEGATIVE_INFINITY)
         {
             lastPollTime = time;
         }
-        Pair<IModelTransform, Iterable<Event>> pair = clipCache.getUnchecked(Triple.of(currentState, lastPollTime, time));
+        Pair<ModelBakeSettings, Iterable<Event>> pair = clipCache.getUnchecked(Triple.of(currentState, lastPollTime, time));
         lastPollTime = time;
         boolean shouldFilter = false;
         if(shouldHandleSpecialEvents)
@@ -205,10 +207,10 @@ public final class AnimationStateMachine implements IAnimationStateMachine
     /**
      * Load a new instance if AnimationStateMachine at specified location, with specified custom parameters.
      */
-    @OnlyIn(Dist.CLIENT)
-    public static IAnimationStateMachine load(IResourceManager manager, ResourceLocation location, ImmutableMap<String, ITimeValue> customParameters)
+    @Environment(EnvType.CLIENT)
+    public static IAnimationStateMachine load(ResourceManager manager, Identifier location, ImmutableMap<String, ITimeValue> customParameters)
     {
-        try (IResource resource = manager.getResource(location))
+        try (Resource resource = manager.getResource(location))
         {
             ClipResolver clipResolver = new ClipResolver();
             ParameterResolver parameterResolver = new ParameterResolver(customParameters);

@@ -1,0 +1,12 @@
+--- a/net/minecraft/world/gen/feature/NetherFortressFeature.java
++++ b/net/minecraft/world/gen/feature/NetherFortressFeature.java
+@@ -32,7 +32,8 @@
+       return NetherFortressFeature.Start::new;
+    }
+ 
+-   public List<SpawnSettings.SpawnEntry> getMonsterSpawns() {
++   @Override
++   public List<SpawnSettings.SpawnEntry> getDefaultSpawnList() {
+       return MONSTER_SPAWNS;
+    }
+ 

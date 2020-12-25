@@ -25,8 +25,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event.HasResult;
 
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
 
 /**
  * SaplingGrowTreeEvent is fired when a sapling grows into a tree.<br>
@@ -48,7 +48,7 @@ public class SaplingGrowTreeEvent extends WorldEvent {
 	private final BlockPos pos;
 	private final Random rand;
 
-	public SaplingGrowTreeEvent(IWorld world, Random rand, BlockPos pos) {
+	public SaplingGrowTreeEvent(WorldAccess world, Random rand, BlockPos pos) {
 		super(world);
 		this.rand = rand;
 		this.pos = pos;

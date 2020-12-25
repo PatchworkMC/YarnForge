@@ -1,0 +1,11 @@
+--- a/net/minecraft/client/render/model/UnbakedModel.java
++++ b/net/minecraft/client/render/model/UnbakedModel.java
+@@ -14,7 +14,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @Environment(EnvType.CLIENT)
+-public interface UnbakedModel {
++public interface UnbakedModel extends net.minecraftforge.client.extensions.IForgeUnbakedModel {
+    Collection<Identifier> getModelDependencies();
+ 
+    Collection<SpriteIdentifier> getTextureDependencies(Function<Identifier, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors);

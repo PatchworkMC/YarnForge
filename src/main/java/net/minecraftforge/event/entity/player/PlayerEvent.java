@@ -20,21 +20,20 @@
 package net.minecraftforge.event.entity.player;
 
 import java.io.File;
-
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.GameType;
+import net.minecraft.text.Text;
+import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.Event;
 
@@ -154,27 +153,27 @@ public class PlayerEvent extends LivingEvent
      **/
     public static class NameFormat extends PlayerEvent
     {
-        private final ITextComponent username;
-        private ITextComponent displayname;
+        private final Text username;
+        private Text displayname;
 
-        public NameFormat(PlayerEntity player, ITextComponent username) 
+        public NameFormat(PlayerEntity player, Text username) 
         {
             super(player);
             this.username = username;
             this.setDisplayname(username);
         }
 
-        public ITextComponent getUsername()
+        public Text getUsername()
         {
             return username;
         }
 
-        public ITextComponent getDisplayname()
+        public Text getDisplayname()
         {
             return displayname;
         }
 
-        public void setDisplayname(ITextComponent displayname)
+        public void setDisplayname(Text displayname)
         {
             this.displayname = displayname;
         }
@@ -420,8 +419,8 @@ public class PlayerEvent extends LivingEvent
     public static class ItemCraftedEvent extends PlayerEvent {
         @Nonnull
         private final ItemStack crafting;
-        private final IInventory craftMatrix;
-        public ItemCraftedEvent(PlayerEntity player, @Nonnull ItemStack crafting, IInventory craftMatrix)
+        private final Inventory craftMatrix;
+        public ItemCraftedEvent(PlayerEntity player, @Nonnull ItemStack crafting, Inventory craftMatrix)
         {
             super(player);
             this.crafting = crafting;
@@ -434,7 +433,7 @@ public class PlayerEvent extends LivingEvent
             return this.crafting;
         }
 
-        public IInventory getInventory()
+        public Inventory getInventory()
         {
             return this.craftMatrix;
         }
@@ -519,22 +518,22 @@ public class PlayerEvent extends LivingEvent
     @Cancelable
     public static class PlayerChangeGameModeEvent extends PlayerEvent
     {
-        private final GameType currentGameMode;
-        private GameType newGameMode;
+        private final GameMode currentGameMode;
+        private GameMode newGameMode;
 
-        public PlayerChangeGameModeEvent(PlayerEntity player, GameType currentGameMode, GameType newGameMode)
+        public PlayerChangeGameModeEvent(PlayerEntity player, GameMode currentGameMode, GameMode newGameMode)
         {
             super(player);
             this.currentGameMode = currentGameMode;
             this.newGameMode = newGameMode;
         }
 
-        public GameType getCurrentGameMode()
+        public GameMode getCurrentGameMode()
         {
             return currentGameMode;
         }
 
-        public GameType getNewGameMode()
+        public GameMode getNewGameMode()
         {
             return newGameMode;
         }
@@ -542,7 +541,7 @@ public class PlayerEvent extends LivingEvent
         /**
          * Sets the game mode the player will be changed to if this event is not cancelled.
          */
-        public void setNewGameMode(GameType newGameMode)
+        public void setNewGameMode(GameMode newGameMode)
         {
             this.newGameMode = newGameMode;
         }

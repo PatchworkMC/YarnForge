@@ -1,0 +1,14 @@
+--- a/net/minecraft/block/entity/ShulkerBoxBlockEntity.java
++++ b/net/minecraft/block/entity/ShulkerBoxBlockEntity.java
+@@ -287,6 +287,11 @@
+       return this.animationStage == ShulkerBoxBlockEntity.AnimationStage.CLOSED;
+    }
+ 
++   @Override
++   protected net.minecraftforge.items.IItemHandler createUnSidedHandler() {
++      return new net.minecraftforge.items.wrapper.SidedInvWrapper(this, Direction.UP);
++   }
++
+    public static enum AnimationStage {
+       CLOSED,
+       OPENING,

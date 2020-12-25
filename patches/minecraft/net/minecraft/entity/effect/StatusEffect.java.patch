@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/effect/StatusEffect.java
++++ b/net/minecraft/entity/effect/StatusEffect.java
+@@ -18,7 +18,7 @@
+ import net.minecraft.util.Util;
+ import net.minecraft.util.registry.Registry;
+ 
+-public class StatusEffect {
++public class StatusEffect extends net.minecraftforge.registries.ForgeRegistryEntry<StatusEffect> implements net.minecraftforge.common.extensions.IForgeEffect {
+    private final Map<EntityAttribute, EntityAttributeModifier> attributeModifiers = Maps.newHashMap();
+    private final StatusEffectType type;
+    private final int color;

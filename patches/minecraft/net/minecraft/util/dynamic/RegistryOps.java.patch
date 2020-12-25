@@ -1,0 +1,18 @@
+--- a/net/minecraft/util/dynamic/RegistryOps.java
++++ b/net/minecraft/util/dynamic/RegistryOps.java
+@@ -193,6 +193,7 @@
+                ) {
+                   JsonParser jsonparser = new JsonParser();
+                   JsonElement jsonelement = jsonparser.parse(reader);
++                  if (jsonelement!= null) jsonelement.getAsJsonObject().addProperty("forge:registry_name", objectKey.getValue().toString());
+                   return decoder.parse(jsonOps, jsonelement).map((p_244347_0_) -> {
+                      return Pair.of(p_244347_0_, OptionalInt.empty());
+                   });
+@@ -234,6 +235,7 @@
+ 
+          public <E> DataResult<Pair<E, OptionalInt>> load(DynamicOps<JsonElement> jsonOps, RegistryKey<? extends Registry<E>> registryKey, RegistryKey<E> objectKey, Decoder<E> decoder) {
+             JsonElement jsonelement = this.values.get(objectKey);
++            if (jsonelement!= null) jsonelement.getAsJsonObject().addProperty("forge:registry_name", objectKey.getValue().toString());
+             return jsonelement == null ? DataResult.error("Unknown element: " + objectKey) : decoder.parse(jsonOps, jsonelement).setLifecycle(this.entryToLifecycle.get(objectKey)).map((p_244353_2_) -> {
+                return Pair.of(p_244353_2_, OptionalInt.of(this.entryToRawId.getInt(objectKey)));
+             });

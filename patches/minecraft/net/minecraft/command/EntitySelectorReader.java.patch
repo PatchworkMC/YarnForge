@@ -1,0 +1,20 @@
+--- a/net/minecraft/command/EntitySelectorReader.java
++++ b/net/minecraft/command/EntitySelectorReader.java
+@@ -447,6 +447,9 @@
+          }
+ 
+          this.reader.skip();
++         EntitySelector forgeSelector = net.minecraftforge.common.command.EntitySelectorManager.parseSelector(this);
++         if (forgeSelector != null)
++            return forgeSelector;
+          this.readAtVariable();
+       } else {
+          this.readRegular();
+@@ -462,6 +465,7 @@
+       suggestionBuilder.suggest("@r", new TranslatableText("argument.entity.selector.randomPlayer"));
+       suggestionBuilder.suggest("@s", new TranslatableText("argument.entity.selector.self"));
+       suggestionBuilder.suggest("@e", new TranslatableText("argument.entity.selector.allEntities"));
++      net.minecraftforge.common.command.EntitySelectorManager.fillSelectorSuggestions(suggestionBuilder);
+    }
+ 
+    private CompletableFuture<Suggestions> suggestSelector(SuggestionsBuilder suggestionBuilder, Consumer<SuggestionsBuilder> consumer) {

@@ -1,0 +1,58 @@
+--- a/net/minecraft/recipe/ShapelessRecipe.java
++++ b/net/minecraft/recipe/ShapelessRecipe.java
+@@ -17,12 +17,14 @@
+    private final String group;
+    private final ItemStack output;
+    private final DefaultedList<Ingredient> input;
++   private final boolean isSimple;
+ 
+    public ShapelessRecipe(Identifier idIn, String groupIn, ItemStack recipeOutputIn, DefaultedList<Ingredient> recipeItemsIn) {
+       this.id = idIn;
+       this.group = groupIn;
+       this.output = recipeOutputIn;
+       this.input = recipeItemsIn;
++      this.isSimple = recipeItemsIn.stream().allMatch(Ingredient::isSimple);
+    }
+ 
+    public Identifier getId() {
+@@ -47,17 +49,20 @@
+ 
+    public boolean matches(CraftingInventory inv, World worldIn) {
+       RecipeFinder recipeitemhelper = new RecipeFinder();
++      java.util.List<ItemStack> inputs = new java.util.ArrayList<>();
+       int i = 0;
+ 
+       for(int j = 0; j < inv.size(); ++j) {
+          ItemStack itemstack = inv.getStack(j);
+          if (!itemstack.isEmpty()) {
+             ++i;
++            if (isSimple)
+             recipeitemhelper.method_20478(itemstack, 1);
++            else inputs.add(itemstack);
+          }
+       }
+ 
+-      return i == this.input.size() && recipeitemhelper.findRecipe(this, (IntList)null);
++      return i == this.input.size() && (isSimple ? recipeitemhelper.findRecipe(this, (IntList)null) : net.minecraftforge.common.util.RecipeMatcher.findMatches(inputs,  this.input) != null);
+    }
+ 
+    public ItemStack craft(CraftingInventory inv) {
+@@ -68,14 +73,15 @@
+       return width * height >= this.input.size();
+    }
+ 
+-   public static class Serializer implements RecipeSerializer<ShapelessRecipe> {
++   public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<ShapelessRecipe> {
++      private static final Identifier NAME = new Identifier("minecraft", "crafting_shapeless");
+       public ShapelessRecipe read(Identifier recipeId, JsonObject json) {
+          String s = JsonHelper.getString(json, "group", "");
+          DefaultedList<Ingredient> nonnulllist = getIngredients(JsonHelper.getArray(json, "ingredients"));
+          if (nonnulllist.isEmpty()) {
+             throw new JsonParseException("No ingredients for shapeless recipe");
+-         } else if (nonnulllist.size() > 9) {
+-            throw new JsonParseException("Too many ingredients for shapeless recipe");
++         } else if (nonnulllist.size() > ShapedRecipe.MAX_WIDTH * ShapedRecipe.MAX_HEIGHT) {
++            throw new JsonParseException("Too many ingredients for shapeless recipe the max is " + (ShapedRecipe.MAX_WIDTH * ShapedRecipe.MAX_HEIGHT));
+          } else {
+             ItemStack itemstack = ShapedRecipe.getItemStack(JsonHelper.getObject(json, "result"));
+             return new ShapelessRecipe(recipeId, s, itemstack, nonnulllist);

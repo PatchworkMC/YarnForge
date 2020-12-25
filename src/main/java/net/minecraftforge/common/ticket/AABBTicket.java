@@ -19,23 +19,22 @@
 
 package net.minecraftforge.common.ticket;
 
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.vector.Vector3d;
-
 import javax.annotation.Nonnull;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 
-public class AABBTicket extends SimpleTicket<Vector3d>
+public class AABBTicket extends SimpleTicket<Vec3d>
 {
     @Nonnull
-    public final AxisAlignedBB axisAlignedBB;
+    public final Box axisAlignedBB;
 
-    public AABBTicket(@Nonnull AxisAlignedBB axisAlignedBB)
+    public AABBTicket(@Nonnull Box axisAlignedBB)
     {
         this.axisAlignedBB = axisAlignedBB;
     }
 
     @Override
-    public boolean matches(Vector3d toMatch)
+    public boolean matches(Vec3d toMatch)
     {
         return this.axisAlignedBB.contains(toMatch);
     }

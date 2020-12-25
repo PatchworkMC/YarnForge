@@ -20,12 +20,11 @@
 package net.minecraftforge.client;
 
 import javax.annotation.Nonnull;
-
-import net.minecraft.client.renderer.color.IItemColor;
+import net.minecraft.client.color.item.ItemColorProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidUtil;
 
-public class FluidContainerColorer implements IItemColor
+public class FluidContainerColorer implements ItemColorProvider
 {
     @Override
     public int getColor(@Nonnull ItemStack stack, int tintIndex)

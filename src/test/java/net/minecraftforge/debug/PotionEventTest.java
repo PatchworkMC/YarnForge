@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.recipe.Ingredient;
 import net.minecraftforge.common.brewing.BrewingRecipeRegistry;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
@@ -46,20 +46,20 @@ public class PotionEventTest
     
     private void onSetup(FMLCommonSetupEvent event)
     {
-    	BrewingRecipeRegistry.addRecipe(Ingredient.fromItems(Items.ICE), Ingredient.fromItems(Items.LAVA_BUCKET), new ItemStack(Items.OBSIDIAN));
+    	BrewingRecipeRegistry.addRecipe(Ingredient.ofItems(Items.ICE), Ingredient.ofItems(Items.LAVA_BUCKET), new ItemStack(Items.OBSIDIAN));
     }
     
     @SubscribeEvent
     public static void onPotionAdded(PotionEvent.PotionAddedEvent event)
     {
-        if (!event.getEntity().getEntityWorld().isRemote)
+        if (!event.getEntity().getEntityWorld().isClient)
             LOGGER.info("{} has a new PotionEffect {}, the old one was {}", event.getEntityLiving(), event.getPotionEffect(), event.getOldPotionEffect());
     }
 
     @SubscribeEvent
     public static void isPotionApplicable(PotionEvent.PotionApplicableEvent event)
     {
-        if (!event.getEntity().getEntityWorld().isRemote)
+        if (!event.getEntity().getEntityWorld().isClient)
         {
             event.setResult(Result.ALLOW);
             LOGGER.info("Allowed Potion {} for Entity {}", event.getPotionEffect(), event.getEntityLiving());
@@ -69,14 +69,14 @@ public class PotionEventTest
     @SubscribeEvent
     public static void onPotionRemove(PotionEvent.PotionRemoveEvent event)
     {
-        if (!event.getEntity().getEntityWorld().isRemote)
+        if (!event.getEntity().getEntityWorld().isClient)
             LOGGER.info("Effect {} got Removed from {}", event.getPotionEffect(), event.getEntityLiving());
     }
 
     @SubscribeEvent
     public static void onPotionExpiry(PotionEvent.PotionExpiryEvent event)
     {
-        if (!event.getEntity().getEntityWorld().isRemote)
+        if (!event.getEntity().getEntityWorld().isClient)
             LOGGER.info("Effect {} expired from {}", event.getPotionEffect(), event.getEntityLiving());
     }
 }

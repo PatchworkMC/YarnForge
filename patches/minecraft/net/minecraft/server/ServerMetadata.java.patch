@@ -1,0 +1,109 @@
+--- a/net/minecraft/server/ServerMetadata.java
++++ b/net/minecraft/server/ServerMetadata.java
+@@ -19,13 +19,24 @@
+    private ServerMetadata.Players players;
+    private ServerMetadata.Version version;
+    private String favicon;
++   private transient net.minecraftforge.fml.network.FMLStatusPing forgeData;
+ 
++   public net.minecraftforge.fml.network.FMLStatusPing getForgeData() {
++      return this.forgeData;
++   }
++
++   public void setForgeData(net.minecraftforge.fml.network.FMLStatusPing data){
++      this.forgeData = data;
++      invalidateJson();
++   }
++
+    public Text getDescription() {
+       return this.description;
+    }
+ 
+    public void setDescription(Text descriptionIn) {
+       this.description = descriptionIn;
++      invalidateJson();
+    }
+ 
+    public ServerMetadata.Players getPlayers() {
+@@ -34,6 +45,7 @@
+ 
+    public void setPlayers(ServerMetadata.Players playersIn) {
+       this.players = playersIn;
++      invalidateJson();
+    }
+ 
+    public ServerMetadata.Version getVersion() {
+@@ -42,16 +54,51 @@
+ 
+    public void setVersion(ServerMetadata.Version versionIn) {
+       this.version = versionIn;
++      invalidateJson();
+    }
+ 
+    public void setFavicon(String faviconBlob) {
+       this.favicon = faviconBlob;
++      invalidateJson();
+    }
+ 
+    public String getFavicon() {
+       return this.favicon;
+    }
+ 
++   private java.util.concurrent.Semaphore mutex = new java.util.concurrent.Semaphore(1);
++   private String json = null;
++   /**
++    * Returns this object as a Json string.
++    * Converting to JSON if a cached version is not available.
++    *
++    * Also to prevent potentially large memory allocations on the server
++    * this is moved from the SPacketServerInfo writePacket function
++    *
++    * As this method is called from the network threads so thread safety is important!
++    */
++   public String getJson() {
++      String ret = this.json;
++      if (ret == null) {
++         mutex.acquireUninterruptibly();
++         ret = this.json;
++         if (ret == null) {
++            ret = net.minecraft.network.packet.s2c.query.QueryResponseS2CPacket.GSON.toJson(this);
++            this.json = ret;
++         }
++         mutex.release();
++      }
++      return ret;
++   }
++
++   /**
++    * Invalidates the cached json, causing the next call to getJson to rebuild it.
++    * This is needed externally because PlayerCountData.setPlayer's is public.
++    */
++   public void invalidateJson() {
++      this.json = null;
++   }
++
+    public static class Players {
+       private final int max;
+       private final int online;
+@@ -143,6 +190,10 @@
+             serverstatusresponse.setFavicon(JsonHelper.getString(jsonobject, "favicon"));
+          }
+ 
++         if (jsonobject.has("forgeData")) {
++            serverstatusresponse.setForgeData(net.minecraftforge.fml.network.FMLStatusPing.Serializer.deserialize(JsonHelper.getObject(jsonobject, "forgeData"), p_deserialize_3_));
++         }
++
+          return serverstatusresponse;
+       }
+ 
+@@ -164,6 +215,10 @@
+             jsonobject.addProperty("favicon", p_serialize_1_.getFavicon());
+          }
+ 
++         if(p_serialize_1_.getForgeData() != null){
++            jsonobject.add("forgeData", net.minecraftforge.fml.network.FMLStatusPing.Serializer.serialize(p_serialize_1_.getForgeData(), p_serialize_3_));
++         }
++
+          return jsonobject;
+       }
+    }

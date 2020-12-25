@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.util.math.MathHelper;
 
 

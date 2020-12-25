@@ -19,10 +19,10 @@
 
 package net.minecraftforge.client.event;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.entity.ItemFrameRenderer;
-import net.minecraft.entity.item.ItemFrameEntity;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
@@ -39,15 +39,15 @@ public class RenderItemInFrameEvent extends Event
 {
     private final ItemStack item;
     private final ItemFrameEntity entityItemFrame;
-    private final ItemFrameRenderer renderer;
+    private final ItemFrameEntityRenderer renderer;
     private final MatrixStack matrix;
-    private final IRenderTypeBuffer buffers;
+    private final VertexConsumerProvider buffers;
     private final int light;
 
-    public RenderItemInFrameEvent(ItemFrameEntity itemFrame, ItemFrameRenderer renderItemFrame, MatrixStack matrix,
-                                  IRenderTypeBuffer buffers, int light)
+    public RenderItemInFrameEvent(ItemFrameEntity itemFrame, ItemFrameEntityRenderer renderItemFrame, MatrixStack matrix,
+                                  VertexConsumerProvider buffers, int light)
     {
-        item = itemFrame.getDisplayedItem();
+        item = itemFrame.getHeldItemStack();
         entityItemFrame = itemFrame;
         renderer = renderItemFrame;
         this.matrix = matrix;
@@ -66,7 +66,7 @@ public class RenderItemInFrameEvent extends Event
         return entityItemFrame;
     }
 
-    public ItemFrameRenderer getRenderer()
+    public ItemFrameEntityRenderer getRenderer()
     {
         return renderer;
     }
@@ -75,7 +75,7 @@ public class RenderItemInFrameEvent extends Event
         return matrix;
     }
 
-    public IRenderTypeBuffer getBuffers() {
+    public VertexConsumerProvider getBuffers() {
         return buffers;
     }
 

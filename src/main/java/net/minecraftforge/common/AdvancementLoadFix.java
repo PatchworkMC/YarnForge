@@ -22,9 +22,9 @@ package net.minecraftforge.common;
 import com.google.common.graph.Graph;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.advancements.PlayerAdvancements;
+import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementProgress;
+import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraftforge.fml.loading.toposort.TopologicalSort;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +46,7 @@ public class AdvancementLoadFix {
     private static final Logger LOGGER = LogManager.getLogger();
     private static Map<Advancement, List<Advancement>> roots;
 
-    public static void loadVisibility(final PlayerAdvancements playerAdvancements, final Set<Advancement> visible, final Set<Advancement> visibilityChanged, final Map<Advancement, AdvancementProgress> progress, final Set<Advancement> progressChanged, final Predicate<Advancement> shouldBeVisible) {
+    public static void loadVisibility(final PlayerAdvancementTracker playerAdvancements, final Set<Advancement> visible, final Set<Advancement> visibilityChanged, final Map<Advancement, AdvancementProgress> progress, final Set<Advancement> progressChanged, final Predicate<Advancement> shouldBeVisible) {
         LOGGER.info("Using new advancement loading for {}", playerAdvancements);
         if (roots == null) throw new RuntimeException("Why did the advancements not load yet?!");
         final Set<Advancement> set = new HashSet<>();

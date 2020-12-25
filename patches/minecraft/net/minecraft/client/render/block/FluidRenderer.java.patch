@@ -1,0 +1,118 @@
+--- a/net/minecraft/client/render/block/FluidRenderer.java
++++ b/net/minecraft/client/render/block/FluidRenderer.java
+@@ -6,9 +6,7 @@
+ import net.minecraft.block.BlockState;
+ import net.minecraft.block.Blocks;
+ import net.minecraft.block.LeavesBlock;
+-import net.minecraft.block.TransparentBlock;
+ import net.minecraft.client.MinecraftClient;
+-import net.minecraft.client.color.world.BiomeColors;
+ import net.minecraft.client.render.VertexConsumer;
+ import net.minecraft.client.render.WorldRenderer;
+ import net.minecraft.client.render.model.ModelLoader;
+@@ -73,9 +71,10 @@
+ 
+    public boolean render(BlockRenderView lightReaderIn, BlockPos posIn, VertexConsumer vertexBuilderIn, FluidState fluidStateIn) {
+       boolean flag = fluidStateIn.isIn(FluidTags.LAVA);
+-      Sprite[] atextureatlassprite = flag ? this.lavaSprites : this.waterSprites;
++      Sprite[] atextureatlassprite = net.minecraftforge.client.ForgeHooksClient.getFluidSprites(lightReaderIn, posIn, fluidStateIn);
+       BlockState blockstate = lightReaderIn.getBlockState(posIn);
+-      int i = flag ? 16777215 : BiomeColors.getWaterColor(lightReaderIn, posIn);
++      int i = fluidStateIn.getFluid().getAttributes().getColor(lightReaderIn, posIn);
++      float alpha = (float)(i >> 24 & 255) / 255.0F;
+       float f = (float)(i >> 16 & 255) / 255.0F;
+       float f1 = (float)(i >> 8 & 255) / 255.0F;
+       float f2 = (float)(i & 255) / 255.0F;
+@@ -160,15 +159,15 @@
+             float f25 = f4 * f;
+             float f26 = f4 * f1;
+             float f27 = f4 * f2;
+-            this.vertex(vertexBuilderIn, d0 + 0.0D, d1 + (double)f7, d2 + 0.0D, f25, f26, f27, f13, f17, j);
+-            this.vertex(vertexBuilderIn, d0 + 0.0D, d1 + (double)f8, d2 + 1.0D, f25, f26, f27, f14, f18, j);
+-            this.vertex(vertexBuilderIn, d0 + 1.0D, d1 + (double)f9, d2 + 1.0D, f25, f26, f27, f15, f19, j);
+-            this.vertex(vertexBuilderIn, d0 + 1.0D, d1 + (double)f10, d2 + 0.0D, f25, f26, f27, f16, f20, j);
++            this.vertexVanilla(vertexBuilderIn, d0 + 0.0D, d1 + (double)f7, d2 + 0.0D, f25, f26, f27, alpha, f13, f17, j);
++            this.vertexVanilla(vertexBuilderIn, d0 + 0.0D, d1 + (double)f8, d2 + 1.0D, f25, f26, f27, alpha, f14, f18, j);
++            this.vertexVanilla(vertexBuilderIn, d0 + 1.0D, d1 + (double)f9, d2 + 1.0D, f25, f26, f27, alpha, f15, f19, j);
++            this.vertexVanilla(vertexBuilderIn, d0 + 1.0D, d1 + (double)f10, d2 + 0.0D, f25, f26, f27, alpha, f16, f20, j);
+             if (fluidStateIn.method_15756(lightReaderIn, posIn.up())) {
+-               this.vertex(vertexBuilderIn, d0 + 0.0D, d1 + (double)f7, d2 + 0.0D, f25, f26, f27, f13, f17, j);
+-               this.vertex(vertexBuilderIn, d0 + 1.0D, d1 + (double)f10, d2 + 0.0D, f25, f26, f27, f16, f20, j);
+-               this.vertex(vertexBuilderIn, d0 + 1.0D, d1 + (double)f9, d2 + 1.0D, f25, f26, f27, f15, f19, j);
+-               this.vertex(vertexBuilderIn, d0 + 0.0D, d1 + (double)f8, d2 + 1.0D, f25, f26, f27, f14, f18, j);
++               this.vertexVanilla(vertexBuilderIn, d0 + 0.0D, d1 + (double)f7, d2 + 0.0D, f25, f26, f27, alpha, f13, f17, j);
++               this.vertexVanilla(vertexBuilderIn, d0 + 1.0D, d1 + (double)f10, d2 + 0.0D, f25, f26, f27, alpha, f16, f20, j);
++               this.vertexVanilla(vertexBuilderIn, d0 + 1.0D, d1 + (double)f9, d2 + 1.0D, f25, f26, f27, alpha, f15, f19, j);
++               this.vertexVanilla(vertexBuilderIn, d0 + 0.0D, d1 + (double)f8, d2 + 1.0D, f25, f26, f27, alpha, f14, f18, j);
+             }
+          }
+ 
+@@ -181,10 +180,10 @@
+             float f40 = f3 * f;
+             float f41 = f3 * f1;
+             float f42 = f3 * f2;
+-            this.vertex(vertexBuilderIn, d0, d1 + (double)f12, d2 + 1.0D, f40, f41, f42, f34, f39, i1);
+-            this.vertex(vertexBuilderIn, d0, d1 + (double)f12, d2, f40, f41, f42, f34, f37, i1);
+-            this.vertex(vertexBuilderIn, d0 + 1.0D, d1 + (double)f12, d2, f40, f41, f42, f35, f37, i1);
+-            this.vertex(vertexBuilderIn, d0 + 1.0D, d1 + (double)f12, d2 + 1.0D, f40, f41, f42, f35, f39, i1);
++            this.vertexVanilla(vertexBuilderIn, d0, d1 + (double)f12, d2 + 1.0D, f40, f41, f42, alpha, f34, f39, i1);
++            this.vertexVanilla(vertexBuilderIn, d0, d1 + (double)f12, d2, f40, f41, f42, alpha, f34, f37, i1);
++            this.vertexVanilla(vertexBuilderIn, d0 + 1.0D, d1 + (double)f12, d2, f40, f41, f42, alpha, f35, f37, i1);
++            this.vertexVanilla(vertexBuilderIn, d0 + 1.0D, d1 + (double)f12, d2 + 1.0D, f40, f41, f42, alpha, f35, f39, i1);
+             flag7 = true;
+          }
+ 
+@@ -239,10 +238,9 @@
+                flag7 = true;
+                BlockPos blockpos = posIn.offset(direction);
+                Sprite textureatlassprite2 = atextureatlassprite[1];
+-               if (!flag) {
+-                  Block block = lightReaderIn.getBlockState(blockpos).getBlock();
+-                  if (block instanceof TransparentBlock || block instanceof LeavesBlock) {
+-                     textureatlassprite2 = this.waterOverlaySprite;
++               if (atextureatlassprite[2] != null) {
++                  if (lightReaderIn.getBlockState(blockpos).shouldDisplayFluidOverlay(lightReaderIn, blockpos, fluidStateIn)) {
++                     textureatlassprite2 = atextureatlassprite[2];
+                   }
+                }
+ 
+@@ -256,15 +254,15 @@
+                float f31 = f4 * f30 * f;
+                float f32 = f4 * f30 * f1;
+                float f33 = f4 * f30 * f2;
+-               this.vertex(vertexBuilderIn, d3, d1 + (double)f36, d4, f31, f32, f33, f48, f50, k);
+-               this.vertex(vertexBuilderIn, d5, d1 + (double)f38, d6, f31, f32, f33, f49, f28, k);
+-               this.vertex(vertexBuilderIn, d5, d1 + (double)f12, d6, f31, f32, f33, f49, f29, k);
+-               this.vertex(vertexBuilderIn, d3, d1 + (double)f12, d4, f31, f32, f33, f48, f29, k);
+-               if (textureatlassprite2 != this.waterOverlaySprite) {
+-                  this.vertex(vertexBuilderIn, d3, d1 + (double)f12, d4, f31, f32, f33, f48, f29, k);
+-                  this.vertex(vertexBuilderIn, d5, d1 + (double)f12, d6, f31, f32, f33, f49, f29, k);
+-                  this.vertex(vertexBuilderIn, d5, d1 + (double)f38, d6, f31, f32, f33, f49, f28, k);
+-                  this.vertex(vertexBuilderIn, d3, d1 + (double)f36, d4, f31, f32, f33, f48, f50, k);
++               this.vertexVanilla(vertexBuilderIn, d3, d1 + (double)f36, d4, f31, f32, f33, alpha, f48, f50, k);
++               this.vertexVanilla(vertexBuilderIn, d5, d1 + (double)f38, d6, f31, f32, f33, alpha, f49, f28, k);
++               this.vertexVanilla(vertexBuilderIn, d5, d1 + (double)f12, d6, f31, f32, f33, alpha, f49, f29, k);
++               this.vertexVanilla(vertexBuilderIn, d3, d1 + (double)f12, d4, f31, f32, f33, alpha, f48, f29, k);
++               if (textureatlassprite2 != atextureatlassprite[2]) {
++                  this.vertexVanilla(vertexBuilderIn, d3, d1 + (double)f12, d4, f31, f32, f33, alpha, f48, f29, k);
++                  this.vertexVanilla(vertexBuilderIn, d5, d1 + (double)f12, d6, f31, f32, f33, alpha, f49, f29, k);
++                  this.vertexVanilla(vertexBuilderIn, d5, d1 + (double)f38, d6, f31, f32, f33, alpha, f49, f28, k);
++                  this.vertexVanilla(vertexBuilderIn, d3, d1 + (double)f36, d4, f31, f32, f33, alpha, f48, f50, k);
+                }
+             }
+          }
+@@ -273,9 +271,13 @@
+       }
+    }
+ 
++   @Deprecated
+    private void vertex(VertexConsumer vertexBuilderIn, double x, double y, double z, float red, float green, float blue, float u, float v, int packedLight) {
+-      vertexBuilderIn.vertex(x, y, z).color(red, green, blue, 1.0F).texture(u, v).light(packedLight).normal(0.0F, 1.0F, 0.0F).next();
++       vertexVanilla(vertexBuilderIn, x, y, z, red, green, blue, 1.0F, u, v, packedLight);
+    }
++   private void vertexVanilla(VertexConsumer vertexBuilderIn, double x, double y, double z, float red, float green, float blue, float alpha, float u, float v, int packedLight) {
++      vertexBuilderIn.vertex(x, y, z).color(red, green, blue, alpha).texture(u, v).light(packedLight).normal(0.0F, 1.0F, 0.0F).next();
++   }
+ 
+    private int getLight(BlockRenderView lightReaderIn, BlockPos posIn) {
+       int i = WorldRenderer.getLightmapCoordinates(lightReaderIn, posIn);

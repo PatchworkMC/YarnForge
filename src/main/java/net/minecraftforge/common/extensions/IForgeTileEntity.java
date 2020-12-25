@@ -20,15 +20,16 @@
 package net.minecraftforge.common.extensions;
 
 import javax.annotation.Nonnull;
-
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -37,28 +38,28 @@ import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 
-public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
+public interface IForgeTileEntity extends ICapabilitySerializable<CompoundTag>
 {
-    default TileEntity getTileEntity() { return (TileEntity) this; }
+    default BlockEntity getTileEntity() { return (BlockEntity) this; }
 
     @Override
-    default void deserializeNBT(CompoundNBT nbt)
+    default void deserializeNBT(CompoundTag nbt)
     {
         //TODO re-evaluate
         deserializeNBT(null, nbt);
     }
 
     //    @Override TODO  re-evaluate
-    default void deserializeNBT(BlockState state, CompoundNBT nbt)
+    default void deserializeNBT(BlockState state, CompoundTag nbt)
     {
-        getTileEntity().read(state, nbt);
+        getTileEntity().fromTag(state, nbt);
     }
 
     @Override
-    default CompoundNBT serializeNBT()
+    default CompoundTag serializeNBT()
     {
-        CompoundNBT ret = new CompoundNBT();
-        getTileEntity().write(ret);
+        CompoundTag ret = new CompoundTag();
+        getTileEntity().toTag(ret);
         return ret;
     }
 
@@ -71,7 +72,7 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
      * @param net The NetworkManager the packet originated from
      * @param pkt The data packet
      */
-    default void onDataPacket(net.minecraft.network.NetworkManager net, net.minecraft.network.play.server.SUpdateTileEntityPacket pkt){ }
+    default void onDataPacket(net.minecraft.network.ClientConnection net, net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket pkt){ }
 
     /**
      * Called when the chunk's TE update tag, gotten from {@link #getUpdateTag()}, is received on the client.
@@ -80,9 +81,9 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
      *
      * @param tag The {@link NBTTagCompound} sent from {@link #getUpdateTag()}
      */
-     default void handleUpdateTag(BlockState state, CompoundNBT tag)
+     default void handleUpdateTag(BlockState state, CompoundTag tag)
      {
-         getTileEntity().read(state, tag);
+         getTileEntity().fromTag(state, tag);
      }
 
     /**
@@ -91,7 +92,7 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
      *
      * @return A compound tag for custom data
      */
-     CompoundNBT getTileData();
+     CompoundTag getTileData();
 
      default void onChunkUnloaded(){}
 
@@ -107,7 +108,7 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
      /**
       * Sometimes default render bounding box: infinite in scope. Used to control rendering on {@link TileEntitySpecialRenderer}.
       */
-     public static final AxisAlignedBB INFINITE_EXTENT_AABB = new net.minecraft.util.math.AxisAlignedBB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+     public static final Box INFINITE_EXTENT_AABB = new net.minecraft.util.math.Box(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
      /**
       * Return an {@link AxisAlignedBB} that controls the visible scope of a {@link TileEntitySpecialRenderer} associated with this {@link TileEntity}
@@ -116,20 +117,20 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
       *
       * @return an appropriately size {@link AxisAlignedBB} for the {@link TileEntity}
       */
-     @OnlyIn(Dist.CLIENT)
-     default AxisAlignedBB getRenderBoundingBox()
+     @Environment(EnvType.CLIENT)
+     default Box getRenderBoundingBox()
      {
-         AxisAlignedBB bb = INFINITE_EXTENT_AABB;
-         BlockState state = getTileEntity().getBlockState();
+         Box bb = INFINITE_EXTENT_AABB;
+         BlockState state = getTileEntity().getCachedState();
          Block block = state.getBlock();
          BlockPos pos = getTileEntity().getPos();
          if (block == Blocks.ENCHANTING_TABLE)
          {
-             bb = new AxisAlignedBB(pos, pos.add(1, 1, 1));
+             bb = new Box(pos, pos.add(1, 1, 1));
          }
          else if (block == Blocks.CHEST || block == Blocks.TRAPPED_CHEST)
          {
-             bb = new AxisAlignedBB(pos.add(-1, 0, -1), pos.add(2, 2, 2));
+             bb = new Box(pos.add(-1, 0, -1), pos.add(2, 2, 2));
          }
          else if (block == Blocks.STRUCTURE_BLOCK)
          {
@@ -137,7 +138,7 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
          }
          else if (block != null && block != Blocks.BEACON)
          {
-             AxisAlignedBB cbb = null;
+             Box cbb = null;
              try
              {
                  VoxelShape collisionShape = state.getCollisionShape(getTileEntity().getWorld(), pos);
@@ -154,7 +155,7 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
                  // So, once again in the long line of US having to accommodate BUKKIT breaking things,
                  // here it is, assume that the TE is only 1 cubic block. Problem with this is that it may
                  // cause the TileEntity renderer to error further down the line! But alas, nothing we can do.
-                 cbb = new net.minecraft.util.math.AxisAlignedBB(pos.add(-1, 0, -1), pos.add(1, 1, 1));
+                 cbb = new net.minecraft.util.math.Box(pos.add(-1, 0, -1), pos.add(1, 1, 1));
              }
              if (cbb != null) bb = cbb;
          }
@@ -167,9 +168,9 @@ public interface IForgeTileEntity extends ICapabilitySerializable<CompoundNBT>
      */
      default void requestModelDataUpdate()
      {
-         TileEntity te = getTileEntity();
+         BlockEntity te = getTileEntity();
          World world = te.getWorld();
-         if (world != null && world.isRemote)
+         if (world != null && world.isClient)
          {
              ModelDataManager.requestModelDataRefresh(te);
          }

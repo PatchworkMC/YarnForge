@@ -19,11 +19,11 @@
 
 package net.minecraftforge.client.event;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.text.Text;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -53,15 +53,15 @@ import net.minecraftforge.eventbus.api.Event;
 public class RenderNameplateEvent extends EntityEvent
 {
 
-    private ITextComponent nameplateContent;
-    private final ITextComponent originalContent;
+    private Text nameplateContent;
+    private final Text originalContent;
     private final EntityRenderer<?> entityRenderer;
     private final MatrixStack matrixStack;
-    private final IRenderTypeBuffer renderTypeBuffer;
+    private final VertexConsumerProvider renderTypeBuffer;
     private final int packedLight;
     private final float partialTicks;
     
-    public RenderNameplateEvent(Entity entity, ITextComponent content, EntityRenderer<?> entityRenderer, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, int packedLight, float partialTicks)
+    public RenderNameplateEvent(Entity entity, Text content, EntityRenderer<?> entityRenderer, MatrixStack matrixStack, VertexConsumerProvider renderTypeBuffer, int packedLight, float partialTicks)
     {
         super(entity);
         this.originalContent = content;
@@ -76,7 +76,7 @@ public class RenderNameplateEvent extends EntityEvent
     /**
      * Sets the content that is to be rendered on the name plate/tag
      */
-    public void setContent(ITextComponent contents)
+    public void setContent(Text contents)
     {
         this.nameplateContent = contents;
     }
@@ -84,7 +84,7 @@ public class RenderNameplateEvent extends EntityEvent
     /**
      * The content being rendered on the name plate/tag
      */
-    public ITextComponent getContent()
+    public Text getContent()
     {
         return this.nameplateContent;
     }
@@ -92,7 +92,7 @@ public class RenderNameplateEvent extends EntityEvent
     /**
      * The original content being rendered on the name plate/tag
      */
-    public ITextComponent getOriginalContent()
+    public Text getOriginalContent()
     {
         return this.originalContent;
     }
@@ -116,7 +116,7 @@ public class RenderNameplateEvent extends EntityEvent
     /**
      * The render type buffer used during the rendering of the name plate/tag
      */
-    public IRenderTypeBuffer getRenderTypeBuffer()
+    public VertexConsumerProvider getRenderTypeBuffer()
     {
         return this.renderTypeBuffer;
     }

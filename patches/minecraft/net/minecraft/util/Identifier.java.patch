@@ -1,0 +1,15 @@
+--- a/net/minecraft/util/Identifier.java
++++ b/net/minecraft/util/Identifier.java
+@@ -114,6 +114,12 @@
+       return i;
+    }
+ 
++   // Normal compare sorts by path first, this compares namespace first.
++   public int compareNamespaced(Identifier o) {
++      int ret = this.namespace.compareTo(o.namespace);
++      return ret != 0 ? ret : this.path.compareTo(o.path);
++   }
++
+    public static Identifier fromCommandInput(StringReader reader) throws CommandSyntaxException {
+       int i = reader.getCursor();
+ 

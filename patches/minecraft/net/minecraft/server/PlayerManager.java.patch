@@ -1,0 +1,147 @@
+--- a/net/minecraft/server/PlayerManager.java
++++ b/net/minecraft/server/PlayerManager.java
+@@ -115,6 +115,7 @@
+    private GameMode gameMode;
+    private boolean cheatsAllowed;
+    private int latencyUpdateTimer;
++   private final List<ServerPlayerEntity> playersView = java.util.Collections.unmodifiableList(players);
+ 
+    public PlayerManager(MinecraftServer p_i231425_1_, DynamicRegistryManager.Impl p_i231425_2_, WorldSaveHandler p_i231425_3_, int p_i231425_4_) {
+       this.server = p_i231425_1_;
+@@ -151,6 +152,7 @@
+       WorldProperties iworldinfo = serverworld1.getLevelProperties();
+       this.setGameMode(playerIn, (ServerPlayerEntity)null, serverworld1);
+       ServerPlayNetworkHandler serverplaynethandler = new ServerPlayNetworkHandler(this.server, netManager, playerIn);
++      net.minecraftforge.fml.network.NetworkHooks.sendMCRegistryPackets(netManager, "PLAY_TO_CLIENT");
+       GameRules gamerules = serverworld1.getGameRules();
+       boolean flag = gamerules.getBoolean(GameRules.DO_IMMEDIATE_RESPAWN);
+       boolean flag1 = gamerules.getBoolean(GameRules.REDUCED_DEBUG_INFO);
+@@ -161,6 +163,7 @@
+       serverplaynethandler.sendPacket(new HeldItemChangeS2CPacket(playerIn.inventory.selectedSlot));
+       serverplaynethandler.sendPacket(new SynchronizeRecipesS2CPacket(this.server.getRecipeManager().values()));
+       serverplaynethandler.sendPacket(new SynchronizeTagsS2CPacket(this.server.getTagManager()));
++      net.minecraftforge.fml.network.NetworkHooks.syncCustomTagTypes(playerIn, this.server.getTagManager());
+       this.sendCommandTree(playerIn);
+       playerIn.getStatHandler().updateStatSet();
+       playerIn.getRecipeBook().sendInitRecipesPacket(playerIn);
+@@ -175,7 +178,7 @@
+ 
+       this.broadcastChatMessage(iformattabletextcomponent.formatted(Formatting.YELLOW), MessageType.SYSTEM, Util.NIL_UUID);
+       serverplaynethandler.requestTeleport(playerIn.getX(), playerIn.getY(), playerIn.getZ(), playerIn.yaw, playerIn.pitch);
+-      this.players.add(playerIn);
++      this.addPlayer(playerIn);
+       this.playerMap.put(playerIn.getUuid(), playerIn);
+       this.sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, playerIn));
+ 
+@@ -230,6 +233,7 @@
+       }
+ 
+       playerIn.onSpawn();
++      net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerLoggedIn( playerIn );
+    }
+ 
+    protected void sendScoreboard(ServerScoreboard scoreboardIn, ServerPlayerEntity playerIn) {
+@@ -290,6 +294,7 @@
+          compoundnbt1 = compoundnbt;
+          playerIn.fromTag(compoundnbt);
+          LOGGER.debug("loading single player");
++         net.minecraftforge.event.ForgeEventFactory.firePlayerLoadingEvent(playerIn, this.saveHandler, playerIn.getUuid().toString());
+       } else {
+          compoundnbt1 = this.saveHandler.loadPlayerData(playerIn);
+       }
+@@ -298,6 +303,7 @@
+    }
+ 
+    protected void savePlayerData(ServerPlayerEntity playerIn) {
++      if (playerIn.networkHandler == null) return;
+       this.saveHandler.savePlayerData(playerIn);
+       ServerStatHandler serverstatisticsmanager = this.statisticsMap.get(playerIn.getUuid());
+       if (serverstatisticsmanager != null) {
+@@ -312,6 +318,7 @@
+    }
+ 
+    public void remove(ServerPlayerEntity playerIn) {
++      net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerLoggedOut(playerIn);
+       ServerWorld serverworld = playerIn.getServerWorld();
+       playerIn.incrementStat(Stats.LEAVE_GAME);
+       this.savePlayerData(playerIn);
+@@ -335,7 +342,7 @@
+       playerIn.detach();
+       serverworld.removePlayer(playerIn);
+       playerIn.getAdvancementTracker().clearCriteria();
+-      this.players.remove(playerIn);
++      this.removePlayer(playerIn);
+       this.server.getBossBarManager().onPlayerDisconnect(playerIn);
+       UUID uuid = playerIn.getUuid();
+       ServerPlayerEntity serverplayerentity = this.playerMap.get(uuid);
+@@ -405,8 +412,8 @@
+    }
+ 
+    public ServerPlayerEntity respawnPlayer(ServerPlayerEntity p_232644_1_, boolean p_232644_2_) {
+-      this.players.remove(p_232644_1_);
+-      p_232644_1_.getServerWorld().removePlayer(p_232644_1_);
++      this.removePlayer(p_232644_1_);
++      p_232644_1_.getServerWorld().removePlayer(p_232644_1_, true); // Forge: keep data until copyFrom called
+       BlockPos blockpos = p_232644_1_.getSpawnPointPosition();
+       float f = p_232644_1_.getSpawnAngle();
+       boolean flag = p_232644_1_.isSpawnPointSet();
+@@ -429,6 +436,7 @@
+       ServerPlayerEntity serverplayerentity = new ServerPlayerEntity(this.server, serverworld1, p_232644_1_.getGameProfile(), playerinteractionmanager);
+       serverplayerentity.networkHandler = p_232644_1_.networkHandler;
+       serverplayerentity.copyFrom(p_232644_1_, p_232644_2_);
++      p_232644_1_.remove(false); // Forge: clone event had a chance to see old data, now discard it
+       serverplayerentity.setEntityId(p_232644_1_.getEntityId());
+       serverplayerentity.setMainArm(p_232644_1_.getMainArm());
+ 
+@@ -470,10 +478,11 @@
+       this.sendWorldInfo(serverplayerentity, serverworld1);
+       this.sendCommandTree(serverplayerentity);
+       serverworld1.onPlayerRespawned(serverplayerentity);
+-      this.players.add(serverplayerentity);
++      this.addPlayer(serverplayerentity);
+       this.playerMap.put(serverplayerentity.getUuid(), serverplayerentity);
+       serverplayerentity.onSpawn();
+       serverplayerentity.setHealth(serverplayerentity.getHealth());
++      net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerRespawnEvent(serverplayerentity, p_232644_2_);
+       if (flag2) {
+          serverplayerentity.networkHandler.sendPacket(new PlaySoundS2CPacket(SoundEvents.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.BLOCKS, (double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ(), 1.0F, 1.0F));
+       }
+@@ -774,6 +783,8 @@
+          this.advancementTrackers.put(uuid, playeradvancements);
+       }
+ 
++      // Forge: don't overwrite active player with a fake one.
++      if (!(p_192054_1_ instanceof net.minecraftforge.common.util.FakePlayer))
+       playeradvancements.setOwner(p_192054_1_);
+       return playeradvancements;
+    }
+@@ -791,7 +802,7 @@
+    }
+ 
+    public List<ServerPlayerEntity> getPlayerList() {
+-      return this.players;
++      return this.playersView; //Unmodifiable view, we don't want people removing things without us knowing.
+    }
+ 
+    @Nullable
+@@ -809,6 +820,7 @@
+       }
+ 
+       this.sendToAll(new SynchronizeTagsS2CPacket(this.server.getTagManager()));
++      net.minecraftforge.fml.network.NetworkHooks.syncCustomTagTypes(this.server.getTagManager());
+       SynchronizeRecipesS2CPacket supdaterecipespacket = new SynchronizeRecipesS2CPacket(this.server.getRecipeManager().values());
+ 
+       for(ServerPlayerEntity serverplayerentity : this.players) {
+@@ -821,4 +833,12 @@
+    public boolean areCheatsAllowed() {
+       return this.cheatsAllowed;
+    }
++
++   public boolean addPlayer(ServerPlayerEntity player) {
++      return players.add(player);
++   }
++
++   public boolean removePlayer(ServerPlayerEntity player) {
++       return this.players.remove(player);
++   }
+ }

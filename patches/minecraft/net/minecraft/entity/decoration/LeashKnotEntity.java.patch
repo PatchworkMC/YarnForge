@@ -1,0 +1,10 @@
+--- a/net/minecraft/entity/decoration/LeashKnotEntity.java
++++ b/net/minecraft/entity/decoration/LeashKnotEntity.java
+@@ -47,6 +47,7 @@
+ 
+    protected void updateAttachmentPosition() {
+       this.setPos((double)this.attachmentPos.getX() + 0.5D, (double)this.attachmentPos.getY() + 0.5D, (double)this.attachmentPos.getZ() + 0.5D);
++      if (this.isAddedToWorld() && this.world instanceof net.minecraft.server.world.ServerWorld) ((net.minecraft.server.world.ServerWorld)this.world).checkEntityChunkPos(this); // Forge - Process chunk registration after moving.
+    }
+ 
+    public void setFacing(Direction facingDirectionIn) {

@@ -21,13 +21,13 @@ package net.minecraftforge.debug.block;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.BoatEntity;
+import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.WorldView;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -47,10 +47,10 @@ public class SlipperinessTest
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> e)
     {
-        e.getRegistry().register((new Block(Block.Properties.create(Material.PACKED_ICE))
+        e.getRegistry().register((new Block(Block.Properties.of(Material.DENSE_ICE))
         {
             @Override
-            public float getSlipperiness(BlockState state, IWorldReader world, BlockPos pos, Entity entity)
+            public float getSlipperiness(BlockState state, WorldView world, BlockPos pos, Entity entity)
             {
                 return entity instanceof BoatEntity ? 2 : super.getSlipperiness(state, world, pos, entity);
             }
@@ -60,7 +60,7 @@ public class SlipperinessTest
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> e)
     {
-        e.getRegistry().register(new BlockItem(BB_BLOCK, new Item.Properties()).setRegistryName(BB_BLOCK.getRegistryName()));
+        e.getRegistry().register(new BlockItem(BB_BLOCK, new Item.Settings()).setRegistryName(BB_BLOCK.getRegistryName()));
     }
 
     /*

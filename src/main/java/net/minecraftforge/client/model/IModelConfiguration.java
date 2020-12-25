@@ -19,10 +19,10 @@
 
 package net.minecraftforge.client.model;
 
-import net.minecraft.client.renderer.model.IModelTransform;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.RenderMaterial;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraftforge.client.model.geometry.IModelGeometryPart;
 
 import javax.annotation.Nullable;
@@ -37,7 +37,7 @@ public interface IModelConfiguration {
      * If available, gets the owning model (usually BlockModel) of this configuration
      */
     @Nullable
-    IUnbakedModel getOwnerModel();
+    UnbakedModel getOwnerModel();
 
     /**
      * @return The name of the model being baked, for logging and cache purposes.
@@ -55,7 +55,7 @@ public interface IModelConfiguration {
      * @param name The name of a texture channel.
      * @return The location of the texture, or the missing texture if not found.
      */
-    RenderMaterial resolveTexture(String name);
+    SpriteIdentifier resolveTexture(String name);
 
     /**
      * @return True if the item is a 3D model, false if it's a generated item model.
@@ -79,12 +79,12 @@ public interface IModelConfiguration {
      * Gets the vanilla camera transforms data.
      * Do not use for non-vanilla code. For general usage, prefer getCombinedState.
      */
-    ItemCameraTransforms getCameraTransforms();
+    ModelTransformation getCameraTransforms();
 
     /**
      * @return The combined transformation state including vanilla and forge transforms data.
      */
-    IModelTransform getCombinedTransform();
+    ModelBakeSettings getCombinedTransform();
 
     /**
      * Queries the visibility information for the model parts.

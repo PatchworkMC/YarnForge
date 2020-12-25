@@ -1,0 +1,54 @@
+--- a/net/minecraft/client/render/entity/feature/ElytraFeatureRenderer.java
++++ b/net/minecraft/client/render/entity/feature/ElytraFeatureRenderer.java
+@@ -31,7 +31,7 @@
+ 
+    public void render(MatrixStack matrixStackIn, VertexConsumerProvider bufferIn, int packedLightIn, T entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+       ItemStack itemstack = entitylivingbaseIn.getEquippedStack(EquipmentSlot.CHEST);
+-      if (itemstack.getItem() == Items.ELYTRA) {
++      if (shouldRender(itemstack, entitylivingbaseIn)) {
+          Identifier resourcelocation;
+          if (entitylivingbaseIn instanceof AbstractClientPlayerEntity) {
+             AbstractClientPlayerEntity abstractclientplayerentity = (AbstractClientPlayerEntity)entitylivingbaseIn;
+@@ -40,10 +40,10 @@
+             } else if (abstractclientplayerentity.canRenderCapeTexture() && abstractclientplayerentity.getCapeTexture() != null && abstractclientplayerentity.isPartVisible(PlayerModelPart.CAPE)) {
+                resourcelocation = abstractclientplayerentity.getCapeTexture();
+             } else {
+-               resourcelocation = SKIN;
++               resourcelocation = getElytraTexture(itemstack, entitylivingbaseIn);
+             }
+          } else {
+-            resourcelocation = SKIN;
++            resourcelocation = getElytraTexture(itemstack, entitylivingbaseIn);
+          }
+ 
+          matrixStackIn.push();
+@@ -55,4 +55,29 @@
+          matrixStackIn.pop();
+       }
+    }
++
++   /**
++    * Determines if the ElytraLayer should render.
++    * ItemStack and Entity are provided for modder convenience,
++    * For example, using the same ElytraLayer for multiple custom Elytra.
++    *
++    * @param stack  The Elytra ItemStack
++    * @param entity The entity being rendered.
++    * @return If the ElytraLayer should render.
++    */
++   public boolean shouldRender(ItemStack stack, T entity) {
++      return stack.getItem() == Items.ELYTRA;
++   }
++
++   /**
++    * Gets the texture to use with this ElytraLayer.
++    * This assumes the vanilla Elytra model.
++    *
++    * @param stack  The Elytra ItemStack.
++    * @param entity The entity being rendered.
++    * @return The texture.
++    */
++   public Identifier getElytraTexture(ItemStack stack, T entity) {
++      return SKIN;
++   }
+ }

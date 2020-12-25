@@ -1,0 +1,93 @@
+--- a/net/minecraft/client/Mouse.java
++++ b/net/minecraft/client/Mouse.java
+@@ -73,6 +73,7 @@
+             this.activeButton = -1;
+          }
+ 
++         if (net.minecraftforge.client.ForgeHooksClient.onRawMouseClicked(button, action, mods)) return;
+          boolean[] aboolean = new boolean[]{false};
+          if (this.client.overlay == null) {
+             if (this.client.currentScreen == null) {
+@@ -84,11 +85,15 @@
+                double d1 = this.y * (double)this.client.getWindow().getScaledHeight() / (double)this.client.getWindow().getHeight();
+                if (flag) {
+                   Screen.wrapScreenError(() -> {
+-                     aboolean[0] = this.client.currentScreen.mouseClicked(d0, d1, i);
++                     aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiMouseClickedPre(this.client.currentScreen, d0, d1, i);
++                     if (!aboolean[0]) aboolean[0] = this.client.currentScreen.mouseClicked(d0, d1, i);
++                     if (!aboolean[0]) aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiMouseClickedPost(this.client.currentScreen, d0, d1, i);
+                   }, "mouseClicked event handler", this.client.currentScreen.getClass().getCanonicalName());
+                } else {
+                   Screen.wrapScreenError(() -> {
+-                     aboolean[0] = this.client.currentScreen.mouseReleased(d0, d1, i);
++                     aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiMouseReleasedPre(this.client.currentScreen, d0, d1, i);
++                     if (!aboolean[0]) aboolean[0] = this.client.currentScreen.mouseReleased(d0, d1, i);
++                     if (!aboolean[0]) aboolean[0] = net.minecraftforge.client.ForgeHooksClient.onGuiMouseReleasedPost(this.client.currentScreen, d0, d1, i);
+                   }, "mouseReleased event handler", this.client.currentScreen.getClass().getCanonicalName());
+                }
+             }
+@@ -112,7 +117,7 @@
+                }
+             }
+          }
+-
++         net.minecraftforge.client.ForgeHooksClient.fireMouseInput(button, action, mods);
+       }
+    }
+ 
+@@ -123,7 +128,9 @@
+             if (this.client.currentScreen != null) {
+                double d1 = this.x * (double)this.client.getWindow().getScaledWidth() / (double)this.client.getWindow().getWidth();
+                double d2 = this.y * (double)this.client.getWindow().getScaledHeight() / (double)this.client.getWindow().getHeight();
+-               this.client.currentScreen.mouseScrolled(d1, d2, d0);
++               if (net.minecraftforge.client.ForgeHooksClient.onGuiMouseScrollPre(this, this.client.currentScreen, d0)) return;
++               if (this.client.currentScreen.mouseScrolled(d1, d2, d0)) return;
++               net.minecraftforge.client.ForgeHooksClient.onGuiMouseScrollPost(this, this.client.currentScreen, d0);
+             } else if (this.client.player != null) {
+                if (this.eventDeltaWheel != 0.0D && Math.signum(d0) != Math.signum(this.eventDeltaWheel)) {
+                   this.eventDeltaWheel = 0.0D;
+@@ -136,6 +143,7 @@
+                }
+ 
+                this.eventDeltaWheel -= (double)f1;
++               if (net.minecraftforge.client.ForgeHooksClient.onMouseScroll(this, d0)) return;
+                if (this.client.player.isSpectator()) {
+                   if (this.client.inGameHud.getSpectatorHud().isOpen()) {
+                      this.client.inGameHud.getSpectatorHud().cycleSlot((double)(-f1));
+@@ -204,7 +212,9 @@
+                double d2 = (xpos - this.x) * (double)this.client.getWindow().getScaledWidth() / (double)this.client.getWindow().getWidth();
+                double d3 = (ypos - this.y) * (double)this.client.getWindow().getScaledHeight() / (double)this.client.getWindow().getHeight();
+                Screen.wrapScreenError(() -> {
+-                  iguieventlistener.mouseDragged(d0, d1, this.activeButton, d2, d3);
++                  if (net.minecraftforge.client.ForgeHooksClient.onGuiMouseDragPre(this.client.currentScreen, d0, d1, this.activeButton, d2, d3)) return;
++                  if (iguieventlistener.mouseDragged(d0, d1, this.activeButton, d2, d3)) return;
++                  net.minecraftforge.client.ForgeHooksClient.onGuiMouseDragPost(this.client.currentScreen, d0, d1, this.activeButton, d2, d3);
+                }, "mouseDragged event handler", iguieventlistener.getClass().getCanonicalName());
+             }
+          }
+@@ -269,6 +279,10 @@
+       return this.rightButtonClicked;
+    }
+ 
++   public boolean isMiddleDown() {
++      return this.middleButtonClicked;
++   }
++
+    public double getX() {
+       return this.x;
+    }
+@@ -277,6 +291,14 @@
+       return this.y;
+    }
+ 
++   public double getXVelocity() {
++      return this.cursorDeltaX;
++   }
++
++   public double getYVelocity() {
++      return this.cursorDeltaY;
++   }
++
+    public void onResolutionChanged() {
+       this.hasResolutionChanged = true;
+    }

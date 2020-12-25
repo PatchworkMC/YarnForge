@@ -1,0 +1,52 @@
+--- a/net/minecraft/entity/mob/MobEntity.java
++++ b/net/minecraft/entity/mob/MobEntity.java
+@@ -203,6 +203,7 @@
+ 
+    public void setTarget(@Nullable LivingEntity entitylivingbaseIn) {
+       this.target = entitylivingbaseIn;
++      net.minecraftforge.common.ForgeHooks.onLivingSetAttackTarget(this, entitylivingbaseIn);
+    }
+ 
+    public boolean canTarget(EntityType<?> typeIn) {
+@@ -491,7 +492,7 @@
+    public void tickMovement() {
+       super.tickMovement();
+       this.world.getProfiler().push("looting");
+-      if (!this.world.isClient && this.canPickUpLoot() && this.isAlive() && !this.dead && this.world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
++      if (!this.world.isClient && this.canPickUpLoot() && this.isAlive() && !this.dead && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.world, this)) {
+          for(ItemEntity itementity : this.world.getNonSpectatingEntities(ItemEntity.class, this.getBoundingBox().expand(1.0D, 0.0D, 1.0D))) {
+             if (!itementity.removed && !itementity.getStack().isEmpty() && !itementity.cannotPickup() && this.canGather(itementity.getStack())) {
+                this.loot(itementity);
+@@ -644,6 +645,14 @@
+          this.remove();
+       } else if (!this.isPersistent() && !this.cannotDespawn()) {
+          Entity entity = this.world.getClosestPlayer(this, -1.0D);
++         net.minecraftforge.eventbus.api.Event.Result result = net.minecraftforge.event.ForgeEventFactory.canEntityDespawn(this);
++         if (result == net.minecraftforge.eventbus.api.Event.Result.DENY) {
++            despawnCounter = 0;
++            entity = null;
++         } else if (result == net.minecraftforge.eventbus.api.Event.Result.ALLOW) {
++            this.remove();
++            entity = null;
++         }
+          if (entity != null) {
+             double d0 = entity.squaredDistanceTo(this);
+             int i = this.getType().getSpawnGroup().getImmediateDespawnRange();
+@@ -884,6 +893,8 @@
+    }
+ 
+    public static EquipmentSlot getPreferredEquipmentSlot(ItemStack stack) {
++      final EquipmentSlot slot = stack.getEquipmentSlot();
++      if (slot != null) return slot; // FORGE: Allow modders to set a non-default equipment slot for a stack; e.g. a non-armor chestplate-slot item
+       Item item = stack.getItem();
+       if (item != Blocks.CARVED_PUMPKIN.asItem() && (!(item instanceof BlockItem) || !(((BlockItem)item).getBlock() instanceof AbstractSkullBlock))) {
+          if (item instanceof ArmorItem) {
+@@ -891,7 +902,7 @@
+          } else if (item == Items.ELYTRA) {
+             return EquipmentSlot.CHEST;
+          } else {
+-            return item == Items.SHIELD ? EquipmentSlot.OFFHAND : EquipmentSlot.MAINHAND;
++            return stack.isShield(null) ? EquipmentSlot.OFFHAND : EquipmentSlot.MAINHAND;
+          }
+       } else {
+          return EquipmentSlot.HEAD;

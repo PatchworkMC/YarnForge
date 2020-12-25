@@ -1,0 +1,20 @@
+--- a/net/minecraft/network/packet/c2s/play/CustomPayloadC2SPacket.java
++++ b/net/minecraft/network/packet/c2s/play/CustomPayloadC2SPacket.java
+@@ -11,7 +11,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public class CustomPayloadC2SPacket implements Packet<ServerPlayPacketListener> {
++public class CustomPayloadC2SPacket implements Packet<ServerPlayPacketListener>, net.minecraftforge.fml.network.ICustomPacket<CustomPayloadC2SPacket> {
+    public static final Identifier BRAND = new Identifier("brand");
+    private Identifier channel;
+    private PacketByteBuf data;
+@@ -37,7 +37,7 @@
+ 
+    public void write(PacketByteBuf buf) throws IOException {
+       buf.writeIdentifier(this.channel);
+-      buf.writeBytes((ByteBuf)this.data);
++      buf.writeBytes((ByteBuf)this.data.copy()); //This may be access multiple times, from multiple threads, lets be safe like the S->C packet
+    }
+ 
+    public void apply(ServerPlayPacketListener handler) {

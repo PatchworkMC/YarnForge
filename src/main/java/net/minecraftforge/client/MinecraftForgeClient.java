@@ -29,26 +29,24 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import net.minecraft.client.renderer.RenderType;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.chunk.ChunkRenderCache;
-import net.minecraft.client.renderer.texture.NativeImage;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.chunk.ChunkRendererRegion;
+import net.minecraft.client.texture.NativeImage;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class MinecraftForgeClient
 {
-    public static RenderType getRenderLayer()
+    public static RenderLayer getRenderLayer()
     {
         return ForgeHooksClient.renderLayer.get();
     }
@@ -59,7 +57,7 @@ public class MinecraftForgeClient
      */
     public static Locale getLocale()
     {
-        return Minecraft.getInstance().getLanguageManager().getCurrentLanguage().getJavaLocale();
+        return MinecraftClient.getInstance().getLanguageManager().getLanguage().getJavaLocale();
     }
 
     private static BitSet stencilBits = new BitSet(8);
@@ -99,20 +97,20 @@ public class MinecraftForgeClient
         }
     }
 
-    private static final LoadingCache<Pair<World, BlockPos>, Optional<ChunkRenderCache>> regionCache = CacheBuilder.newBuilder()
+    private static final LoadingCache<Pair<World, BlockPos>, Optional<ChunkRendererRegion>> regionCache = CacheBuilder.newBuilder()
         .maximumSize(500)
         .concurrencyLevel(5)
         .expireAfterAccess(1, TimeUnit.SECONDS)
-        .build(new CacheLoader<Pair<World, BlockPos>, Optional<ChunkRenderCache>>()
+        .build(new CacheLoader<Pair<World, BlockPos>, Optional<ChunkRendererRegion>>()
         {
             @Override
-            public Optional<ChunkRenderCache> load(Pair<World, BlockPos> key)
+            public Optional<ChunkRendererRegion> load(Pair<World, BlockPos> key)
             {
-                return Optional.ofNullable(ChunkRenderCache.generateCache(key.getLeft(), key.getRight().add(-1, -1, -1), key.getRight().add(16, 16, 16), 1));
+                return Optional.ofNullable(ChunkRendererRegion.create(key.getLeft(), key.getRight().add(-1, -1, -1), key.getRight().add(16, 16, 16), 1));
             }
         });
 
-    public static void onRebuildChunk(World world, BlockPos position, ChunkRenderCache cache)
+    public static void onRebuildChunk(World world, BlockPos position, ChunkRendererRegion cache)
     {
         if (cache == null)
             regionCache.invalidate(Pair.of(world, position));
@@ -121,12 +119,12 @@ public class MinecraftForgeClient
     }
 
     @Nullable
-    public static ChunkRenderCache getRegionRenderCache(World world, BlockPos pos)
+    public static ChunkRendererRegion getRegionRenderCache(World world, BlockPos pos)
     {
         return getRegionRenderCacheOptional(world, pos).orElse(null);
     }
 
-    public static Optional<ChunkRenderCache> getRegionRenderCacheOptional(World world, BlockPos pos)
+    public static Optional<ChunkRendererRegion> getRegionRenderCacheOptional(World world, BlockPos pos)
     {
         int x = pos.getX() & ~0xF;
         int y = pos.getY() & ~0xF;
@@ -140,20 +138,20 @@ public class MinecraftForgeClient
         regionCache.cleanUp();
     }
 
-    private static HashMap<ResourceLocation, Supplier<NativeImage>> bufferedImageSuppliers = new HashMap<ResourceLocation, Supplier<NativeImage>>();
-    public static void registerImageLayerSupplier(ResourceLocation resourceLocation, Supplier<NativeImage> supplier)
+    private static HashMap<Identifier, Supplier<NativeImage>> bufferedImageSuppliers = new HashMap<Identifier, Supplier<NativeImage>>();
+    public static void registerImageLayerSupplier(Identifier resourceLocation, Supplier<NativeImage> supplier)
     {
         bufferedImageSuppliers.put(resourceLocation, supplier);
     }
 
     @Nonnull
-    public static NativeImage getImageLayer(ResourceLocation resourceLocation, IResourceManager resourceManager) throws IOException
+    public static NativeImage getImageLayer(Identifier resourceLocation, ResourceManager resourceManager) throws IOException
     {
         Supplier<NativeImage> supplier = bufferedImageSuppliers.get(resourceLocation);
         if (supplier != null)
             return supplier.get();
 
-        IResource iresource1 = resourceManager.getResource(resourceLocation);
+        Resource iresource1 = resourceManager.getResource(resourceLocation);
         return NativeImage.read(iresource1.getInputStream());
     }
 }

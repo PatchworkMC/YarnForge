@@ -1,0 +1,11 @@
+--- a/net/minecraft/loot/function/FurnaceSmeltLootFunction.java
++++ b/net/minecraft/loot/function/FurnaceSmeltLootFunction.java
+@@ -32,7 +32,7 @@
+             ItemStack itemstack = optional.get().getOutput();
+             if (!itemstack.isEmpty()) {
+                ItemStack itemstack1 = itemstack.copy();
+-               itemstack1.setCount(stack.getCount());
++               itemstack1.setCount(stack.getCount() * itemstack.getCount()); //Forge: Support smelting returning multiple
+                return itemstack1;
+             }
+          }

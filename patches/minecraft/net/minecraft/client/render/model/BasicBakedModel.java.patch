@@ -1,0 +1,13 @@
+--- a/net/minecraft/client/render/model/BasicBakedModel.java
++++ b/net/minecraft/client/render/model/BasicBakedModel.java
+@@ -82,6 +82,10 @@
+       private final boolean hasDepth;
+       private final ModelTransformation transformation;
+ 
++      public Builder(net.minecraftforge.client.model.IModelConfiguration model, ModelOverrideList overrides) {
++         this(model.useSmoothLighting(), model.isSideLit(), model.isShadedInGui(), model.getCameraTransforms(), overrides);
++      }
++
+       public Builder(JsonUnbakedModel model, ModelOverrideList itemOverrideList, boolean gui3d) {
+          this(model.useAmbientOcclusion(), model.getGuiLight().isSide(), gui3d, model.getTransformations(), itemOverrideList);
+       }

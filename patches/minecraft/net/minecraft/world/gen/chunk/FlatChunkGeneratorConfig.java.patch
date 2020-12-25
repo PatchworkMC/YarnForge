@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/chunk/FlatChunkGeneratorConfig.java
++++ b/net/minecraft/world/gen/chunk/FlatChunkGeneratorConfig.java
+@@ -176,7 +176,7 @@
+          }
+       }
+ 
+-      return (new Biome.Builder()).precipitation(biome.getPrecipitation()).category(biome.getCategory()).depth(biome.getDepth()).scale(biome.getScale()).temperature(biome.getTemperature()).downfall(biome.getDownfall()).effects(biome.getEffects()).generationSettings(biomegenerationsettings$builder.build()).spawnSettings(biome.getSpawnSettings()).build();
++      return (new Biome.Builder()).precipitation(biome.getPrecipitation()).category(biome.getCategory()).depth(biome.getDepth()).scale(biome.getScale()).temperature(biome.getTemperature()).downfall(biome.getDownfall()).effects(biome.getEffects()).generationSettings(biomegenerationsettings$builder.build()).spawnSettings(biome.getSpawnSettings()).build().setRegistryName(biome.getRegistryName());
+    }
+ 
+    public StructuresConfig getStructuresConfig() {

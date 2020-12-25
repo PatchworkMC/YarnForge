@@ -19,7 +19,7 @@
 
 package net.minecraftforge.event.entity.player;
 
-import net.minecraft.item.ItemUseContext;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event.HasResult;
 
@@ -41,16 +41,16 @@ import javax.annotation.Nonnull;
 @Deprecated
 public class UseHoeEvent extends PlayerEvent
 {
-    private final ItemUseContext context;;
+    private final ItemUsageContext context;;
 
-    public UseHoeEvent(ItemUseContext context)
+    public UseHoeEvent(ItemUsageContext context)
     {
         super(context.getPlayer());
         this.context = context;
     }
 
     @Nonnull
-    public ItemUseContext getContext()
+    public ItemUsageContext getContext()
     {
         return context;
     }

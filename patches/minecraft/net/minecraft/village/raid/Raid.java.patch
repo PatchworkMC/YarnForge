@@ -1,0 +1,31 @@
+--- a/net/minecraft/village/raid/Raid.java
++++ b/net/minecraft/village/raid/Raid.java
+@@ -769,7 +769,7 @@
+       }
+    }
+ 
+-   static enum Member {
++   public static enum Member implements net.minecraftforge.common.IExtensibleEnum {
+       VINDICATOR(EntityType.VINDICATOR, new int[]{0, 0, 2, 0, 1, 4, 2, 5}),
+       EVOKER(EntityType.EVOKER, new int[]{0, 0, 0, 0, 0, 1, 1, 2}),
+       PILLAGER(EntityType.PILLAGER, new int[]{0, 4, 3, 3, 4, 4, 4, 2}),
+@@ -784,5 +784,19 @@
+          this.type = typeIn;
+          this.countInWave = waveCountsIn;
+       }
++      
++      /**
++       * The waveCountsIn integer decides how many entities of the EntityType defined in typeIn will spawn in each wave.
++       * For example, one ravager will always spawn in wave 3.
++       */
++      public static Member create(String name, EntityType<? extends RaiderEntity> typeIn, int[] waveCountsIn) {
++         throw new IllegalStateException("Enum not extended");
++      }
++      
++      @Override
++      @Deprecated
++      public void init() {
++         VALUES = values();
++      }
+    }
+ }

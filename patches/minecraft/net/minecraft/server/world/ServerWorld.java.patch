@@ -1,0 +1,231 @@
+--- a/net/minecraft/server/world/ServerWorld.java
++++ b/net/minecraft/server/world/ServerWorld.java
+@@ -144,7 +144,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public class ServerWorld extends World implements StructureWorldAccess {
++public class ServerWorld extends World implements StructureWorldAccess, net.minecraftforge.common.extensions.IForgeWorldServer {
+    public static final BlockPos END_SPAWN_POS = new BlockPos(100, 50, 0);
+    private static final Logger LOGGER = LogManager.getLogger();
+    private final Int2ObjectMap<Entity> entitiesById = new Int2ObjectLinkedOpenHashMap<>();
+@@ -174,6 +174,7 @@
+    private final EnderDragonFight enderDragonFight;
+    private final StructureAccessor structureAccessor;
+    private final boolean shouldTickTime;
++   private net.minecraftforge.common.util.WorldCapabilityData capabilityData;
+ 
+    public ServerWorld(MinecraftServer p_i241885_1_, Executor p_i241885_2_, LevelStorage.Session p_i241885_3_, ServerWorldProperties p_i241885_4_, RegistryKey<World> p_i241885_5_, DimensionType p_i241885_6_, WorldGenerationProgressListener p_i241885_7_, ChunkGenerator p_i241885_8_, boolean p_i241885_9_, long p_i241885_10_, List<Spawner> p_i241885_12_, boolean p_i241885_13_) {
+       super(p_i241885_4_, p_i241885_5_, p_i241885_6_, p_i241885_1_::getProfiler, false, p_i241885_9_, p_i241885_10_);
+@@ -201,7 +202,7 @@
+       } else {
+          this.enderDragonFight = null;
+       }
+-
++      this.initCapabilities();
+    }
+ 
+    public void setWeather(int p_241113_1_, int p_241113_2_, boolean p_241113_3_, boolean p_241113_4_) {
+@@ -297,15 +298,19 @@
+          this.server.getPlayerManager().sendToDimension(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.THUNDER_GRADIENT_CHANGED, this.thunderGradient), this.getRegistryKey());
+       }
+ 
++      /* The function in use here has been replaced in order to only send the weather info to players in the correct dimension,
++       * rather than to all players on the server. This is what causes the client-side rain, as the
++       * client believes that it has started raining locally, rather than in another dimension.
++       */
+       if (flag != this.isRaining()) {
+          if (flag) {
+-            this.server.getPlayerManager().sendToAll(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.RAIN_STOPPED, 0.0F));
++            this.server.getPlayerManager().sendToDimension(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.RAIN_STOPPED, 0.0F), this.getRegistryKey());
+          } else {
+-            this.server.getPlayerManager().sendToAll(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.RAIN_STARTED, 0.0F));
++            this.server.getPlayerManager().sendToDimension(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.RAIN_STARTED, 0.0F), this.getRegistryKey());
+          }
+ 
+-         this.server.getPlayerManager().sendToAll(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.RAIN_GRADIENT_CHANGED, this.rainGradient));
+-         this.server.getPlayerManager().sendToAll(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.THUNDER_GRADIENT_CHANGED, this.thunderGradient));
++         this.server.getPlayerManager().sendToDimension(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.RAIN_GRADIENT_CHANGED, this.rainGradient), this.getRegistryKey());
++         this.server.getPlayerManager().sendToDimension(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.THUNDER_GRADIENT_CHANGED, this.thunderGradient), this.getRegistryKey());
+       }
+ 
+       if (this.allPlayersSleeping && this.players.stream().noneMatch((p_241132_0_) -> {
+@@ -313,8 +318,8 @@
+       })) {
+          this.allPlayersSleeping = false;
+          if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
+-            long l = this.properties.getTimeOfDay() + 24000L;
+-            this.setTimeOfDay(l - l % 24000L);
++            long l = this.getTimeOfDay() + 24000L;
++            this.setTimeOfDay(net.minecraftforge.event.ForgeEventFactory.onSleepFinished(this, l - l % 24000L, this.getTimeOfDay()));
+          }
+ 
+          this.wakeSleepingPlayers();
+@@ -405,7 +410,7 @@
+             if (entity1.removed) {
+                this.removeEntityFromChunk(entity1);
+                objectiterator.remove();
+-               this.unloadEntity(entity1);
++               this.removeEntityComplete(entity1, entity1 instanceof ServerPlayerEntity); //Forge: Keep cap data until revive. Every other entity removes directly.
+             }
+ 
+             iprofiler.pop();
+@@ -476,6 +481,7 @@
+          BlockPos blockpos2 = this.getTopPosition(Heightmap.Type.MOTION_BLOCKING, this.getRandomPosInChunk(i, 0, j, 15));
+          BlockPos blockpos3 = blockpos2.down();
+          Biome biome = this.getBiome(blockpos2);
++         if (this.isAreaLoaded(blockpos2, 1)) // Forge: check area to avoid loading neighbors in unloaded chunks
+          if (biome.canSetIce(this, blockpos3)) {
+             this.setBlockState(blockpos3, Blocks.ICE.getDefaultState());
+          }
+@@ -599,9 +605,10 @@
+             ++entityIn.age;
+             Profiler iprofiler = this.getProfiler();
+             iprofiler.push(() -> {
+-               return Registry.ENTITY_TYPE.getId(entityIn.getType()).toString();
++               return entityIn.getType().getRegistryName() == null ? entityIn.getType().toString() : entityIn.getType().getRegistryName().toString();
+             });
+             iprofiler.visit("tickNonPassenger");
++            if (entityIn.canUpdate())
+             entityIn.tick();
+             iprofiler.pop();
+          }
+@@ -688,6 +695,7 @@
+             progress.method_15414(new TranslatableText("menu.savingChunks"));
+          }
+ 
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.WorldEvent.Save(this));
+          serverchunkprovider.save(flush);
+       }
+    }
+@@ -778,6 +786,7 @@
+    }
+ 
+    private void addPlayer(ServerPlayerEntity player) {
++      if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.EntityJoinWorldEvent(player, this))) return;
+       Entity entity = this.entitiesByUuid.get(player.getUuid());
+       if (entity != null) {
+          LOGGER.warn("Force-added player with duplicate UUID {}", (Object)player.getUuid().toString());
+@@ -802,6 +811,7 @@
+       } else if (this.checkUuid(entityIn)) {
+          return false;
+       } else {
++         if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.EntityJoinWorldEvent(entityIn, this))) return false;
+          Chunk ichunk = this.getChunk(MathHelper.floor(entityIn.getX() / 16.0D), MathHelper.floor(entityIn.getZ() / 16.0D), ChunkStatus.FULL, entityIn.teleporting);
+          if (!(ichunk instanceof WorldChunk)) {
+             return false;
+@@ -817,6 +827,7 @@
+       if (this.checkUuid(entityIn)) {
+          return false;
+       } else {
++         if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.EntityJoinWorldEvent(entityIn, this))) return false;
+          this.loadEntityUnchecked(entityIn);
+          return true;
+       }
+@@ -880,12 +891,17 @@
+ 
+    }
+ 
++   @Deprecated //Forge: Use removeEntityComplete(entity,boolean)
+    public void unloadEntity(Entity entityIn) {
++      removeEntityComplete(entityIn, false);
++   }
++   public void removeEntityComplete(Entity entityIn, boolean keepData) {
+       if (entityIn instanceof EnderDragonEntity) {
+          for(EnderDragonPart enderdragonpartentity : ((EnderDragonEntity)entityIn).getBodyParts()) {
+-            enderdragonpartentity.remove();
++            enderdragonpartentity.remove(keepData);
+          }
+       }
++      entityIn.remove(keepData);
+ 
+       this.entitiesByUuid.remove(entityIn.getUuid());
+       this.getChunkManager().unloadEntity(entityIn);
+@@ -899,6 +915,8 @@
+          this.entityNavigations.remove(((MobEntity)entityIn).getNavigation());
+       }
+ 
++      entityIn.onRemovedFromWorld();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.EntityLeaveWorldEvent(entityIn, this));
+    }
+ 
+    private void loadEntityUnchecked(Entity entityIn) {
+@@ -919,15 +937,19 @@
+          }
+       }
+ 
++      entityIn.onAddedToWorld();
+    }
+ 
+    public void removeEntity(Entity entityIn) {
++      removeEntity(entityIn, false);
++   }
++   public void removeEntity(Entity entityIn, boolean keepData) {
+       if (this.inEntityTick) {
+          throw (IllegalStateException)Util.throwOrPause(new IllegalStateException("Removing entity while ticking!"));
+       } else {
+          this.removeEntityFromChunk(entityIn);
+          this.entitiesById.remove(entityIn.getEntityId());
+-         this.unloadEntity(entityIn);
++         this.removeEntityComplete(entityIn, keepData);
+       }
+    }
+ 
+@@ -940,8 +962,11 @@
+    }
+ 
+    public void removePlayer(ServerPlayerEntity player) {
+-      player.remove();
+-      this.removeEntity(player);
++      removePlayer(player, false);
++   }
++   public void removePlayer(ServerPlayerEntity player, boolean keepData) {
++      player.remove(keepData);
++      this.removeEntity(player, keepData);
+       this.updateSleepingPlayers();
+    }
+ 
+@@ -960,10 +985,20 @@
+    }
+ 
+    public void playSound(@Nullable PlayerEntity player, double x, double y, double z, SoundEvent soundIn, SoundCategory category, float volume, float pitch) {
++      net.minecraftforge.event.entity.PlaySoundAtEntityEvent event = net.minecraftforge.event.ForgeEventFactory.onPlaySoundAtEntity(player, soundIn, category, volume, pitch);
++      if (event.isCanceled() || event.getSound() == null) return;
++      soundIn = event.getSound();
++      category = event.getCategory();
++      volume = event.getVolume();
+       this.server.getPlayerManager().sendToAround(player, x, y, z, volume > 1.0F ? (double)(16.0F * volume) : 16.0D, this.getRegistryKey(), new PlaySoundS2CPacket(soundIn, category, x, y, z, volume, pitch));
+    }
+ 
+    public void playSoundFromEntity(@Nullable PlayerEntity playerIn, Entity entityIn, SoundEvent eventIn, SoundCategory categoryIn, float volume, float pitch) {
++      net.minecraftforge.event.entity.PlaySoundAtEntityEvent event = net.minecraftforge.event.ForgeEventFactory.onPlaySoundAtEntity(playerIn, eventIn, categoryIn, volume, pitch);
++      if (event.isCanceled() || event.getSound() == null) return;
++      eventIn = event.getSound();
++      categoryIn = event.getCategory();
++      volume = event.getVolume();
+       this.server.getPlayerManager().sendToAround(playerIn, entityIn.getX(), entityIn.getY(), entityIn.getZ(), volume > 1.0F ? (double)(16.0F * volume) : 16.0D, this.getRegistryKey(), new PlaySoundFromEntityS2CPacket(eventIn, categoryIn, entityIn, volume, pitch));
+    }
+ 
+@@ -999,6 +1034,7 @@
+ 
+    public Explosion createExplosion(@Nullable Entity exploder, @Nullable DamageSource damageSource, @Nullable ExplosionBehavior context, double x, double y, double z, float size, boolean causesFire, Explosion.DestructionType mode) {
+       Explosion explosion = new Explosion(this, exploder, damageSource, context, x, y, z, size, causesFire, mode);
++      if (net.minecraftforge.event.ForgeEventFactory.onExplosionStart(this, explosion)) return explosion;
+       explosion.collectBlocksAndDamageEntities();
+       explosion.affectWorld(false);
+       if (mode == Explosion.DestructionType.NONE) {
+@@ -1411,4 +1447,14 @@
+          p_241121_0_.setBlockState(p_241122_1_, Blocks.OBSIDIAN.getDefaultState());
+       });
+    }
++
++   protected void initCapabilities() {
++      this.gatherCapabilities();
++      capabilityData = this.getPersistentStateManager().getOrCreate(() -> new net.minecraftforge.common.util.WorldCapabilityData(getCapabilities()), net.minecraftforge.common.util.WorldCapabilityData.ID);
++      capabilityData.setCapabilities(getCapabilities());
++   }
++
++   public java.util.stream.Stream<Entity> getEntities() {
++       return entitiesById.values().stream();
++   }
+ }

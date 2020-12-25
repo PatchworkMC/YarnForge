@@ -20,17 +20,17 @@
 package net.minecraftforge.items;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import javax.annotation.Nonnull;
 
-public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, INBTSerializable<CompoundNBT>
+public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, INBTSerializable<CompoundTag>
 {
-    protected NonNullList<ItemStack> stacks;
+    protected DefaultedList<ItemStack> stacks;
 
     public ItemStackHandler()
     {
@@ -39,17 +39,17 @@ public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, I
 
     public ItemStackHandler(int size)
     {
-        stacks = NonNullList.withSize(size, ItemStack.EMPTY);
+        stacks = DefaultedList.ofSize(size, ItemStack.EMPTY);
     }
 
-    public ItemStackHandler(NonNullList<ItemStack> stacks)
+    public ItemStackHandler(DefaultedList<ItemStack> stacks)
     {
         this.stacks = stacks;
     }
 
     public void setSize(int size)
     {
-        stacks = NonNullList.withSize(size, ItemStack.EMPTY);
+        stacks = DefaultedList.ofSize(size, ItemStack.EMPTY);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, I
             }
             else
             {
-                existing.grow(reachedLimit ? limit : stack.getCount());
+                existing.increment(reachedLimit ? limit : stack.getCount());
             }
             onContentsChanged(slot);
         }
@@ -133,7 +133,7 @@ public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, I
         if (existing.isEmpty())
             return ItemStack.EMPTY;
 
-        int toExtract = Math.min(amount, existing.getMaxStackSize());
+        int toExtract = Math.min(amount, existing.getMaxCount());
 
         if (existing.getCount() <= toExtract)
         {
@@ -168,7 +168,7 @@ public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, I
 
     protected int getStackLimit(int slot, @Nonnull ItemStack stack)
     {
-        return Math.min(getSlotLimit(slot), stack.getMaxStackSize());
+        return Math.min(getSlotLimit(slot), stack.getMaxCount());
     }
 
     @Override
@@ -178,38 +178,38 @@ public class ItemStackHandler implements IItemHandler, IItemHandlerModifiable, I
     }
 
     @Override
-    public CompoundNBT serializeNBT()
+    public CompoundTag serializeNBT()
     {
-        ListNBT nbtTagList = new ListNBT();
+        ListTag nbtTagList = new ListTag();
         for (int i = 0; i < stacks.size(); i++)
         {
             if (!stacks.get(i).isEmpty())
             {
-                CompoundNBT itemTag = new CompoundNBT();
+                CompoundTag itemTag = new CompoundTag();
                 itemTag.putInt("Slot", i);
-                stacks.get(i).write(itemTag);
+                stacks.get(i).toTag(itemTag);
                 nbtTagList.add(itemTag);
             }
         }
-        CompoundNBT nbt = new CompoundNBT();
+        CompoundTag nbt = new CompoundTag();
         nbt.put("Items", nbtTagList);
         nbt.putInt("Size", stacks.size());
         return nbt;
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt)
+    public void deserializeNBT(CompoundTag nbt)
     {
         setSize(nbt.contains("Size", Constants.NBT.TAG_INT) ? nbt.getInt("Size") : stacks.size());
-        ListNBT tagList = nbt.getList("Items", Constants.NBT.TAG_COMPOUND);
+        ListTag tagList = nbt.getList("Items", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < tagList.size(); i++)
         {
-            CompoundNBT itemTags = tagList.getCompound(i);
+            CompoundTag itemTags = tagList.getCompound(i);
             int slot = itemTags.getInt("Slot");
 
             if (slot >= 0 && slot < stacks.size())
             {
-                stacks.set(slot, ItemStack.read(itemTags));
+                stacks.set(slot, ItemStack.fromTag(itemTags));
             }
         }
         onLoad();

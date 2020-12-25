@@ -25,9 +25,9 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootContext;
-import net.minecraft.loot.conditions.ILootCondition;
-import net.minecraft.loot.conditions.LootConditionManager;
+import net.minecraft.loot.condition.LootCondition;
+import net.minecraft.loot.condition.LootConditionTypes;
+import net.minecraft.loot.context.LootContext;
 
 /**
  * A base implementation of a Global Loot Modifier for modders to extend.
@@ -35,16 +35,16 @@ import net.minecraft.loot.conditions.LootConditionManager;
  * implementation that takes care of Forge registry things.
  */
 public abstract class LootModifier implements IGlobalLootModifier {
-    protected final ILootCondition[] conditions;
+    protected final LootCondition[] conditions;
     private final Predicate<LootContext> combinedConditions;
     
     /**
      * Constructs a LootModifier.
      * @param conditionsIn the ILootConditions that need to be matched before the loot is modified.
      */
-    protected LootModifier(ILootCondition[] conditionsIn) {
+    protected LootModifier(LootCondition[] conditionsIn) {
         this.conditions = conditionsIn;
-        this.combinedConditions = LootConditionManager.and(conditionsIn);
+        this.combinedConditions = LootConditionTypes.joinAnd(conditionsIn);
     }
     
     @Nonnull

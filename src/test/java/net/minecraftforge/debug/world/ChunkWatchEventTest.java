@@ -21,7 +21,7 @@ package net.minecraftforge.debug.world;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkWatchEvent;
@@ -55,9 +55,9 @@ public class ChunkWatchEventTest
     @SubscribeEvent
     public static void onUnwatch(ChunkWatchEvent.UnWatch event)
     {
-        int watched = watchedByPlayer.getInt(event.getPlayer().getUniqueID());
+        int watched = watchedByPlayer.getInt(event.getPlayer().getUuid());
         --watched;
-        watchedByPlayer.put(event.getPlayer().getUniqueID(), watched);
+        watchedByPlayer.put(event.getPlayer().getUuid(), watched);
         logger.info("Unwatching chunk {} in dimension {}. Player's dimension: {}, total chunks watched by player {}",
                 event.getPos(), getDimensionName(event.getWorld()), getDimensionName(event.getPlayer().getEntityWorld()),
                 watched);
@@ -66,17 +66,17 @@ public class ChunkWatchEventTest
     @SubscribeEvent
     public static void onWatch(ChunkWatchEvent.Watch event)
     {
-        int watched = watchedByPlayer.getInt(event.getPlayer().getUniqueID());
+        int watched = watchedByPlayer.getInt(event.getPlayer().getUuid());
         ++watched;
-        watchedByPlayer.put(event.getPlayer().getUniqueID(), watched);
+        watchedByPlayer.put(event.getPlayer().getUuid(), watched);
         logger.info("Watching chunk {} in dimension {}. Player's dimension: {}, total chunks watched by player {}",
                 event.getPos(), getDimensionName(event.getWorld()), getDimensionName(event.getPlayer().getEntityWorld()),
                 watched);
     }
 
     @Nullable
-    private static ResourceLocation getDimensionName(World w)
+    private static Identifier getDimensionName(World w)
     {
-        return w.getDimensionKey().getLocation();
+        return w.getRegistryKey().getValue();
     }
 }

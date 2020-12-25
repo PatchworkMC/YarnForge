@@ -19,8 +19,8 @@
 
 package net.minecraftforge.client.event.sound;
 
-import net.minecraft.client.audio.ISound;
-import net.minecraft.client.audio.SoundEngine;
+import net.minecraft.client.sound.SoundInstance;
+import net.minecraft.client.sound.SoundSystem;
 
 /***
  * Raised when the SoundManager tries to play a normal sound.
@@ -31,14 +31,14 @@ import net.minecraft.client.audio.SoundEngine;
 public class PlaySoundEvent extends SoundEvent
 {
     private final String name;
-    private final ISound sound;
-    private ISound result;
+    private final SoundInstance sound;
+    private SoundInstance result;
 
-    public PlaySoundEvent(SoundEngine manager, ISound sound)
+    public PlaySoundEvent(SoundSystem manager, SoundInstance sound)
     {
         super(manager);
         this.sound = sound;
-        this.name = sound.getSoundLocation().getPath();
+        this.name = sound.getId().getPath();
         this.setResultSound(sound);
     }
 
@@ -47,17 +47,17 @@ public class PlaySoundEvent extends SoundEvent
         return name;
     }
 
-    public ISound getSound()
+    public SoundInstance getSound()
     {
         return sound;
     }
 
-    public ISound getResultSound()
+    public SoundInstance getResultSound()
     {
         return result;
     }
 
-    public void setResultSound(ISound result)
+    public void setResultSound(SoundInstance result)
     {
         this.result = result;
     }

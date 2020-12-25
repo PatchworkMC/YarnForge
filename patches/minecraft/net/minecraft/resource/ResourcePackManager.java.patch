@@ -1,0 +1,22 @@
+--- a/net/minecraft/resource/ResourcePackManager.java
++++ b/net/minecraft/resource/ResourcePackManager.java
+@@ -22,7 +22,7 @@
+ 
+    public ResourcePackManager(ResourcePackProfile.Factory p_i231423_1_, ResourcePackProvider... p_i231423_2_) {
+       this.profileFactory = p_i231423_1_;
+-      this.providers = ImmutableSet.copyOf(p_i231423_2_);
++      this.providers = new java.util.HashSet<>(java.util.Arrays.asList(p_i231423_2_));
+    }
+ 
+    public ResourcePackManager(ResourcePackProvider... p_i241886_1_) {
+@@ -89,6 +89,10 @@
+       return this.profiles.get(name);
+    }
+ 
++   public void addPackFinder(ResourcePackProvider packFinder) {
++      this.providers.add(packFinder);
++   }
++
+    public void close() {
+       this.profiles.values().forEach(ResourcePackProfile::close);
+    }

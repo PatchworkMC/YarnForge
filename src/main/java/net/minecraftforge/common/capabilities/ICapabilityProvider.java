@@ -21,8 +21,7 @@ package net.minecraftforge.common.capabilities;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import net.minecraft.util.Direction;
+import net.minecraft.util.math.Direction;
 import net.minecraftforge.common.util.LazyOptional;
 
 public interface ICapabilityProvider

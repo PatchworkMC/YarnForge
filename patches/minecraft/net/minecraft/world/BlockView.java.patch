@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/BlockView.java
++++ b/net/minecraft/world/BlockView.java
+@@ -25,7 +25,7 @@
+    FluidState getFluidState(BlockPos pos);
+ 
+    default int getLuminance(BlockPos pos) {
+-      return this.getBlockState(pos).getLuminance();
++      return this.getBlockState(pos).getLightValue(this, pos);
+    }
+ 
+    default int getMaxLightLevel() {

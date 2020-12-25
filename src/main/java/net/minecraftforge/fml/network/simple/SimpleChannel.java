@@ -30,16 +30,15 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import io.netty.buffer.Unpooled;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.Packet;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkInstance;
 import net.minecraftforge.fml.network.PacketDistributor;
 import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class SimpleChannel {
@@ -68,7 +67,7 @@ public class SimpleChannel {
 	private void networkLoginGather(final NetworkEvent.GatherLoginPayloadsEvent gatherEvent) {
 		loginPackets.forEach(packetGenerator -> {
 			packetGenerator.apply(gatherEvent.isLocal()).forEach(p -> {
-				PacketBuffer pb = new PacketBuffer(Unpooled.buffer());
+				PacketByteBuf pb = new PacketByteBuf(Unpooled.buffer());
 				this.indexedCodec.build(p.getRight(), pb);
 				gatherEvent.add(pb, this.instance.getChannelName(), p.getLeft());
 			});
@@ -83,30 +82,30 @@ public class SimpleChannel {
 		}
 	}
 
-	public <MSG> int encodeMessage(MSG message, final PacketBuffer target) {
+	public <MSG> int encodeMessage(MSG message, final PacketByteBuf target) {
 		return this.indexedCodec.build(message, target);
 	}
 
-	public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
+	public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketByteBuf> encoder, Function<PacketByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer) {
 		return registerMessage(index, messageType, encoder, decoder, messageConsumer, Optional.empty());
 	}
 
-	public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketBuffer> encoder, Function<PacketBuffer, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer, final Optional<NetworkDirection> networkDirection) {
+	public <MSG> IndexedMessageCodec.MessageHandler<MSG> registerMessage(int index, Class<MSG> messageType, BiConsumer<MSG, PacketByteBuf> encoder, Function<PacketByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> messageConsumer, final Optional<NetworkDirection> networkDirection) {
 		return this.indexedCodec.addCodecIndex(index, messageType, encoder, decoder, messageConsumer, networkDirection);
 	}
 
-	private <MSG> Pair<PacketBuffer, Integer> toBuffer(MSG msg) {
-		final PacketBuffer bufIn = new PacketBuffer(Unpooled.buffer());
+	private <MSG> Pair<PacketByteBuf, Integer> toBuffer(MSG msg) {
+		final PacketByteBuf bufIn = new PacketByteBuf(Unpooled.buffer());
 		int index = encodeMessage(msg, bufIn);
 		return Pair.of(bufIn, index);
 	}
 
 	public <MSG> void sendToServer(MSG message) {
-		sendTo(message, Minecraft.getInstance().getConnection().getNetworkManager(), NetworkDirection.PLAY_TO_SERVER);
+		sendTo(message, MinecraftClient.getInstance().getNetworkHandler().getConnection(), NetworkDirection.PLAY_TO_SERVER);
 	}
 
-	public <MSG> void sendTo(MSG message, NetworkManager manager, NetworkDirection direction) {
-		manager.sendPacket(toVanillaPacket(message, direction));
+	public <MSG> void sendTo(MSG message, ClientConnection manager, NetworkDirection direction) {
+		manager.send(toVanillaPacket(message, direction));
 	}
 
 	/**
@@ -124,7 +123,7 @@ public class SimpleChannel {
 		target.send(toVanillaPacket(message, target.getDirection()));
 	}
 
-	public <MSG> IPacket<?> toVanillaPacket(MSG message, NetworkDirection direction) {
+	public <MSG> Packet<?> toVanillaPacket(MSG message, NetworkDirection direction) {
 		return direction.buildPacket(toBuffer(message), instance.getChannelName()).getThis();
 	}
 
@@ -162,8 +161,8 @@ public class SimpleChannel {
 		private SimpleChannel channel;
 		private Class<MSG> type;
 		private int id;
-		private BiConsumer<MSG, PacketBuffer> encoder;
-		private Function<PacketBuffer, MSG> decoder;
+		private BiConsumer<MSG, PacketByteBuf> encoder;
+		private Function<PacketByteBuf, MSG> decoder;
 		private BiConsumer<MSG, Supplier<NetworkEvent.Context>> consumer;
 		private Function<MSG, Integer> loginIndexGetter;
 		private BiConsumer<MSG, Integer> loginIndexSetter;
@@ -179,12 +178,12 @@ public class SimpleChannel {
 			return builder;
 		}
 
-		public MessageBuilder<MSG> encoder(BiConsumer<MSG, PacketBuffer> encoder) {
+		public MessageBuilder<MSG> encoder(BiConsumer<MSG, PacketByteBuf> encoder) {
 			this.encoder = encoder;
 			return this;
 		}
 
-		public MessageBuilder<MSG> decoder(Function<PacketBuffer, MSG> decoder) {
+		public MessageBuilder<MSG> decoder(Function<PacketByteBuf, MSG> decoder) {
 			this.decoder = decoder;
 			return this;
 		}

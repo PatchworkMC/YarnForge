@@ -29,28 +29,26 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
+import net.minecraft.util.Identifier;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.ObjectHolderRegistry;
 import net.minecraftforge.registries.RegistryManager;
 
-import net.minecraft.util.ResourceLocation;
-
 public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> implements Supplier<T> {
-	private final ResourceLocation name;
+	private final Identifier name;
 	@Nullable
 	private T value;
 
-	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final ResourceLocation name, Supplier<Class<? super T>> registryType) {
+	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final Identifier name, Supplier<Class<? super T>> registryType) {
 		return new RegistryObject<>(name, registryType);
 	}
 
-	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final ResourceLocation name, IForgeRegistry<T> registry) {
+	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final Identifier name, IForgeRegistry<T> registry) {
 		return new RegistryObject<>(name, registry);
 	}
 
-	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final ResourceLocation name, final Class<T> baseType, String modid) {
+	public static <T extends IForgeRegistryEntry<T>, U extends T> RegistryObject<U> of(final Identifier name, final Class<T> baseType, String modid) {
 		return new RegistryObject<>(name, baseType, modid);
 	}
 
@@ -66,12 +64,12 @@ public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> impl
 		this.name = null;
 	}
 
-	private <V extends IForgeRegistryEntry<V>> RegistryObject(ResourceLocation name, Supplier<Class<? super V>> registryType) {
+	private <V extends IForgeRegistryEntry<V>> RegistryObject(Identifier name, Supplier<Class<? super V>> registryType) {
 		this(name, RegistryManager.ACTIVE.<V>getRegistry(registryType.get()));
 	}
 
 	@SuppressWarnings("unchecked")
-	private <V extends IForgeRegistryEntry<V>> RegistryObject(ResourceLocation name, IForgeRegistry<V> registry) {
+	private <V extends IForgeRegistryEntry<V>> RegistryObject(Identifier name, IForgeRegistry<V> registry) {
 		if (registry == null) {
 			throw new IllegalArgumentException("Invalid registry argument, must not be null");
 		}
@@ -85,14 +83,14 @@ public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> impl
 	}
 
 	@SuppressWarnings("unchecked")
-	private <V extends IForgeRegistryEntry<V>> RegistryObject(final ResourceLocation name, final Class<V> baseType, final String modid) {
+	private <V extends IForgeRegistryEntry<V>> RegistryObject(final Identifier name, final Class<V> baseType, final String modid) {
 		this.name = name;
 		final Throwable callerStack = new Throwable("Calling Site from mod: " + modid);
-		ObjectHolderRegistry.addHandler(new Consumer<Predicate<ResourceLocation>>() {
+		ObjectHolderRegistry.addHandler(new Consumer<Predicate<Identifier>>() {
 			private IForgeRegistry<V> registry;
 
 			@Override
-			public void accept(Predicate<ResourceLocation> pred) {
+			public void accept(Predicate<Identifier> pred) {
 				if (registry == null) {
 					this.registry = RegistryManager.ACTIVE.getRegistry(baseType);
 					if (registry == null) {
@@ -122,7 +120,7 @@ public final class RegistryObject<T extends IForgeRegistryEntry<? super T>> impl
 		this.value = registry.getValue(getId());
 	}
 
-	public ResourceLocation getId() {
+	public Identifier getId() {
 		return this.name;
 	}
 

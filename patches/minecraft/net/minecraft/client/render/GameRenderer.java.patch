@@ -1,0 +1,56 @@
+--- a/net/minecraft/client/render/GameRenderer.java
++++ b/net/minecraft/client/render/GameRenderer.java
+@@ -137,6 +137,8 @@
+          this.loadShader(new Identifier("shaders/post/spider.json"));
+       } else if (entityIn instanceof EndermanEntity) {
+          this.loadShader(new Identifier("shaders/post/invert.json"));
++      } else {
++         net.minecraftforge.client.ForgeHooksClient.loadEntityShader(entityIn, this);
+       }
+ 
+    }
+@@ -312,7 +314,7 @@
+             d0 = d0 * 60.0D / 70.0D;
+          }
+ 
+-         return d0;
++         return net.minecraftforge.client.ForgeHooksClient.getFOVModifier(this, activeRenderInfoIn, partialTicks, d0);
+       }
+    }
+ 
+@@ -488,7 +490,7 @@
+             }
+          } else if (this.client.currentScreen != null) {
+             try {
+-               this.client.currentScreen.render(matrixstack, i, j, this.client.getLastFrameDuration());
++               net.minecraftforge.client.ForgeHooksClient.drawScreen(this.client.currentScreen, matrixstack, i, j, this.client.getLastFrameDuration());
+             } catch (Throwable throwable) {
+                CrashReport crashreport1 = CrashReport.create(throwable, "Rendering screen");
+                CrashReportSection crashreportcategory1 = crashreport1.addElement("Screen render details");
+@@ -597,9 +599,16 @@
+       Matrix4f matrix4f = matrixstack.peek().getModel();
+       this.loadProjectionMatrix(matrix4f);
+       activerenderinfo.update(this.client.world, (Entity)(this.client.getCameraEntity() == null ? this.client.player : this.client.getCameraEntity()), !this.client.options.getPerspective().isFirstPerson(), this.client.options.getPerspective().isFrontView(), partialTicks);
++
++      net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(this, activerenderinfo, partialTicks);
++      activerenderinfo.setAnglesInternal(cameraSetup.getYaw(), cameraSetup.getPitch());
++      matrixStackIn.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion(cameraSetup.getRoll()));
++
+       matrixStackIn.multiply(Vector3f.POSITIVE_X.getDegreesQuaternion(activerenderinfo.getPitch()));
+       matrixStackIn.multiply(Vector3f.POSITIVE_Y.getDegreesQuaternion(activerenderinfo.getYaw() + 180.0F));
+       this.client.worldRenderer.render(matrixStackIn, partialTicks, finishTimeNano, flag, activerenderinfo, this, this.lightmapTextureManager, matrix4f);
++      this.client.getProfiler().swap("forge_render_last");
++      net.minecraftforge.client.ForgeHooksClient.dispatchRenderLast(this.client.worldRenderer, matrixStackIn, partialTicks, matrix4f, finishTimeNano);
+       this.client.getProfiler().swap("hand");
+       if (this.renderHand) {
+          RenderSystem.clear(256, MinecraftClient.IS_SYSTEM_MAC);
+@@ -711,4 +720,9 @@
+    public OverlayTexture getOverlayTexture() {
+       return this.overlayTexture;
+    }
++
++   @Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.SHADERS;
++   }
+ }

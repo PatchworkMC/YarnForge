@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/dimension/AreaHelper.java
++++ b/net/minecraft/world/dimension/AreaHelper.java
+@@ -21,7 +21,7 @@
+ 
+ public class AreaHelper {
+    private static final AbstractBlock.ContextPredicate IS_VALID_FRAME_BLOCK = (p_242966_0_, p_242966_1_, p_242966_2_) -> {
+-      return p_242966_0_.isOf(Blocks.OBSIDIAN);
++      return p_242966_0_.isPortalFrame(p_242966_1_, p_242966_2_);
+    };
+    private final WorldAccess world;
+    private final Direction.Axis axis;

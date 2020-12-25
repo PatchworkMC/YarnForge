@@ -1,0 +1,58 @@
+--- a/net/minecraft/client/render/model/BakedModelManager.java
++++ b/net/minecraft/client/render/model/BakedModelManager.java
+@@ -21,7 +21,7 @@
+ 
+ @Environment(EnvType.CLIENT)
+ public class BakedModelManager extends SinglePreparationResourceReloadListener<ModelLoader> implements AutoCloseable {
+-   private Map<Identifier, BakedModel> models;
++   private Map<Identifier, BakedModel> models = new java.util.HashMap<>();
+    @Nullable
+    private SpriteAtlasManager atlasManager;
+    private final BlockModels blockModelCache;
+@@ -38,6 +38,10 @@
+       this.blockModelCache = new BlockModels(this);
+    }
+ 
++   public BakedModel getModel(Identifier modelLocation) {
++      return this.models.getOrDefault(modelLocation, this.missingModel);
++   }
++
+    public BakedModel getModel(ModelIdentifier modelLocation) {
+       return this.models.getOrDefault(modelLocation, this.missingModel);
+    }
+@@ -52,7 +56,7 @@
+ 
+    protected ModelLoader prepare(ResourceManager resourceManagerIn, Profiler profilerIn) {
+       profilerIn.startTick();
+-      ModelLoader modelbakery = new ModelLoader(resourceManagerIn, this.colorMap, profilerIn, this.mipmap);
++      net.minecraftforge.client.model.ModelLoader modelbakery = new net.minecraftforge.client.model.ModelLoader(resourceManagerIn, this.colorMap, profilerIn, this.mipmap);
+       profilerIn.endTick();
+       return modelbakery;
+    }
+@@ -68,6 +72,7 @@
+       this.models = objectIn.getBakedModelMap();
+       this.stateLookup = objectIn.getStateLookup();
+       this.missingModel = this.models.get(ModelLoader.MISSING);
++      net.minecraftforge.client.ForgeHooksClient.onModelBake(this, this.models, (net.minecraftforge.client.model.ModelLoader) objectIn);
+       profilerIn.swap("cache");
+       this.blockModelCache.reload();
+       profilerIn.pop();
+@@ -93,6 +98,7 @@
+    }
+ 
+    public SpriteAtlasTexture method_24153(Identifier locationIn) {
++      if (this.atlasManager == null) throw new RuntimeException("getAtlasTexture called too early!");
+       return this.atlasManager.getAtlas(locationIn);
+    }
+ 
+@@ -106,4 +112,10 @@
+    public void resetMipmapLevels(int levelIn) {
+       this.mipmap = levelIn;
+    }
++
++   // TODO
++   //@Override
++   public net.minecraftforge.resource.IResourceType getResourceType() {
++      return net.minecraftforge.resource.VanillaResourceType.MODELS;
++   }
+ }

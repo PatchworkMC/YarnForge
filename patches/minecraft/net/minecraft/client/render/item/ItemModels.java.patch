@@ -1,0 +1,12 @@
+--- a/net/minecraft/client/render/item/ItemModels.java
++++ b/net/minecraft/client/render/item/ItemModels.java
+@@ -33,7 +33,8 @@
+ 
+    public Sprite getSprite(ItemStack stack) {
+       BakedModel ibakedmodel = this.getModel(stack);
+-      return ibakedmodel == this.modelManager.getMissingModel() && stack.getItem() instanceof BlockItem ? this.modelManager.getBlockModels().getSprite(((BlockItem)stack.getItem()).getBlock().getDefaultState()) : ibakedmodel.getSprite();
++      // FORGE: Make sure to call the item overrides
++      return ibakedmodel == this.modelManager.getMissingModel() && stack.getItem() instanceof BlockItem ? this.modelManager.getBlockModels().getSprite(((BlockItem)stack.getItem()).getBlock().getDefaultState()) : ibakedmodel.getOverrides().apply(ibakedmodel, stack, null, null).getParticleTexture(net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
+    }
+ 
+    public BakedModel getModel(ItemStack stack) {

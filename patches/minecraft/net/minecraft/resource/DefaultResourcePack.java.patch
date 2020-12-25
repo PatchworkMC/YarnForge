@@ -1,0 +1,39 @@
+--- a/net/minecraft/resource/DefaultResourcePack.java
++++ b/net/minecraft/resource/DefaultResourcePack.java
+@@ -171,7 +171,7 @@
+ 
+       try {
+          URL url = DefaultResourcePack.class.getResource(s);
+-         return isValidUrl(s, url) ? url.openStream() : null;
++         return isValidUrl(s, url) ? getExtraInputStream(type, s) : null;
+       } catch (IOException ioexception) {
+          return DefaultResourcePack.class.getResourceAsStream(s);
+       }
+@@ -187,7 +187,7 @@
+ 
+    @Nullable
+    protected InputStream getInputStream(String pathIn) {
+-      return DefaultResourcePack.class.getResourceAsStream("/" + pathIn);
++      return getExtraInputStream(ResourceType.SERVER_DATA, "/" + pathIn);
+    }
+ 
+    public boolean contains(ResourceType type, Identifier location) {
+@@ -226,4 +226,18 @@
+ 
+    public void close() {
+    }
++
++   //Vanilla used to just grab from the classpath, this breaks dev environments, and Forge runtime
++   //as forge ships vanilla assets in an 'extra' jar with no classes.
++   //So find that extra jar using the .mcassetsroot marker.
++   private InputStream getExtraInputStream(ResourceType type, String resource) {
++      try {
++         FileSystem fs = typeToFileSystem.get(type);
++         if (fs != null)
++            return Files.newInputStream(fs.getPath(resource));
++         return DefaultResourcePack.class.getResourceAsStream(resource);
++      } catch (IOException e) {
++         return DefaultResourcePack.class.getResourceAsStream(resource);
++      }
++   }
+ }

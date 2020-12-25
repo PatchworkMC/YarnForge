@@ -1,0 +1,88 @@
+--- a/net/minecraft/client/render/model/json/JsonUnbakedModel.java
++++ b/net/minecraft/client/render/model/json/JsonUnbakedModel.java
+@@ -68,9 +68,10 @@
+    public JsonUnbakedModel parent;
+    @Nullable
+    protected Identifier parentId;
++   public final net.minecraftforge.client.model.BlockModelConfiguration customData = new net.minecraftforge.client.model.BlockModelConfiguration(this);
+ 
+    public static JsonUnbakedModel deserialize(Reader readerIn) {
+-      return JsonHelper.deserialize(GSON, readerIn, JsonUnbakedModel.class);
++      return JsonHelper.deserialize(net.minecraftforge.client.model.ModelLoaderRegistry.ExpandedBlockModelDeserializer.INSTANCE, readerIn, JsonUnbakedModel.class);
+    }
+ 
+    public static JsonUnbakedModel deserialize(String jsonString) {
+@@ -87,10 +88,15 @@
+       this.overrides = overrides;
+    }
+ 
++   @Deprecated
+    public List<ModelElement> getElements() {
++      if (customData.hasCustomGeometry()) return java.util.Collections.emptyList();
+       return this.elements.isEmpty() && this.parent != null ? this.parent.getElements() : this.elements;
+    }
+ 
++   @Nullable
++   public Identifier getParentLocation() { return parentId; }
++
+    public boolean useAmbientOcclusion() {
+       return this.parent != null ? this.parent.useAmbientOcclusion() : this.ambientOcclusion;
+    }
+@@ -111,6 +117,10 @@
+       return this.overrides.isEmpty() ? ModelOverrideList.EMPTY : new ModelOverrideList(modelBakeryIn, modelIn, modelBakeryIn::getOrLoadModel, this.overrides);
+    }
+ 
++   public ModelOverrideList getOverrides(ModelLoader modelBakeryIn, JsonUnbakedModel modelIn, Function<SpriteIdentifier, Sprite> textureGetter) {
++      return this.overrides.isEmpty() ? ModelOverrideList.EMPTY : new ModelOverrideList(modelBakeryIn, modelIn, modelBakeryIn::getOrLoadModel, textureGetter, this.overrides);
++   }
++
+    public Collection<Identifier> getModelDependencies() {
+       Set<Identifier> set = Sets.newHashSet();
+ 
+@@ -154,6 +164,9 @@
+ 
+       Set<SpriteIdentifier> set1 = Sets.newHashSet(this.resolveSprite("particle"));
+ 
++      if(customData.hasCustomGeometry())
++         set1.addAll(customData.getTextureDependencies(modelGetter, missingTextureErrors));
++      else
+       for(ModelElement blockpart : this.getElements()) {
+          for(ModelElementFace blockpartface : blockpart.faces.values()) {
+             SpriteIdentifier rendermaterial = this.resolveSprite(blockpartface.textureId);
+@@ -180,11 +193,17 @@
+       return set1;
+    }
+ 
++   @Deprecated //Forge: Use Boolean variant
+    public BakedModel bake(ModelLoader modelBakeryIn, Function<SpriteIdentifier, Sprite> spriteGetterIn, ModelBakeSettings transformIn, Identifier locationIn) {
+       return this.bake(modelBakeryIn, this, spriteGetterIn, transformIn, locationIn, true);
+    }
+ 
+    public BakedModel bake(ModelLoader modelBakeryIn, JsonUnbakedModel modelIn, Function<SpriteIdentifier, Sprite> spriteGetterIn, ModelBakeSettings transformIn, Identifier locationIn, boolean guiLight3d) {
++      return net.minecraftforge.client.model.ModelLoaderRegistry.bakeHelper(this, modelBakeryIn, modelIn, spriteGetterIn, transformIn, locationIn, guiLight3d);
++   }
++
++   @Deprecated //Forge: exposed for our callbacks only. Use the above function.
++   public BakedModel bakeVanilla(ModelLoader modelBakeryIn, JsonUnbakedModel modelIn, Function<SpriteIdentifier, Sprite> spriteGetterIn, ModelBakeSettings transformIn, Identifier locationIn, boolean guiLight3d) {
+       Sprite textureatlassprite = spriteGetterIn.apply(this.resolveSprite("particle"));
+       if (this.getRootModel() == ModelLoader.BLOCK_ENTITY_MARKER) {
+          return new BuiltinBakedModel(this.getTransformations(), this.compileOverrides(modelBakeryIn, modelIn), textureatlassprite, this.getGuiLight().isSide());
+@@ -211,6 +230,10 @@
+       return QUAD_FACTORY.bake(partIn.from, partIn.to, partFaceIn, spriteIn, directionIn, transformIn, partIn.rotation, partIn.shade, locationIn);
+    }
+ 
++   public static BakedQuad makeBakedQuad(ModelElement partIn, ModelElementFace partFaceIn, Sprite spriteIn, Direction directionIn, ModelBakeSettings transformIn, Identifier locationIn) {
++      return createQuad(partIn, partFaceIn, spriteIn, directionIn, transformIn, locationIn);
++   }
++
+    public boolean textureExists(String textureName) {
+       return !MissingSprite.getMissingSpriteId().equals(this.resolveSprite(textureName).getTextureId());
+    }
+@@ -384,5 +407,7 @@
+       public boolean isSide() {
+          return this == SIDE;
+       }
++      
++      public String getSerializedName() { return name; }
+    }
+ }

@@ -1,0 +1,11 @@
+--- a/net/minecraft/particle/ParticleType.java
++++ b/net/minecraft/particle/ParticleType.java
+@@ -6,7 +6,7 @@
+ import net.minecraftforge.api.distmarker.Dist;
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+-public abstract class ParticleType<T extends ParticleEffect> {
++public abstract class ParticleType<T extends ParticleEffect>  extends net.minecraftforge.registries.ForgeRegistryEntry<ParticleType<?>>{
+    private final boolean alwaysShow;
+    private final ParticleEffect.Factory<T> parametersFactory;
+ 

@@ -1,0 +1,118 @@
+--- a/net/minecraft/entity/ItemEntity.java
++++ b/net/minecraft/entity/ItemEntity.java
+@@ -39,6 +39,10 @@
+    private UUID thrower;
+    private UUID owner;
+    public final float hoverHeight;
++   /**
++    * The maximum age of this EntityItem.  The item is expired once this is reached.
++    */
++   public int lifespan = 6000;
+ 
+    public ItemEntity(EntityType<? extends ItemEntity> p_i50217_1_, World world) {
+       super(p_i50217_1_, world);
+@@ -55,6 +59,7 @@
+    public ItemEntity(World worldIn, double x, double y, double z, ItemStack stack) {
+       this(worldIn, x, y, z);
+       this.setStack(stack);
++      this.lifespan = (stack.getItem() == null ? 6000 : stack.getEntityLifespan(worldIn));
+    }
+ 
+    @Environment(EnvType.CLIENT)
+@@ -75,6 +80,7 @@
+    }
+ 
+    public void tick() {
++      if (getStack().onEntityItemUpdate(this)) return;
+       if (this.getStack().isEmpty()) {
+          this.remove();
+       } else {
+@@ -145,7 +151,14 @@
+             }
+          }
+ 
+-         if (!this.world.isClient && this.age >= 6000) {
++         ItemStack item = this.getStack();
++         if (!this.world.isClient && this.age >= lifespan) {
++             int hook = net.minecraftforge.event.ForgeEventFactory.onItemExpire(this, item);
++             if (hook < 0) this.remove();
++             else          this.lifespan += hook;
++         }
++
++         if (item.isEmpty()) {
+             this.remove();
+          }
+ 
+@@ -203,6 +216,8 @@
+          return false;
+       } else if (stack2.hasTag() ^ stack1.hasTag()) {
+          return false;
++      } else if (!stack1.areCapsCompatible(stack2)) {
++         return false;
+       } else {
+          return !stack2.hasTag() || stack2.getTag().equals(stack1.getTag());
+       }
+@@ -236,6 +251,7 @@
+    }
+ 
+    public boolean damage(DamageSource source, float amount) {
++      if (this.world.isClient || this.removed) return false; //Forge: Fixes MC-53850
+       if (this.isInvulnerableTo(source)) {
+          return false;
+       } else if (!this.getStack().isEmpty() && this.getStack().getItem() == Items.NETHER_STAR && source.isExplosive()) {
+@@ -257,6 +273,7 @@
+       compound.putShort("Health", (short)this.health);
+       compound.putShort("Age", (short)this.age);
+       compound.putShort("PickupDelay", (short)this.pickupDelay);
++      compound.putInt("Lifespan", lifespan);
+       if (this.getThrower() != null) {
+          compound.putUuid("Thrower", this.getThrower());
+       }
+@@ -277,6 +294,7 @@
+       if (compound.contains("PickupDelay")) {
+          this.pickupDelay = compound.getShort("PickupDelay");
+       }
++      if (compound.contains("Lifespan")) lifespan = compound.getInt("Lifespan");
+ 
+       if (compound.containsUuid("Owner")) {
+          this.owner = compound.getUuid("Owner");
+@@ -296,10 +314,18 @@
+ 
+    public void onPlayerCollision(PlayerEntity entityIn) {
+       if (!this.world.isClient) {
++         if (this.pickupDelay > 0) return;
+          ItemStack itemstack = this.getStack();
+          Item item = itemstack.getItem();
+          int i = itemstack.getCount();
+-         if (this.pickupDelay == 0 && (this.owner == null || this.owner.equals(entityIn.getUuid())) && entityIn.inventory.insertStack(itemstack)) {
++
++         int hook = net.minecraftforge.event.ForgeEventFactory.onItemPickup(this, entityIn);
++         if (hook < 0) return;
++
++         ItemStack copy = itemstack.copy();
++         if (this.pickupDelay == 0 && (this.owner == null || lifespan - this.age <= 200 || this.owner.equals(entityIn.getUuid())) && (hook == 1 || i <= 0 || entityIn.inventory.insertStack(itemstack))) {
++            copy.setCount(copy.getCount() - getStack().getCount());
++            net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerItemPickupEvent(entityIn, this, copy);
+             entityIn.sendPickup(this, i);
+             if (itemstack.isEmpty()) {
+                this.remove();
+@@ -323,8 +349,8 @@
+    }
+ 
+    @Nullable
+-   public Entity moveToWorld(ServerWorld server) {
+-      Entity entity = super.moveToWorld(server);
++   public Entity changeDimension(ServerWorld server, net.minecraftforge.common.util.ITeleporter teleporter) {
++      Entity entity = super.changeDimension(server, teleporter);
+       if (!this.world.isClient && entity instanceof ItemEntity) {
+          ((ItemEntity)entity).tryMerge();
+       }
+@@ -397,7 +423,7 @@
+ 
+    public void setDespawnImmediately() {
+       this.setPickupDelayInfinite();
+-      this.age = 5999;
++      this.age = getStack().getEntityLifespan(world) - 1;
+    }
+ 
+    @Environment(EnvType.CLIENT)

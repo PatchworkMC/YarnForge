@@ -20,13 +20,13 @@
 package net.minecraftforge.debug.client.model;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
+import net.minecraft.block.Material;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -40,7 +40,7 @@ public class MultiLayerModelTest
     public static final String VERSION = "0.0";
 
     private static final String blockName = "test_layer_block";
-    private static final ResourceLocation blockId = new ResourceLocation(MODID, blockName);
+    private static final Identifier blockId = new Identifier(MODID, blockName);
     @ObjectHolder(blockName)
     public static final Block TEST_BLOCK = null;
 
@@ -53,7 +53,7 @@ public class MultiLayerModelTest
             if (!ENABLED)
                 return;
             event.getRegistry().register(
-                new Block(Block.Properties.create(Material.WOOD).notSolid())
+                new Block(Block.Properties.of(Material.WOOD).nonOpaque())
                 {
                 }.setRegistryName(blockId)
             );
@@ -64,7 +64,7 @@ public class MultiLayerModelTest
         {
             if (!ENABLED)
                 return;
-            event.getRegistry().register(new BlockItem(TEST_BLOCK, new Item.Properties().group(ItemGroup.MISC)).setRegistryName(TEST_BLOCK.getRegistryName()));
+            event.getRegistry().register(new BlockItem(TEST_BLOCK, new Item.Settings().group(ItemGroup.MISC)).setRegistryName(TEST_BLOCK.getRegistryName()));
         }
 
         @net.minecraftforge.eventbus.api.SubscribeEvent
@@ -72,8 +72,8 @@ public class MultiLayerModelTest
         {
             if (!ENABLED)
                 return;
-            RenderTypeLookup.setRenderLayer(TEST_BLOCK, (layer) -> {
-                return layer == RenderType.getSolid() || layer == RenderType.getTranslucent();
+            RenderLayers.setRenderLayer(TEST_BLOCK, (layer) -> {
+                return layer == RenderLayer.getSolid() || layer == RenderLayer.getTranslucent();
             });
         }
     }

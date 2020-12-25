@@ -1,0 +1,13 @@
+--- a/net/minecraft/recipe/BannerDuplicateRecipe.java
++++ b/net/minecraft/recipe/BannerDuplicateRecipe.java
+@@ -77,8 +77,8 @@
+       for(int i = 0; i < nonnulllist.size(); ++i) {
+          ItemStack itemstack = inv.getStack(i);
+          if (!itemstack.isEmpty()) {
+-            if (itemstack.getItem().hasRecipeRemainder()) {
+-               nonnulllist.set(i, new ItemStack(itemstack.getItem().getRecipeRemainder()));
++            if (itemstack.hasContainerItem()) {
++               nonnulllist.set(i, itemstack.getContainerItem());
+             } else if (itemstack.hasTag() && BannerBlockEntity.getPatternCount(itemstack) > 0) {
+                ItemStack itemstack1 = itemstack.copy();
+                itemstack1.setCount(1);

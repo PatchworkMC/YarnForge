@@ -21,21 +21,21 @@ package net.minecraftforge.debug.client.model;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.Entity;
-import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.BlockItem;
-import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.BlockView;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
@@ -53,45 +53,45 @@ public class CompositeModelTest
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
 
     public static RegistryObject<Block> composite_block = BLOCKS.register("composite_block", () ->
-            new Block(Block.Properties.create(Material.WOOD).hardnessAndResistance(10)) {
+            new Block(Block.Properties.of(Material.WOOD).strength(10)) {
                 @Override
-                protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder)
+                protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
                 {
-                    builder.add(BlockStateProperties.HORIZONTAL_FACING);
+                    builder.add(Properties.HORIZONTAL_FACING);
                 }
 
                 @Nullable
                 @Override
-                public BlockState getStateForPlacement(BlockItemUseContext context)
+                public BlockState getPlacementState(ItemPlacementContext context)
                 {
                     return getDefaultState().with(
-                            BlockStateProperties.HORIZONTAL_FACING, context.getPlacementHorizontalFacing()
+                            Properties.HORIZONTAL_FACING, context.getPlayerFacing()
                     );
                 }
 
                 @Override
-                public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-                    return VoxelShapes.or(
-                            makeCuboidShape(5.6, 5.6, 5.6, 10.4, 10.4, 10.4),
-                            makeCuboidShape(0, 0, 0, 4.8, 4.8, 4.8),
-                            makeCuboidShape(11.2, 0, 0, 16, 4.8, 4.8),
-                            makeCuboidShape(0, 0, 11.2, 4.8, 4.8, 16),
-                            makeCuboidShape(11.2, 0, 11.2, 16, 4.8, 16),
-                            makeCuboidShape(0, 11.2, 0, 4.8, 16, 4.8),
-                            makeCuboidShape(11.2, 11.2, 0, 16, 16, 4.8),
-                            makeCuboidShape(0, 11.2, 11.2, 4.8, 16, 16),
-                            makeCuboidShape(11.2, 11.2, 11.2, 16, 16, 16)
+                public VoxelShape getOutlineShape(BlockState state, BlockView worldIn, BlockPos pos, ShapeContext context) {
+                    return VoxelShapes.union(
+                            createCuboidShape(5.6, 5.6, 5.6, 10.4, 10.4, 10.4),
+                            createCuboidShape(0, 0, 0, 4.8, 4.8, 4.8),
+                            createCuboidShape(11.2, 0, 0, 16, 4.8, 4.8),
+                            createCuboidShape(0, 0, 11.2, 4.8, 4.8, 16),
+                            createCuboidShape(11.2, 0, 11.2, 16, 4.8, 16),
+                            createCuboidShape(0, 11.2, 0, 4.8, 16, 4.8),
+                            createCuboidShape(11.2, 11.2, 0, 16, 16, 4.8),
+                            createCuboidShape(0, 11.2, 11.2, 4.8, 16, 16),
+                            createCuboidShape(11.2, 11.2, 11.2, 16, 16, 16)
                     );
                 }
             }
     );
 
     public static RegistryObject<Item> composite_item = ITEMS.register("composite_block", () ->
-            new BlockItem(composite_block.get(), new Item.Properties().group(ItemGroup.MISC)) {
+            new BlockItem(composite_block.get(), new Item.Settings().group(ItemGroup.MISC)) {
                 @Override
-                public boolean canEquip(ItemStack stack, EquipmentSlotType armorType, Entity entity)
+                public boolean canEquip(ItemStack stack, EquipmentSlot armorType, Entity entity)
                 {
-                    return armorType == EquipmentSlotType.HEAD;
+                    return armorType == EquipmentSlot.HEAD;
                 }
             }
     );

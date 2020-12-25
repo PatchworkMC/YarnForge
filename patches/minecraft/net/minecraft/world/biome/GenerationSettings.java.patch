@@ -1,0 +1,28 @@
+--- a/net/minecraft/world/biome/GenerationSettings.java
++++ b/net/minecraft/world/biome/GenerationSettings.java
+@@ -47,6 +47,7 @@
+    });
+    private final Supplier<ConfiguredSurfaceBuilder<?>> surfaceBuilder;
+    private final Map<GenerationStep.Carver, List<Supplier<ConfiguredCarver<?>>>> carvers;
++   private final java.util.Set<GenerationStep.Carver> carversView;
+    private final List<List<Supplier<ConfiguredFeature<?, ?>>>> features;
+    private final List<Supplier<ConfiguredStructureFeature<?, ?>>> structureFeatures;
+    private final List<ConfiguredFeature<?, ?>> flowerFeatures;
+@@ -59,12 +60,17 @@
+       this.flowerFeatures = features.stream().flatMap(Collection::stream).map(Supplier::get).flatMap(ConfiguredFeature::method_30648).filter((p_242490_0_) -> {
+          return p_242490_0_.feature == Feature.FLOWER;
+       }).collect(ImmutableList.toImmutableList());
++      this.carversView = java.util.Collections.unmodifiableSet(carvers.keySet());
+    }
+ 
+    public List<Supplier<ConfiguredCarver<?>>> getCarversForStep(GenerationStep.Carver carvingType) {
+       return this.carvers.getOrDefault(carvingType, ImmutableList.of());
+    }
+ 
++   public java.util.Set<GenerationStep.Carver> getCarvingStages() {
++       return this.carversView;
++   }
++
+    public boolean hasStructureFeature(StructureFeature<?> structure) {
+       return this.structureFeatures.stream().anyMatch((p_242494_1_) -> {
+          return (p_242494_1_.get()).feature == structure;

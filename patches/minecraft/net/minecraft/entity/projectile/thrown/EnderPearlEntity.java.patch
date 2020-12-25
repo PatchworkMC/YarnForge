@@ -1,0 +1,39 @@
+--- a/net/minecraft/entity/projectile/thrown/EnderPearlEntity.java
++++ b/net/minecraft/entity/projectile/thrown/EnderPearlEntity.java
+@@ -56,6 +56,8 @@
+          if (entity instanceof ServerPlayerEntity) {
+             ServerPlayerEntity serverplayerentity = (ServerPlayerEntity)entity;
+             if (serverplayerentity.networkHandler.getConnection().isOpen() && serverplayerentity.world == this.world && !serverplayerentity.isSleeping()) {
++               net.minecraftforge.event.entity.living.EnderTeleportEvent event = new net.minecraftforge.event.entity.living.EnderTeleportEvent(serverplayerentity, this.getX(), this.getY(), this.getZ(), 5.0F);
++               if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) { // Don't indent to lower patch size
+                if (this.random.nextFloat() < 0.05F && this.world.getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING)) {
+                   EndermiteEntity endermiteentity = EntityType.ENDERMITE.create(this.world);
+                   endermiteentity.setPlayerSpawned(true);
+@@ -67,9 +69,10 @@
+                   entity.stopRiding();
+                }
+ 
+-               entity.requestTeleport(this.getX(), this.getY(), this.getZ());
++               entity.requestTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ());
+                entity.fallDistance = 0.0F;
+-               entity.damage(DamageSource.FALL, 5.0F);
++               entity.damage(DamageSource.FALL, event.getAttackDamage());
++               } //Forge: End
+             }
+          } else if (entity != null) {
+             entity.requestTeleport(this.getX(), this.getY(), this.getZ());
+@@ -92,12 +95,12 @@
+    }
+ 
+    @Nullable
+-   public Entity moveToWorld(ServerWorld server) {
++   public Entity changeDimension(ServerWorld server, net.minecraftforge.common.util.ITeleporter teleporter) {
+       Entity entity = this.getOwner();
+       if (entity != null && entity.world.getRegistryKey() != server.getRegistryKey()) {
+          this.setOwner((Entity)null);
+       }
+ 
+-      return super.moveToWorld(server);
++      return super.changeDimension(server, teleporter);
+    }
+ }

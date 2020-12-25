@@ -1,0 +1,11 @@
+--- a/net/minecraft/structure/MineshaftGenerator.java
++++ b/net/minecraft/structure/MineshaftGenerator.java
+@@ -208,7 +208,7 @@
+ 
+       protected boolean addChest(StructureWorldAccess worldIn, BlockBox structurebb, Random randomIn, int x, int y, int z, Identifier loot) {
+          BlockPos blockpos = new BlockPos(this.applyXTransform(x, z), this.applyYTransform(y), this.applyZTransform(x, z));
+-         if (structurebb.contains(blockpos) && worldIn.getBlockState(blockpos).isAir() && !worldIn.getBlockState(blockpos.down()).isAir()) {
++         if (structurebb.contains(blockpos) && worldIn.getBlockState(blockpos).isAir(worldIn, blockpos) && !worldIn.getBlockState(blockpos.down()).isAir(worldIn, blockpos.down())) {
+             BlockState blockstate = Blocks.RAIL.getDefaultState().with(RailBlock.SHAPE, randomIn.nextBoolean() ? RailShape.NORTH_SOUTH : RailShape.EAST_WEST);
+             this.addBlock(worldIn, blockstate, x, y, z, structurebb);
+             ChestMinecartEntity chestminecartentity = new ChestMinecartEntity(worldIn.toServerWorld(), (double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.5D, (double)blockpos.getZ() + 0.5D);

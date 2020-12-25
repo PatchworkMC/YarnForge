@@ -1,0 +1,42 @@
+--- a/net/minecraft/block/entity/HopperBlockEntity.java
++++ b/net/minecraft/block/entity/HopperBlockEntity.java
+@@ -134,6 +134,7 @@
+    }
+ 
+    private boolean insert() {
++      if (net.minecraftforge.items.VanillaInventoryCodeHooks.insertHook(this)) return true;
+       Inventory iinventory = this.getOutputInventory();
+       if (iinventory == null) {
+          return false;
+@@ -178,6 +179,8 @@
+    }
+ 
+    public static boolean extract(Hopper hopper) {
++      Boolean ret = net.minecraftforge.items.VanillaInventoryCodeHooks.extractHook(hopper);
++      if (ret != null) return ret;
+       Inventory iinventory = getInputInventory(hopper);
+       if (iinventory != null) {
+          Direction direction = Direction.DOWN;
+@@ -326,7 +329,7 @@
+       Block block = blockstate.getBlock();
+       if (block instanceof InventoryProvider) {
+          iinventory = ((InventoryProvider)block).getInventory(blockstate, worldIn, blockpos);
+-      } else if (block.hasBlockEntity()) {
++      } else if (blockstate.hasTileEntity()) {
+          BlockEntity tileentity = worldIn.getBlockEntity(blockpos);
+          if (tileentity instanceof Inventory) {
+             iinventory = (Inventory)tileentity;
+@@ -405,4 +408,13 @@
+    protected ScreenHandler createScreenHandler(int id, PlayerInventory player) {
+       return new HopperScreenHandler(id, player, this);
+    }
++
++   @Override
++   protected net.minecraftforge.items.IItemHandler createUnSidedHandler() {
++      return new net.minecraftforge.items.VanillaHopperItemHandler(this);
++   }
++
++   public long getLastUpdateTime() {
++      return this.lastTickTime;
++   }
+ }

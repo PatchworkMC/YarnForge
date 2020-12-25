@@ -1,0 +1,18 @@
+--- a/net/minecraft/world/chunk/ProtoChunk.java
++++ b/net/minecraft/world/chunk/ProtoChunk.java
+@@ -138,13 +138,13 @@
+          if (this.sections[j >> 4] == WorldChunk.EMPTY_SECTION && state.isOf(Blocks.AIR)) {
+             return state;
+          } else {
+-            if (state.getLuminance() > 0) {
++            if (state.getLightValue(this, pos) > 0) {
+                this.lightSources.add(new BlockPos((i & 15) + this.getPos().getStartX(), j, (k & 15) + this.getPos().getStartZ()));
+             }
+ 
+             ChunkSection chunksection = this.getSection(j >> 4);
+             BlockState blockstate = chunksection.setBlockState(i & 15, j & 15, k & 15, state);
+-            if (this.status.isAtLeast(ChunkStatus.FEATURES) && state != blockstate && (state.getOpacity(this, pos) != blockstate.getOpacity(this, pos) || state.getLuminance() != blockstate.getLuminance() || state.hasSidedTransparency() || blockstate.hasSidedTransparency())) {
++            if (this.status.isAtLeast(ChunkStatus.FEATURES) && state != blockstate && (state.getOpacity(this, pos) != blockstate.getOpacity(this, pos) || state.getLightValue(this, pos) != blockstate.getLightValue(this, pos) || state.hasSidedTransparency() || blockstate.hasSidedTransparency())) {
+                LightingProvider worldlightmanager = this.getLightingProvider();
+                worldlightmanager.checkBlock(pos);
+             }

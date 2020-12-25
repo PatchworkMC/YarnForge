@@ -6,23 +6,23 @@
     }
 +
 +   @Override
-+   public net.minecraft.util.ActionResultType func_111207_a(ItemStack stack, net.minecraft.entity.player.PlayerEntity playerIn, LivingEntity entity, net.minecraft.util.Hand hand) {
-+      if (entity.field_70170_p.field_72995_K) return net.minecraft.util.ActionResultType.PASS;
++   public net.minecraft.util.ActionResult useOnEntity(ItemStack stack, net.minecraft.entity.player.PlayerEntity playerIn, LivingEntity entity, net.minecraft.util.Hand hand) {
++      if (entity.world.isClient) return net.minecraft.util.ActionResult.PASS;
 +      if (entity instanceof net.minecraftforge.common.IForgeShearable) {
 +          net.minecraftforge.common.IForgeShearable target = (net.minecraftforge.common.IForgeShearable)entity;
-+         BlockPos pos = new BlockPos(entity.func_226277_ct_(), entity.func_226278_cu_(), entity.func_226281_cx_());
-+         if (target.isShearable(stack, entity.field_70170_p, pos)) {
-+            java.util.List<ItemStack> drops = target.onSheared(playerIn, stack, entity.field_70170_p, pos,
-+                    net.minecraft.enchantment.EnchantmentHelper.func_77506_a(net.minecraft.enchantment.Enchantments.field_185308_t, stack));
++         BlockPos pos = new BlockPos(entity.getX(), entity.getY(), entity.getZ());
++         if (target.isShearable(stack, entity.world, pos)) {
++            java.util.List<ItemStack> drops = target.onSheared(playerIn, stack, entity.world, pos,
++                    net.minecraft.enchantment.EnchantmentHelper.getLevel(net.minecraft.enchantment.Enchantments.FORTUNE, stack));
 +            java.util.Random rand = new java.util.Random();
 +            drops.forEach(d -> {
-+               net.minecraft.entity.item.ItemEntity ent = entity.func_70099_a(d, 1.0F);
-+               ent.func_213317_d(ent.func_213322_ci().func_72441_c((double)((rand.nextFloat() - rand.nextFloat()) * 0.1F), (double)(rand.nextFloat() * 0.05F), (double)((rand.nextFloat() - rand.nextFloat()) * 0.1F)));
++               net.minecraft.entity.ItemEntity ent = entity.dropStack(d, 1.0F);
++               ent.setVelocity(ent.getVelocity().add((double)((rand.nextFloat() - rand.nextFloat()) * 0.1F), (double)(rand.nextFloat() * 0.05F), (double)((rand.nextFloat() - rand.nextFloat()) * 0.1F)));
 +            });
-+            stack.func_222118_a(1, entity, e -> e.func_213334_d(hand));
++            stack.damage(1, entity, e -> e.sendToolBreakStatus(hand));
 +         }
-+         return net.minecraft.util.ActionResultType.SUCCESS;
++         return net.minecraft.util.ActionResult.SUCCESS;
 +      }
-+      return net.minecraft.util.ActionResultType.PASS;
++      return net.minecraft.util.ActionResult.PASS;
 +   }
  }

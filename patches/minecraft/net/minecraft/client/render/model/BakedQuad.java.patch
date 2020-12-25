@@ -1,0 +1,27 @@
+--- a/net/minecraft/client/render/model/BakedQuad.java
++++ b/net/minecraft/client/render/model/BakedQuad.java
+@@ -8,7 +8,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @Environment(EnvType.CLIENT)
+-public class BakedQuad {
++public class BakedQuad implements net.minecraftforge.client.model.pipeline.IVertexProducer {
+    protected final int[] vertexData;
+    protected final int colorIndex;
+    protected final Direction face;
+@@ -39,6 +39,15 @@
+       return this.face;
+    }
+ 
++   @Override
++   public void pipe(net.minecraftforge.client.model.pipeline.IVertexConsumer consumer) {
++      net.minecraftforge.client.model.pipeline.LightUtil.putBakedQuad(consumer, this);
++   }
++
++   public Sprite a() {
++      return sprite;
++   }
++
+    public boolean hasShade() {
+       return this.shade;
+    }

@@ -1,0 +1,14 @@
+--- a/net/minecraft/entity/passive/MerchantEntity.java
++++ b/net/minecraft/entity/passive/MerchantEntity.java
+@@ -167,9 +167,9 @@
+    }
+ 
+    @Nullable
+-   public Entity moveToWorld(ServerWorld server) {
++   public Entity changeDimension(ServerWorld server, net.minecraftforge.common.util.ITeleporter teleporter) {
+       this.resetCustomer();
+-      return super.moveToWorld(server);
++      return super.changeDimension(server, teleporter);
+    }
+ 
+    protected void resetCustomer() {

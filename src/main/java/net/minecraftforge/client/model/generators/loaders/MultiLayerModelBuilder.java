@@ -21,8 +21,8 @@ package net.minecraftforge.client.model.generators.loaders;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.client.model.MultiLayerModel;
 import net.minecraftforge.client.model.generators.CustomLoaderBuilder;
 import net.minecraftforge.client.model.generators.ModelBuilder;
@@ -42,10 +42,10 @@ public class MultiLayerModelBuilder<T extends ModelBuilder<T>> extends CustomLoa
 
     protected MultiLayerModelBuilder(T parent, ExistingFileHelper existingFileHelper)
     {
-        super(new ResourceLocation("forge:multi-layer"), parent, existingFileHelper);
+        super(new Identifier("forge:multi-layer"), parent, existingFileHelper);
     }
 
-    public MultiLayerModelBuilder<T> submodel(RenderType layer, T modelBuilder)
+    public MultiLayerModelBuilder<T> submodel(RenderLayer layer, T modelBuilder)
     {
         Preconditions.checkNotNull(layer, "layer must not be null");
         Preconditions.checkArgument(MultiLayerModel.Loader.BLOCK_LAYERS.containsValue(layer), "layer must be supported by MultiLayerModel");

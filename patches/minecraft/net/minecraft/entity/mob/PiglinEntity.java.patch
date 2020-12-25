@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/mob/PiglinEntity.java
++++ b/net/minecraft/entity/mob/PiglinEntity.java
+@@ -305,7 +305,7 @@
+    }
+ 
+    protected void equipToOffHand(ItemStack p_234439_1_) {
+-      if (p_234439_1_.getItem() == PiglinBrain.BARTERING_ITEM) {
++      if (p_234439_1_.isPiglinCurrency()) {
+          this.equipStack(EquipmentSlot.OFFHAND, p_234439_1_);
+          this.updateDropChances(EquipmentSlot.OFFHAND);
+       } else {

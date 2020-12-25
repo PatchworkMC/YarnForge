@@ -1,0 +1,18 @@
+--- a/net/minecraft/data/server/ItemTagsProvider.java
++++ b/net/minecraft/data/server/ItemTagsProvider.java
+@@ -15,10 +15,15 @@
+ public class ItemTagsProvider extends AbstractTagProvider<Item> {
+    private final Function<Tag.Identified<Block>, Tag.Builder> field_23783;
+ 
++   @Deprecated
+    public ItemTagsProvider(DataGenerator dataGenerator, BlockTagsProvider blockTagProvider) {
+       super(dataGenerator, Registry.ITEM);
+       this.field_23783 = blockTagProvider::method_27169;
+    }
++   public ItemTagsProvider(DataGenerator dataGenerator, BlockTagsProvider blockTagProvider, String modId, @javax.annotation.Nullable net.minecraftforge.common.data.ExistingFileHelper existingFileHelper) {
++      super(dataGenerator, Registry.ITEM, modId, existingFileHelper);
++      this.field_23783 = blockTagProvider::method_27169;
++   }
+ 
+    protected void configure() {
+       this.copy(BlockTags.WOOL, ItemTags.WOOL);

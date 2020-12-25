@@ -23,17 +23,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.gui.widget.button.Button;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.InputMappings;
-
+import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
@@ -44,7 +40,7 @@ import org.lwjgl.glfw.GLFW;
  *
  * @author bspkrs
  */
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class GuiScreenEvent extends Event
 {
     private final Screen gui;
@@ -64,12 +60,12 @@ public class GuiScreenEvent extends Event
 
     public static class InitGuiEvent extends GuiScreenEvent
     {
-        private Consumer<Widget> add;
-        private Consumer<Widget> remove;
+        private Consumer<AbstractButtonWidget> add;
+        private Consumer<AbstractButtonWidget> remove;
 
-        private List<Widget> list;
+        private List<AbstractButtonWidget> list;
 
-        public InitGuiEvent(Screen gui, List<Widget> list, Consumer<Widget> add, Consumer<Widget> remove)
+        public InitGuiEvent(Screen gui, List<AbstractButtonWidget> list, Consumer<AbstractButtonWidget> add, Consumer<AbstractButtonWidget> remove)
         {
             super(gui);
             this.list = Collections.unmodifiableList(list);
@@ -80,17 +76,17 @@ public class GuiScreenEvent extends Event
         /**
          * Unmodifiable reference to the list of buttons on the {@link #gui}.
          */
-        public List<Widget> getWidgetList()
+        public List<AbstractButtonWidget> getWidgetList()
         {
             return list;
         }
 
-        public void addWidget(Widget button)
+        public void addWidget(AbstractButtonWidget button)
         {
             add.accept(button);
         }
 
-        public void removeWidget(Widget button)
+        public void removeWidget(AbstractButtonWidget button)
         {
             remove.accept(button);
         }
@@ -107,7 +103,7 @@ public class GuiScreenEvent extends Event
         @Cancelable
         public static class Pre extends InitGuiEvent
         {
-            public Pre(Screen gui, List<Widget> list, Consumer<Widget> add, Consumer<Widget> remove)
+            public Pre(Screen gui, List<AbstractButtonWidget> list, Consumer<AbstractButtonWidget> add, Consumer<AbstractButtonWidget> remove)
             {
                 super(gui, list, add, remove);
             }
@@ -119,7 +115,7 @@ public class GuiScreenEvent extends Event
          */
         public static class Post extends InitGuiEvent
         {
-            public Post(Screen gui, List<Widget> list, Consumer<Widget> add, Consumer<Widget> remove)
+            public Post(Screen gui, List<AbstractButtonWidget> list, Consumer<AbstractButtonWidget> add, Consumer<AbstractButtonWidget> remove)
             {
                 super(gui, list, add, remove);
             }

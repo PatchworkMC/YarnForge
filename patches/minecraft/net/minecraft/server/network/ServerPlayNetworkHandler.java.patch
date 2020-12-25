@@ -1,0 +1,62 @@
+--- a/net/minecraft/server/network/ServerPlayNetworkHandler.java
++++ b/net/minecraft/server/network/ServerPlayNetworkHandler.java
+@@ -391,9 +391,11 @@
+             }
+ 
+             entity.updatePositionAndAngles(d3, d4, d5, f, f1);
++            this.player.updatePositionAndAngles(d3, d4, d5, this.player.yaw, this.player.pitch); // Forge - Resync player position on vehicle moving
+             boolean flag2 = serverworld.isSpaceEmpty(entity, entity.getBoundingBox().contract(0.0625D));
+             if (flag && (flag1 || !flag2)) {
+                entity.updatePositionAndAngles(d0, d1, d2, f, f1);
++               this.player.updatePositionAndAngles(d3, d4, d5, this.player.yaw, this.player.pitch); // Forge - Resync player position on vehicle moving
+                this.connection.send(new VehicleMoveS2CPacket(entity));
+                return;
+             }
+@@ -410,7 +412,7 @@
+    }
+ 
+    private boolean method_29780(Entity p_241162_1_) {
+-      return p_241162_1_.world.method_29546(p_241162_1_.getBoundingBox().expand(0.0625D).stretch(0.0D, -0.55D, 0.0D)).allMatch(AbstractBlock.AbstractBlockState::isAir);
++      return BlockPos.stream(p_241162_1_.getBoundingBox().expand(0.0625D).stretch(0.0D, -0.55D, 0.0D)).allMatch(b -> p_241162_1_.world.getBlockState(b).isAir(p_241162_1_.world, b));
+    }
+ 
+    public void onTeleportConfirm(TeleportConfirmC2SPacket packetIn) {
+@@ -950,7 +952,9 @@
+       Direction direction = blockraytraceresult.getSide();
+       this.player.updateLastActionTime();
+       if (blockpos.getY() < this.server.getWorldHeight()) {
+-         if (this.requestedTeleportPos == null && this.player.squaredDistanceTo((double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.5D, (double)blockpos.getZ() + 0.5D) < 64.0D && serverworld.canPlayerModifyAt(this.player, blockpos)) {
++         double dist = player.getAttributeInstance(net.minecraftforge.common.ForgeMod.REACH_DISTANCE.get()).getValue() + 3;
++         dist *= dist;
++         if (this.requestedTeleportPos == null && this.player.squaredDistanceTo((double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 0.5D, (double)blockpos.getZ() + 0.5D) < dist && serverworld.canPlayerModifyAt(this.player, blockpos)) {
+             ActionResult actionresulttype = this.player.interactionManager.interactBlock(this.player, serverworld, itemstack, hand, blockraytraceresult);
+             if (direction == Direction.UP && !actionresulttype.isAccepted() && blockpos.getY() >= this.server.getWorldHeight() - 1 && canPlace(this.player, itemstack)) {
+                Text itextcomponent = (new TranslatableText("build.tooHigh", this.server.getWorldHeight())).formatted(Formatting.RED);
+@@ -1097,7 +1101,9 @@
+          if (p_244548_1_.startsWith("/")) {
+             this.executeCommand(p_244548_1_);
+          } else {
+-            Text itextcomponent = new TranslatableText("chat.type.text", this.player.getDisplayName(), p_244548_1_);
++            Text itextcomponent = new TranslatableText("chat.type.text", this.player.getDisplayName(), net.minecraftforge.common.ForgeHooks.newChatWithLinks(p_244548_1_));
++            itextcomponent = net.minecraftforge.common.ForgeHooks.onServerChatEvent(this, p_244548_1_, itextcomponent);
++            if (itextcomponent == null) return;
+             this.server.getPlayerManager().broadcastChatMessage(itextcomponent, MessageType.CHAT, this.player.getUuid());
+          }
+ 
+@@ -1187,6 +1193,7 @@
+             if (packetIn.getType() == PlayerInteractEntityC2SPacket.InteractionType.INTERACT) {
+                optional = Optional.of(this.player.interact(entity, hand));
+             } else if (packetIn.getType() == PlayerInteractEntityC2SPacket.InteractionType.INTERACT_AT) {
++               if (net.minecraftforge.common.ForgeHooks.onInteractEntityAt(player, entity, packetIn.getHitPosition(), hand) != null) return;
+                optional = Optional.of(entity.interactAt(this.player, packetIn.getHitPosition(), hand));
+             } else if (packetIn.getType() == PlayerInteractEntityC2SPacket.InteractionType.ATTACK) {
+                if (entity instanceof ItemEntity || entity instanceof ExperienceOrbEntity || entity instanceof PersistentProjectileEntity || entity == this.player) {
+@@ -1402,6 +1409,8 @@
+    }
+ 
+    public void onCustomPayload(CustomPayloadC2SPacket packetIn) {
++      NetworkThreadUtils.forceMainThread(packetIn, this, this.player.getServerWorld());
++      net.minecraftforge.fml.network.NetworkHooks.onCustomPayload(packetIn, this.connection);
+    }
+ 
+    public void onUpdateDifficulty(UpdateDifficultyC2SPacket p_217263_1_) {

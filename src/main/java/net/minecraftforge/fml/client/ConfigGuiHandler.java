@@ -25,12 +25,11 @@ import java.util.function.BiFunction;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
-
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 
 public class ConfigGuiHandler {
-	public static Optional<BiFunction<Minecraft, Screen, Screen>> getGuiFactoryFor(ModInfo selectedMod) {
+	public static Optional<BiFunction<MinecraftClient, Screen, Screen>> getGuiFactoryFor(ModInfo selectedMod) {
 		return ModList.get().getModContainerById(selectedMod.getModId()).
 			flatMap(mc -> mc.getCustomExtension(ExtensionPoint.CONFIGGUIFACTORY));
 	}

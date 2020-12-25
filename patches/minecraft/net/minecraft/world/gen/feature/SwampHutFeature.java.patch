@@ -1,0 +1,18 @@
+--- a/net/minecraft/world/gen/feature/SwampHutFeature.java
++++ b/net/minecraft/world/gen/feature/SwampHutFeature.java
+@@ -25,11 +25,13 @@
+       return SwampHutFeature.Start::new;
+    }
+ 
+-   public List<SpawnSettings.SpawnEntry> getMonsterSpawns() {
++   @Override
++   public List<SpawnSettings.SpawnEntry> getDefaultSpawnList() {
+       return MONSTER_SPAWNS;
+    }
+ 
+-   public List<SpawnSettings.SpawnEntry> getCreatureSpawns() {
++   @Override
++   public List<SpawnSettings.SpawnEntry> getDefaultCreatureSpawnList() {
+       return CREATURE_SPAWNS;
+    }
+ 

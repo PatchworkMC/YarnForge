@@ -1,0 +1,54 @@
+--- a/net/minecraft/world/level/storage/LevelStorage.java
++++ b/net/minecraft/world/level/storage/LevelStorage.java
+@@ -186,6 +186,10 @@
+    }
+ 
+    private static BiFunction<File, DataFixer, LevelProperties> createLevelDataParser(DynamicOps<Tag> nbt, DataPackSettings datapackCodec) {
++       return getReader(nbt, datapackCodec, null);
++   }
++
++   private static BiFunction<File, DataFixer, LevelProperties> getReader(DynamicOps<Tag> nbt, DataPackSettings datapackCodec, @Nullable Session levelSave) {
+       return (p_242976_2_, p_242976_3_) -> {
+          try {
+             CompoundTag compoundnbt = NbtIo.readCompressed(p_242976_2_);
+@@ -197,7 +201,10 @@
+             Pair<GeneratorOptions, Lifecycle> pair = readGeneratorProperties(dynamic, p_242976_3_, i);
+             SaveVersionInfo versiondata = SaveVersionInfo.fromDynamic(dynamic);
+             LevelInfo worldsettings = LevelInfo.fromDynamic(dynamic, datapackCodec);
+-            return LevelProperties.readProperties(dynamic, p_242976_3_, i, compoundnbt2, worldsettings, versiondata, pair.getFirst(), pair.getSecond());
++            LevelProperties info = LevelProperties.readProperties(dynamic, p_242976_3_, i, compoundnbt2, worldsettings, versiondata, pair.getFirst(), pair.getSecond());
++            if (levelSave != null)
++                net.minecraftforge.fml.WorldPersistenceHooks.handleWorldDataLoad(levelSave, info, compoundnbt);
++            return info;
+          } catch (Exception exception) {
+             LOGGER.error("Exception reading {}", p_242976_2_, exception);
+             return null;
+@@ -318,7 +325,7 @@
+       @Nullable
+       public SaveProperties readLevelProperties(DynamicOps<Tag> nbt, DataPackSettings datapackCodec) {
+          this.checkValid();
+-         return LevelStorage.this.readLevelProperties(this.directory.toFile(), LevelStorage.createLevelDataParser(nbt, datapackCodec));
++         return LevelStorage.this.readLevelProperties(this.directory.toFile(), LevelStorage.getReader(nbt, datapackCodec, this));
+       }
+ 
+       @Nullable
+@@ -339,6 +346,8 @@
+          CompoundTag compoundnbt1 = new CompoundTag();
+          compoundnbt1.put("Data", compoundnbt);
+ 
++         net.minecraftforge.fml.WorldPersistenceHooks.handleWorldDataSave(this, serverConfiguration, compoundnbt1);
++
+          try {
+             File file2 = File.createTempFile("level", ".dat", file1);
+             NbtIo.writeCompressed(compoundnbt1, file2);
+@@ -356,6 +365,10 @@
+          return this.directory.resolve("icon.png").toFile();
+       }
+ 
++      public Path getWorldDir() {
++          return directory;
++      }
++
+       @Environment(EnvType.CLIENT)
+       public void deleteSessionLock() throws IOException {
+          this.checkValid();

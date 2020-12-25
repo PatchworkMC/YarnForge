@@ -1,0 +1,64 @@
+--- a/net/minecraft/client/options/GameOptions.java
++++ b/net/minecraft/client/options/GameOptions.java
+@@ -163,6 +163,7 @@
+    public boolean syncChunkWrites;
+ 
+    public GameOptions(MinecraftClient mcIn, File mcDataDir) {
++      setForgeKeybindProperties();
+       this.client = mcIn;
+       this.optionsFile = new File(mcDataDir, "options.txt");
+       if (mcIn.is64Bit() && Runtime.getRuntime().maxMemory() >= 1000000000L) {
+@@ -522,7 +523,11 @@
+ 
+                for(KeyBinding keybinding : this.keysAll) {
+                   if (s.equals("key_" + keybinding.getTranslationKey())) {
+-                     keybinding.setBoundKey(InputUtil.fromTranslationKey(s1));
++                     if (s1.indexOf(':') != -1) {
++                        String[] pts = s1.split(":");
++                        keybinding.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.valueFromString(pts[1]), InputUtil.fromTranslationKey(pts[0]));
++                     } else
++                        keybinding.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.NONE, InputUtil.fromTranslationKey(s1));
+                   }
+                }
+ 
+@@ -569,6 +574,7 @@
+    }
+ 
+    public void write() {
++      if (net.minecraftforge.fml.client.ClientModLoader.isLoading()) return; //Don't save settings before mods add keybindigns and the like to prevent them from being deleted.
+       try (PrintWriter printwriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(this.optionsFile), StandardCharsets.UTF_8))) {
+          printwriter.println("version:" + SharedConstants.getGameVersion().getWorldVersion());
+          printwriter.println("autoJump:" + Option.AUTO_JUMP.get(this));
+@@ -654,7 +660,7 @@
+          printwriter.println("syncChunkWrites:" + this.syncChunkWrites);
+ 
+          for(KeyBinding keybinding : this.keysAll) {
+-            printwriter.println("key_" + keybinding.getTranslationKey() + ":" + keybinding.getBoundKeyTranslationKey());
++            printwriter.println("key_" + keybinding.getTranslationKey() + ":" + keybinding.getBoundKeyTranslationKey() + (keybinding.getKeyModifier() != net.minecraftforge.client.settings.KeyModifier.NONE ? ":" + keybinding.getKeyModifier() : ""));
+          }
+ 
+          for(SoundCategory soundcategory : SoundCategory.values()) {
+@@ -753,6 +759,23 @@
+       resourcePackListIn.setEnabledProfiles(set);
+    }
+ 
++   private void setForgeKeybindProperties() {
++      net.minecraftforge.client.settings.KeyConflictContext inGame = net.minecraftforge.client.settings.KeyConflictContext.IN_GAME;
++      keyForward.setKeyConflictContext(inGame);
++      keyLeft.setKeyConflictContext(inGame);
++      keyBack.setKeyConflictContext(inGame);
++      keyRight.setKeyConflictContext(inGame);
++      keyJump.setKeyConflictContext(inGame);
++      keySneak.setKeyConflictContext(inGame);
++      keySprint.setKeyConflictContext(inGame);
++      keyAttack.setKeyConflictContext(inGame);
++      keyChat.setKeyConflictContext(inGame);
++      keyPlayerList.setKeyConflictContext(inGame);
++      keyCommand.setKeyConflictContext(inGame);
++      keyTogglePerspective.setKeyConflictContext(inGame);
++      keySmoothCamera.setKeyConflictContext(inGame);
++   }
++
+    public Perspective getPerspective() {
+       return this.perspective;
+    }

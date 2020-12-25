@@ -19,7 +19,7 @@
 
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.render.VertexFormat;
 
 public abstract class QuadGatheringTransformer implements IVertexConsumer
 {

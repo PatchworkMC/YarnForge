@@ -19,46 +19,45 @@
 
 package net.minecraftforge.client.model;
 
-import net.minecraft.client.renderer.model.IModelTransform;
-
 import com.google.common.collect.ImmutableMap;
-import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.util.math.AffineTransformation;
 
 /**
  * Simple implementation of IModelState via a map and a default value.
  */
-public final class SimpleModelTransform implements IModelTransform
+public final class SimpleModelTransform implements ModelBakeSettings
 {
-    public static final SimpleModelTransform IDENTITY = new SimpleModelTransform(TransformationMatrix.identity());
+    public static final SimpleModelTransform IDENTITY = new SimpleModelTransform(AffineTransformation.identity());
 
-    private final ImmutableMap<?, TransformationMatrix> map;
-    private final TransformationMatrix base;
+    private final ImmutableMap<?, AffineTransformation> map;
+    private final AffineTransformation base;
 
-    public SimpleModelTransform(ImmutableMap<?, TransformationMatrix> map)
+    public SimpleModelTransform(ImmutableMap<?, AffineTransformation> map)
     {
-        this(map, TransformationMatrix.identity());
+        this(map, AffineTransformation.identity());
     }
 
-    public SimpleModelTransform(TransformationMatrix base)
+    public SimpleModelTransform(AffineTransformation base)
     {
         this(ImmutableMap.of(), base);
     }
 
-    public SimpleModelTransform(ImmutableMap<?, TransformationMatrix> map, TransformationMatrix base)
+    public SimpleModelTransform(ImmutableMap<?, AffineTransformation> map, AffineTransformation base)
     {
         this.map = map;
         this.base = base;
     }
 
     @Override
-    public TransformationMatrix getRotation()
+    public AffineTransformation getRotation()
     {
         return base;
     }
 
     @Override
-    public TransformationMatrix getPartTransformation(Object part)
+    public AffineTransformation getPartTransformation(Object part)
     {
-        return map.getOrDefault(part, TransformationMatrix.identity());
+        return map.getOrDefault(part, AffineTransformation.identity());
     }
 }

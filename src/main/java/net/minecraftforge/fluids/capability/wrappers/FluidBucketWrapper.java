@@ -24,8 +24,8 @@ import javax.annotation.Nullable;
 
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.*;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
@@ -60,7 +60,7 @@ public class FluidBucketWrapper implements IFluidHandlerItem, ICapabilityProvide
 
     public boolean canFillFluidType(FluidStack fluid)
     {
-        if (fluid.getFluid() == Fluids.WATER || fluid.getFluid() == Fluids.LAVA || fluid.getFluid().getRegistryName().equals(new ResourceLocation("milk")))
+        if (fluid.getFluid() == Fluids.WATER || fluid.getFluid() == Fluids.LAVA || fluid.getFluid().getRegistryName().equals(new Identifier("milk")))
         {
             return true;
         }

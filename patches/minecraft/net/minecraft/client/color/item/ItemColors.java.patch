@@ -1,0 +1,41 @@
+--- a/net/minecraft/client/color/item/ItemColors.java
++++ b/net/minecraft/client/color/item/ItemColors.java
+@@ -16,7 +16,6 @@
+ import net.minecraft.item.SpawnEggItem;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.potion.PotionUtil;
+-import net.minecraft.util.collection.IdList;
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.util.registry.Registry;
+ import net.minecraft.world.BlockRenderView;
+@@ -25,7 +24,8 @@
+ 
+ @Environment(EnvType.CLIENT)
+ public class ItemColors {
+-   private final IdList<ItemColorProvider> providers = new IdList<>(32);
++   // FORGE: Use RegistryDelegates as non-Vanilla item ids are not constant
++   private final java.util.Map<net.minecraftforge.registries.IRegistryDelegate<Item>, ItemColorProvider> providers = new java.util.HashMap<>();
+ 
+    public static ItemColors create(BlockColors colors) {
+       ItemColors itemcolors = new ItemColors();
+@@ -85,17 +85,18 @@
+       itemcolors.register((p_210237_0_, p_210237_1_) -> {
+          return p_210237_1_ == 0 ? -1 : FilledMapItem.getMapColor(p_210237_0_);
+       }, Items.FILLED_MAP);
++      net.minecraftforge.client.ForgeHooksClient.onItemColorsInit(itemcolors, colors);
+       return itemcolors;
+    }
+ 
+    public int getColorMultiplier(ItemStack stack, int tintIndex) {
+-      ItemColorProvider iitemcolor = this.providers.get(Registry.ITEM.getRawId(stack.getItem()));
++      ItemColorProvider iitemcolor = this.providers.get(stack.getItem().delegate);
+       return iitemcolor == null ? -1 : iitemcolor.getColor(stack, tintIndex);
+    }
+ 
+    public void register(ItemColorProvider itemColor, ItemConvertible... itemsIn) {
+       for(ItemConvertible iitemprovider : itemsIn) {
+-         this.providers.set(itemColor, Item.getRawId(iitemprovider.asItem()));
++         this.providers.put(iitemprovider.asItem().delegate, itemColor);
+       }
+ 
+    }

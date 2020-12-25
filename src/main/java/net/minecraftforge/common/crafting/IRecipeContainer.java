@@ -19,8 +19,8 @@
 
 package net.minecraftforge.common.crafting;
 
-import net.minecraft.inventory.CraftResultInventory;
 import net.minecraft.inventory.CraftingInventory;
+import net.minecraft.inventory.CraftingResultInventory;
 
 /**
  * This interface is to be implemented on Container objects.
@@ -34,7 +34,7 @@ public interface IRecipeContainer
      * The equivalent for {@link ContainerWorkbench} is {@link ContainerWorkbench#craftResult}.
      * The equivalent for {@link ContainerPlayer} is {@link ContainerPlayer#craftResult}.
      */
-    CraftResultInventory getCraftResult();
+    CraftingResultInventory getCraftResult();
 
     /**
      * The crafting matrix of your container, where ingredients go for crafting.

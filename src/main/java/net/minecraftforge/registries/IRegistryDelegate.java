@@ -19,9 +19,8 @@
 
 package net.minecraftforge.registries;
 
-import net.minecraft.util.ResourceLocation;
-
 import java.util.function.Supplier;
+import net.minecraft.util.Identifier;
 
 
 /**
@@ -49,7 +48,7 @@ public interface IRegistryDelegate<T> extends Supplier<T> {
      * will never change.
      * @return The name
      */
-    ResourceLocation name();
+    Identifier name();
 
     /**
      * Get the delegate type. It will be dependent on the registry this delegate is sourced from.

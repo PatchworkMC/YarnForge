@@ -1,0 +1,22 @@
+--- a/net/minecraft/entity/data/TrackedDataHandlerRegistry.java
++++ b/net/minecraft/entity/data/TrackedDataHandlerRegistry.java
+@@ -301,16 +301,16 @@
+    };
+ 
+    public static void register(TrackedDataHandler<?> serializer) {
+-      field_13328.add(serializer);
++      if (field_13328.add(serializer) >= 256) throw new RuntimeException("Vanilla DataSerializer ID limit exceeded");
+    }
+ 
+    @Nullable
+    public static TrackedDataHandler<?> get(int id) {
+-      return field_13328.get(id);
++      return net.minecraftforge.common.ForgeHooks.getSerializer(id, field_13328);
+    }
+ 
+    public static int getId(TrackedDataHandler<?> serializer) {
+-      return field_13328.getRawId(serializer);
++      return net.minecraftforge.common.ForgeHooks.getSerializerId(serializer, field_13328);
+    }
+ 
+    static {

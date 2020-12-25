@@ -20,20 +20,18 @@
 package net.minecraftforge.client.model.animation;
 
 import java.util.Random;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
-
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.Atlases;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.TexturedRenderLayers;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
+import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.world.BlockRenderView;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.ModelDataManager;
 import net.minecraftforge.client.model.data.IModelData;
@@ -47,34 +45,34 @@ import net.minecraftforge.common.util.LazyOptional;
 /**
  * Generic {@link TileGameRenderer} that works with the Forge model system and animations.
  */
-public class TileEntityRendererAnimation<T extends TileEntity> extends TileEntityRenderer<T> implements IEventHandler<T>
+public class TileEntityRendererAnimation<T extends BlockEntity> extends BlockEntityRenderer<T> implements IEventHandler<T>
 {
-    public TileEntityRendererAnimation(TileEntityRendererDispatcher rendererDispatcherIn)
+    public TileEntityRendererAnimation(BlockEntityRenderDispatcher rendererDispatcherIn)
     {
         super(rendererDispatcherIn);
     }
 
-    protected static BlockRendererDispatcher blockRenderer;
+    protected static BlockRenderManager blockRenderer;
 
     @Override
-    public void render(T te, float partialTick, MatrixStack mat, IRenderTypeBuffer renderer, int light, int otherlight)
+    public void render(T te, float partialTick, MatrixStack mat, VertexConsumerProvider renderer, int light, int otherlight)
     {
         LazyOptional<IAnimationStateMachine> cap = te.getCapability(CapabilityAnimation.ANIMATION_CAPABILITY);
         if(!cap.isPresent())
         {
             return;
         }
-        if(blockRenderer == null) blockRenderer = Minecraft.getInstance().getBlockRendererDispatcher();
+        if(blockRenderer == null) blockRenderer = MinecraftClient.getInstance().getBlockRenderManager();
         BlockPos pos = te.getPos();
-        IBlockDisplayReader world = MinecraftForgeClient.getRegionRenderCacheOptional(te.getWorld(), pos)
-            .map(IBlockDisplayReader.class::cast).orElseGet(() -> te.getWorld());
+        BlockRenderView world = MinecraftForgeClient.getRegionRenderCacheOptional(te.getWorld(), pos)
+            .map(BlockRenderView.class::cast).orElseGet(() -> te.getWorld());
         BlockState state = world.getBlockState(pos);
-        IBakedModel model = blockRenderer.getBlockModelShapes().getModel(state);
+        BakedModel model = blockRenderer.getModels().getModel(state);
         IModelData data = model.getModelData(world, pos, state, ModelDataManager.getModelData(te.getWorld(), pos));
         if (data.hasProperty(Properties.AnimationProperty))
         {
             @SuppressWarnings("resource")
-            float time = Animation.getWorldTime(Minecraft.getInstance().world, partialTick);
+            float time = Animation.getWorldTime(MinecraftClient.getInstance().world, partialTick);
             cap
                 .map(asm -> asm.apply(time))
                 .ifPresent(pair -> {
@@ -82,7 +80,7 @@ public class TileEntityRendererAnimation<T extends TileEntity> extends TileEntit
 
                     // TODO: caching?
                     data.setData(Properties.AnimationProperty, pair.getLeft());
-                    blockRenderer.getBlockModelRenderer().renderModel(world, model, state, pos, mat, renderer.getBuffer(Atlases.getSolidBlockType()), false, new Random(), 42, light, data);
+                    blockRenderer.getModelRenderer().renderModel(world, model, state, pos, mat, renderer.getBuffer(TexturedRenderLayers.getEntitySolid()), false, new Random(), 42, light, data);
                 });
         }
     }

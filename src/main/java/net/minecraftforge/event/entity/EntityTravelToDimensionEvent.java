@@ -20,7 +20,7 @@
 package net.minecraftforge.event.entity;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.util.RegistryKey;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;

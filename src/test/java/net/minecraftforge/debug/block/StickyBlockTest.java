@@ -21,7 +21,7 @@ package net.minecraftforge.debug.block;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraftforge.event.RegistryEvent;
@@ -43,7 +43,7 @@ public class StickyBlockTest
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event)
     {
-        event.getRegistry().register((new Block(Block.Properties.create(Material.ROCK))
+        event.getRegistry().register((new Block(Block.Properties.of(Material.STONE))
         {
             @Override
             public boolean isStickyBlock(BlockState state)
@@ -56,6 +56,6 @@ public class StickyBlockTest
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event)
     {
-        event.getRegistry().register(new BlockItem(BLUE_BLOCK, new Item.Properties()).setRegistryName(MODID, BLOCK_ID));
+        event.getRegistry().register(new BlockItem(BLUE_BLOCK, new Item.Settings()).setRegistryName(MODID, BLOCK_ID));
     }
 }

@@ -1,0 +1,60 @@
+--- a/net/minecraft/network/ClientConnection.java
++++ b/net/minecraft/network/ClientConnection.java
+@@ -79,6 +79,7 @@
+    private float avgPacketsSent;
+    private int ticks;
+    private boolean errored;
++   private java.util.function.Consumer<ClientConnection> activationHandler;
+ 
+    public ClientConnection(NetworkSide packetDirection) {
+       this.side = packetDirection;
+@@ -88,6 +89,7 @@
+       super.channelActive(p_channelActive_1_);
+       this.channel = p_channelActive_1_.channel();
+       this.address = this.channel.remoteAddress();
++      if (activationHandler != null) activationHandler.accept(this);
+ 
+       try {
+          this.setState(NetworkState.HANDSHAKING);
+@@ -176,7 +178,7 @@
+       ++this.packetsSentCounter;
+       if (protocoltype1 != protocoltype) {
+          LOGGER.debug("Disabled auto read");
+-         this.channel.config().setAutoRead(false);
++         this.channel.eventLoop().execute(()->this.channel.config().setAutoRead(false));
+       }
+ 
+       if (this.channel.eventLoop().inEventLoop()) {
+@@ -264,7 +266,9 @@
+ 
+    @Environment(EnvType.CLIENT)
+    public static ClientConnection connect(InetAddress address, int serverPort, boolean useNativeTransport) {
++      if (address instanceof java.net.Inet6Address) System.setProperty("java.net.preferIPv4Stack", "false");
+       final ClientConnection networkmanager = new ClientConnection(NetworkSide.CLIENTBOUND);
++      networkmanager.activationHandler = net.minecraftforge.fml.network.NetworkHooks::registerClientLoginChannel;
+       Class<? extends SocketChannel> oclass;
+       Lazy<? extends EventLoopGroup> lazyvalue;
+       if (Epoll.isAvailable() && useNativeTransport) {
+@@ -291,6 +295,7 @@
+    @Environment(EnvType.CLIENT)
+    public static ClientConnection connectLocal(SocketAddress address) {
+       final ClientConnection networkmanager = new ClientConnection(NetworkSide.CLIENTBOUND);
++      networkmanager.activationHandler = net.minecraftforge.fml.network.NetworkHooks::registerClientLoginChannel;
+       (new Bootstrap()).group(CLIENT_IO_GROUP_LOCAL.get()).handler(new ChannelInitializer<Channel>() {
+          protected void initChannel(Channel p_initChannel_1_) throws Exception {
+             p_initChannel_1_.pipeline().addLast("packet_handler", networkmanager);
+@@ -381,6 +386,14 @@
+       return this.avgPacketsSent;
+    }
+ 
++   public Channel channel() {
++      return channel;
++   }
++
++   public NetworkSide getDirection() {
++      return this.side;
++   }
++
+    static class QueuedPacket {
+       private final Packet<?> packet;
+       @Nullable

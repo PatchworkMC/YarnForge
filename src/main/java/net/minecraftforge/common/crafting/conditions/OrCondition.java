@@ -27,14 +27,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 import net.minecraftforge.common.crafting.CraftingHelper;
 
 public class OrCondition implements ICondition
 {
-    private static final ResourceLocation NAME = new ResourceLocation("forge", "or");
+    private static final Identifier NAME = new Identifier("forge", "or");
     private final ICondition[] children;
 
     public OrCondition(ICondition... values)
@@ -52,7 +51,7 @@ public class OrCondition implements ICondition
     }
 
     @Override
-    public ResourceLocation getID()
+    public Identifier getID()
     {
         return NAME;
     }
@@ -92,7 +91,7 @@ public class OrCondition implements ICondition
         public OrCondition read(JsonObject json)
         {
             List<ICondition> children = new ArrayList<>();
-            for (JsonElement j : JSONUtils.getJsonArray(json, "values"))
+            for (JsonElement j : JsonHelper.getArray(json, "values"))
             {
                 if (!j.isJsonObject())
                     throw new JsonSyntaxException("Or condition values must be an array of JsonObjects");
@@ -102,7 +101,7 @@ public class OrCondition implements ICondition
         }
 
         @Override
-        public ResourceLocation getID()
+        public Identifier getID()
         {
             return OrCondition.NAME;
         }

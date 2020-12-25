@@ -20,11 +20,11 @@
 package net.minecraftforge.items.wrapper;
 
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
 
-public class RecipeWrapper implements IInventory {
+public class RecipeWrapper implements Inventory {
 
     protected final IItemHandlerModifiable inv;
 
@@ -37,7 +37,7 @@ public class RecipeWrapper implements IInventory {
      * Returns the size of this inventory.  Must be equivalent to {@link #getHeight()} * {@link #getWidth()}.
      */
     @Override
-    public int getSizeInventory()
+    public int size()
     {
         return inv.getSlots();
     }
@@ -46,7 +46,7 @@ public class RecipeWrapper implements IInventory {
      * Returns the stack in this slot.  This stack should be a modifiable reference, not a copy of a stack in your inventory.
      */
     @Override
-    public ItemStack getStackInSlot(int slot)
+    public ItemStack getStack(int slot)
     {
         return inv.getStackInSlot(slot);
     }
@@ -55,7 +55,7 @@ public class RecipeWrapper implements IInventory {
      * Attempts to remove n items from the specified slot.  Returns the split stack that was removed.  Modifies the inventory.
      */
     @Override
-    public ItemStack decrStackSize(int slot, int count)
+    public ItemStack removeStack(int slot, int count)
     {
         ItemStack stack = inv.getStackInSlot(slot);
         return stack.isEmpty() ? ItemStack.EMPTY : stack.split(count);
@@ -65,7 +65,7 @@ public class RecipeWrapper implements IInventory {
      * Sets the contents of this slot to the provided stack.
      */
     @Override
-    public void setInventorySlotContents(int slot, ItemStack stack)
+    public void setStack(int slot, ItemStack stack)
     {
         inv.setStackInSlot(slot, stack);
     }
@@ -74,11 +74,11 @@ public class RecipeWrapper implements IInventory {
      * Removes the stack contained in this slot from the underlying handler, and returns it.
      */
     @Override
-    public ItemStack removeStackFromSlot(int index)
+    public ItemStack removeStack(int index)
     {
-        ItemStack s = getStackInSlot(index);
+        ItemStack s = getStack(index);
         if(s.isEmpty()) return ItemStack.EMPTY;
-        setInventorySlotContents(index, ItemStack.EMPTY);
+        setStack(index, ItemStack.EMPTY);
         return s;
     }
 
@@ -93,7 +93,7 @@ public class RecipeWrapper implements IInventory {
     }
 
     @Override
-    public boolean isItemValidForSlot(int slot, ItemStack stack)
+    public boolean isValid(int slot, ItemStack stack)
     {
         return inv.isItemValid(slot, stack);
     }
@@ -109,14 +109,14 @@ public class RecipeWrapper implements IInventory {
 
     //The following methods are never used by vanilla in crafting.  They are defunct as mods need not override them.
     @Override
-    public int getInventoryStackLimit() { return 0; }
+    public int getMaxCountPerStack() { return 0; }
     @Override
     public void markDirty() {}
     @Override
-    public boolean isUsableByPlayer(PlayerEntity player) { return false; }
+    public boolean canPlayerUse(PlayerEntity player) { return false; }
     @Override
-    public void openInventory(PlayerEntity player) {}
+    public void onOpen(PlayerEntity player) {}
     @Override
-    public void closeInventory(PlayerEntity player) {}
+    public void onClose(PlayerEntity player) {}
 
 }

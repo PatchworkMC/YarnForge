@@ -1,0 +1,11 @@
+--- a/net/minecraft/network/packet/c2s/play/CreativeInventoryActionC2SPacket.java
++++ b/net/minecraft/network/packet/c2s/play/CreativeInventoryActionC2SPacket.java
+@@ -34,7 +34,7 @@
+ 
+    public void write(PacketByteBuf buf) throws IOException {
+       buf.writeShort(this.slot);
+-      buf.writeItemStack(this.stack);
++      buf.writeItemStack(this.stack, false); //Forge: Include full tag for C->S
+    }
+ 
+    public int getSlot() {

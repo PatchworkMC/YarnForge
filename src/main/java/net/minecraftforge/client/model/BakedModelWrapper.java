@@ -23,20 +23,19 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.BlockRenderView;
 import net.minecraftforge.client.model.data.IModelData;
 
-public abstract class BakedModelWrapper<T extends IBakedModel> implements IBakedModel
+public abstract class BakedModelWrapper<T extends BakedModel> implements BakedModel
 {
     protected final T originalModel;
 
@@ -52,9 +51,9 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
     }
 
     @Override
-    public boolean isAmbientOcclusion()
+    public boolean useAmbientOcclusion()
     {
-        return originalModel.isAmbientOcclusion();
+        return originalModel.useAmbientOcclusion();
     }
 
     @Override
@@ -64,9 +63,9 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
     }
 
     @Override
-    public boolean isGui3d()
+    public boolean hasDepth()
     {
-        return originalModel.isGui3d();
+        return originalModel.hasDepth();
     }
 
     @Override
@@ -76,25 +75,25 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
     }
 
     @Override
-    public boolean isBuiltInRenderer()
+    public boolean isBuiltin()
     {
-        return originalModel.isBuiltInRenderer();
+        return originalModel.isBuiltin();
     }
 
     @Override
-    public TextureAtlasSprite getParticleTexture()
+    public Sprite getSprite()
     {
-        return originalModel.getParticleTexture();
+        return originalModel.getSprite();
     }
 
     @Override
-    public ItemCameraTransforms getItemCameraTransforms()
+    public ModelTransformation getTransformation()
     {
-        return originalModel.getItemCameraTransforms();
+        return originalModel.getTransformation();
     }
 
     @Override
-    public ItemOverrideList getOverrides()
+    public ModelOverrideList getOverrides()
     {
         return originalModel.getOverrides();
     }
@@ -106,13 +105,13 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
     }
 
     @Override
-    public IBakedModel handlePerspective(ItemCameraTransforms.TransformType cameraTransformType, MatrixStack mat)
+    public BakedModel handlePerspective(ModelTransformation.Mode cameraTransformType, MatrixStack mat)
     {
         return originalModel.handlePerspective(cameraTransformType, mat);
     }
 
     @Override
-    public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data)
+    public Sprite getParticleTexture(@Nonnull IModelData data)
     {
         return originalModel.getParticleTexture(data);
     }
@@ -126,7 +125,7 @@ public abstract class BakedModelWrapper<T extends IBakedModel> implements IBaked
 
     @Nonnull
     @Override
-    public IModelData getModelData(@Nonnull IBlockDisplayReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData)
+    public IModelData getModelData(@Nonnull BlockRenderView world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData)
     {
         return originalModel.getModelData(world, pos, state, tileData);
     }

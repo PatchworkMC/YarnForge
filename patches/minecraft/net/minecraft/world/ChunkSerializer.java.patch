@@ -1,0 +1,68 @@
+--- a/net/minecraft/world/ChunkSerializer.java
++++ b/net/minecraft/world/ChunkSerializer.java
+@@ -129,6 +129,7 @@
+          ichunk = new WorldChunk(worldIn.toServerWorld(), pos, biomecontainer, upgradedata, iticklist, iticklist1, k1, achunksection, (p_222648_1_) -> {
+             writeEntities(compoundnbt, p_222648_1_);
+          });
++         if (compoundnbt.contains("ForgeCaps")) ((WorldChunk)ichunk).readCapsFromNBT(compoundnbt.getCompound("ForgeCaps"));
+       } else {
+          ProtoChunk chunkprimer = new ProtoChunk(pos, upgradedata, achunksection, chunkprimerticklist, chunkprimerticklist1);
+          chunkprimer.setBiomes(biomecontainer);
+@@ -141,7 +142,7 @@
+ 
+          if (!flag && chunkprimer.getStatus().isAtLeast(ChunkStatus.LIGHT)) {
+             for(BlockPos blockpos : BlockPos.iterate(pos.getStartX(), 0, pos.getStartZ(), pos.getEndX(), 255, pos.getEndZ())) {
+-               if (ichunk.getBlockState(blockpos).getLuminance() != 0) {
++               if (ichunk.getBlockState(blockpos).getLightValue(ichunk, blockpos) != 0) {
+                   chunkprimer.addLightSource(blockpos);
+                }
+             }
+@@ -164,7 +165,7 @@
+       Heightmap.populateHeightmaps(ichunk, enumset);
+       CompoundTag compoundnbt4 = compoundnbt.getCompound("Structures");
+       ichunk.setStructureStarts(readStructureStarts(templateManagerIn, compoundnbt4, worldIn.getSeed()));
+-      ichunk.setStructureReferences(readStructureReferences(pos, compoundnbt4));
++      net.minecraftforge.common.ForgeHooks.fixNullStructureReferences(ichunk, readStructureReferences(pos, compoundnbt4));
+       if (compoundnbt.getBoolean("shouldSave")) {
+          ichunk.setShouldSave(true);
+       }
+@@ -180,6 +181,7 @@
+       }
+ 
+       if (chunkstatus$type == ChunkStatus.ChunkType.LEVELCHUNK) {
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkDataEvent.Load(ichunk, compound, chunkstatus$type));
+          return new ReadOnlyChunk((WorldChunk)ichunk);
+       } else {
+          ProtoChunk chunkprimer1 = (ProtoChunk)ichunk;
+@@ -213,6 +215,8 @@
+             chunkprimer1.setCarvingMask(generationstage$carving, BitSet.valueOf(compoundnbt5.getByteArray(s1)));
+          }
+ 
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkDataEvent.Load(ichunk, compound, chunkstatus$type));
++
+          return chunkprimer1;
+       }
+    }
+@@ -292,12 +296,22 @@
+          for(int k = 0; k < chunk.getEntitySectionArray().length; ++k) {
+             for(Entity entity : chunk.getEntitySectionArray()[k]) {
+                CompoundTag compoundnbt3 = new CompoundTag();
++               try {
+                if (entity.saveToTag(compoundnbt3)) {
+                   chunk.setUnsaved(true);
+                   listnbt2.add(compoundnbt3);
+                }
++               } catch (Exception e) {
++                  LogManager.getLogger().error("An Entity type {} has thrown an exception trying to write state. It will not persist. Report this to the mod author", entity.getType(), e);
++               }
+             }
+          }
++         try {
++             final CompoundTag capTag = chunk.writeCapsToNBT();
++             if (capTag != null) compoundnbt1.put("ForgeCaps", capTag);
++         } catch (Exception exception) {
++             LogManager.getLogger().error("A capability provider has thrown an exception trying to write state. It will not persist. Report this to the mod author", exception);
++         }
+       } else {
+          ProtoChunk chunkprimer = (ProtoChunk)chunkIn;
+          listnbt2.addAll(chunkprimer.getEntities());

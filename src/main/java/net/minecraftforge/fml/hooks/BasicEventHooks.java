@@ -24,12 +24,11 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.LogicalSide;
-
-import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.RegistryKey;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 
 public class BasicEventHooks {
@@ -54,7 +53,7 @@ public class BasicEventHooks {
 		MinecraftForge.EVENT_BUS.post(new PlayerEvent.ItemPickupEvent(player, item, clone));
 	}
 
-	public static void firePlayerCraftingEvent(PlayerEntity player, ItemStack crafted, IInventory craftMatrix) {
+	public static void firePlayerCraftingEvent(PlayerEntity player, ItemStack crafted, Inventory craftMatrix) {
 		MinecraftForge.EVENT_BUS.post(new PlayerEvent.ItemCraftedEvent(player, crafted, craftMatrix));
 	}
 

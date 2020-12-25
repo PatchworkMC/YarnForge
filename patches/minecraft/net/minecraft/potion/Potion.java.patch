@@ -1,27 +1,27 @@
 --- a/net/minecraft/potion/Potion.java
 +++ b/net/minecraft/potion/Potion.java
-@@ -6,7 +6,8 @@
- import net.minecraft.util.ResourceLocation;
+@@ -7,7 +7,8 @@
+ import net.minecraft.util.Identifier;
  import net.minecraft.util.registry.Registry;
  
 -public class Potion {
 +public class Potion extends net.minecraftforge.registries.ForgeRegistryEntry<Potion> {
-+   private final net.minecraftforge.common.util.ReverseTagWrapper<Potion> reverseTags = new net.minecraftforge.common.util.ReverseTagWrapper<>(this, () -> net.minecraft.tags.TagCollectionManager.func_242178_a().getCustomTypeCollection(net.minecraftforge.registries.ForgeRegistries.POTION_TYPES));
-    private final String field_185179_d;
-    private final ImmutableList<EffectInstance> field_185180_e;
++   private final net.minecraftforge.common.util.ReverseTagWrapper<Potion> reverseTags = new net.minecraftforge.common.util.ReverseTagWrapper<>(this, () -> net.minecraft.tag.ServerTagManagerHolder.getTagManager().getCustomTypeCollection(net.minecraftforge.registries.ForgeRegistries.POTION_TYPES));
+    private final String baseName;
+    private final ImmutableList<StatusEffectInstance> effects;
  
-@@ -23,6 +24,14 @@
-       this.field_185180_e = ImmutableList.copyOf(p_i46740_2_);
+@@ -24,6 +25,14 @@
+       this.effects = ImmutableList.copyOf(effectsIn);
     }
  
-+   public java.util.Set<net.minecraft.util.ResourceLocation> getTags() {
++   public java.util.Set<net.minecraft.util.Identifier> getTags() {
 +      return reverseTags.getTagNames();
 +   }
 +
-+   public boolean isIn(net.minecraft.tags.ITag<Potion> tag) {
-+      return tag.func_230235_a_(this);
++   public boolean isIn(net.minecraft.tag.Tag<Potion> tag) {
++      return tag.contains(this);
 +   }
 +
-    public String func_185174_b(String p_185174_1_) {
-       return p_185174_1_ + (this.field_185179_d == null ? Registry.field_212621_j.func_177774_c(this).func_110623_a() : this.field_185179_d);
+    public String finishTranslationKey(String prefix) {
+       return prefix + (this.baseName == null ? Registry.POTION.getId(this).getPath() : this.baseName);
     }

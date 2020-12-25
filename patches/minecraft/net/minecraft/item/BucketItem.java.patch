@@ -1,76 +1,76 @@
 --- a/net/minecraft/item/BucketItem.java
 +++ b/net/minecraft/item/BucketItem.java
-@@ -32,14 +32,28 @@
+@@ -31,14 +31,28 @@
  public class BucketItem extends Item {
-    private final Fluid field_77876_a;
+    private final Fluid fluid;
  
 +   // Forge: Use the other constructor that takes a Supplier
 +   @Deprecated
-    public BucketItem(Fluid p_i49025_1_, Item.Properties p_i49025_2_) {
-       super(p_i49025_2_);
-       this.field_77876_a = p_i49025_1_;
-+      this.fluidSupplier = p_i49025_1_.delegate;
+    public BucketItem(Fluid containedFluidIn, Item.Settings builder) {
+       super(builder);
+       this.fluid = containedFluidIn;
++      this.fluidSupplier = containedFluidIn.delegate;
     }
  
 +   /**
 +    * @param supplier A fluid supplier such as {@link net.minecraftforge.fml.RegistryObject<Fluid>}
 +    */
-+   public BucketItem(java.util.function.Supplier<? extends Fluid> supplier, Item.Properties builder) {
++   public BucketItem(java.util.function.Supplier<? extends Fluid> supplier, Item.Settings builder) {
 +      super(builder);
-+      this.field_77876_a = null;
++      this.fluid = null;
 +      this.fluidSupplier = supplier;
 +   }
 +
-    public ActionResult<ItemStack> func_77659_a(World p_77659_1_, PlayerEntity p_77659_2_, Hand p_77659_3_) {
-       ItemStack itemstack = p_77659_2_.func_184586_b(p_77659_3_);
-       RayTraceResult raytraceresult = func_219968_a(p_77659_1_, p_77659_2_, this.field_77876_a == Fluids.field_204541_a ? RayTraceContext.FluidMode.SOURCE_ONLY : RayTraceContext.FluidMode.NONE);
-+      ActionResult<ItemStack> ret = net.minecraftforge.event.ForgeEventFactory.onBucketUse(p_77659_2_, p_77659_1_, itemstack, raytraceresult);
+    public TypedActionResult<ItemStack> use(World worldIn, PlayerEntity playerIn, Hand handIn) {
+       ItemStack itemstack = playerIn.getStackInHand(handIn);
+       HitResult raytraceresult = raycast(worldIn, playerIn, this.fluid == Fluids.EMPTY ? RaycastContext.FluidHandling.SOURCE_ONLY : RaycastContext.FluidHandling.NONE);
++      TypedActionResult<ItemStack> ret = net.minecraftforge.event.ForgeEventFactory.onBucketUse(playerIn, worldIn, itemstack, raytraceresult);
 +      if (ret != null) return ret;
-       if (raytraceresult.func_216346_c() == RayTraceResult.Type.MISS) {
-          return ActionResult.func_226250_c_(itemstack);
-       } else if (raytraceresult.func_216346_c() != RayTraceResult.Type.BLOCK) {
-@@ -56,7 +70,10 @@
-                   Fluid fluid = ((IBucketPickupHandler)blockstate1.func_177230_c()).func_204508_a(p_77659_1_, blockpos, blockstate1);
-                   if (fluid != Fluids.field_204541_a) {
-                      p_77659_2_.func_71029_a(Stats.field_75929_E.func_199076_b(this));
--                     p_77659_2_.func_184185_a(fluid.func_207185_a(FluidTags.field_206960_b) ? SoundEvents.field_187633_N : SoundEvents.field_187630_M, 1.0F, 1.0F);
+       if (raytraceresult.getType() == HitResult.Type.MISS) {
+          return TypedActionResult.pass(itemstack);
+       } else if (raytraceresult.getType() != HitResult.Type.BLOCK) {
+@@ -55,7 +69,10 @@
+                   Fluid fluid = ((FluidDrainable)blockstate1.getBlock()).tryDrainFluid(worldIn, blockpos, blockstate1);
+                   if (fluid != Fluids.EMPTY) {
+                      playerIn.incrementStat(Stats.USED.getOrCreateStat(this));
+-                     playerIn.playSound(fluid.isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_FILL_LAVA : SoundEvents.ITEM_BUCKET_FILL, 1.0F, 1.0F);
 +
-+                     SoundEvent soundevent = this.field_77876_a.getAttributes().getFillSound();
-+                     if (soundevent == null) soundevent = fluid.func_207185_a(FluidTags.field_206960_b) ? SoundEvents.field_187633_N : SoundEvents.field_187630_M;
-+                     p_77659_2_.func_184185_a(soundevent, 1.0F, 1.0F);
-                      ItemStack itemstack1 = DrinkHelper.func_242398_a(itemstack, p_77659_2_, new ItemStack(fluid.func_204524_b()));
-                      if (!p_77659_1_.field_72995_K) {
-                         CriteriaTriggers.field_204813_j.func_204817_a((ServerPlayerEntity)p_77659_2_, new ItemStack(fluid.func_204524_b()));
-@@ -69,7 +86,7 @@
-                return ActionResult.func_226251_d_(itemstack);
++                     SoundEvent soundevent = this.fluid.getAttributes().getFillSound();
++                     if (soundevent == null) soundevent = fluid.isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_FILL_LAVA : SoundEvents.ITEM_BUCKET_FILL;
++                     playerIn.playSound(soundevent, 1.0F, 1.0F);
+                      ItemStack itemstack1 = ItemUsage.method_30012(itemstack, playerIn, new ItemStack(fluid.getBucketItem()));
+                      if (!worldIn.isClient) {
+                         Criteria.FILLED_BUCKET.trigger((ServerPlayerEntity)playerIn, new ItemStack(fluid.getBucketItem()));
+@@ -68,7 +85,7 @@
+                return TypedActionResult.fail(itemstack);
              } else {
-                BlockState blockstate = p_77659_1_.func_180495_p(blockpos);
--               BlockPos blockpos2 = blockstate.func_177230_c() instanceof ILiquidContainer && this.field_77876_a == Fluids.field_204546_a ? blockpos : blockpos1;
-+               BlockPos blockpos2 = canBlockContainFluid(p_77659_1_, blockpos, blockstate) ? blockpos : blockpos1;
-                if (this.func_180616_a(p_77659_2_, p_77659_1_, blockpos2, blockraytraceresult)) {
-                   this.func_203792_a(p_77659_1_, itemstack, blockpos2);
-                   if (p_77659_2_ instanceof ServerPlayerEntity) {
-@@ -117,7 +134,7 @@
+                BlockState blockstate = worldIn.getBlockState(blockpos);
+-               BlockPos blockpos2 = blockstate.getBlock() instanceof FluidFillable && this.fluid == Fluids.WATER ? blockpos : blockpos1;
++               BlockPos blockpos2 = canBlockContainFluid(worldIn, blockpos, blockstate) ? blockpos : blockpos1;
+                if (this.placeFluid(playerIn, worldIn, blockpos2, blockraytraceresult)) {
+                   this.onEmptied(worldIn, itemstack, blockpos2);
+                   if (playerIn instanceof ServerPlayerEntity) {
+@@ -116,7 +133,7 @@
              }
  
              return true;
--         } else if (block instanceof ILiquidContainer && this.field_77876_a == Fluids.field_204546_a) {
-+         } else if (block instanceof ILiquidContainer && ((ILiquidContainer)block).func_204510_a(p_180616_2_,p_180616_3_,blockstate,field_77876_a)) {
-             ((ILiquidContainer)block).func_204509_a(p_180616_2_, p_180616_3_, blockstate, ((FlowingFluid)this.field_77876_a).func_207204_a(false));
-             this.func_203791_b(p_180616_1_, p_180616_2_, p_180616_3_);
+-         } else if (block instanceof FluidFillable && this.fluid == Fluids.WATER) {
++         } else if (block instanceof FluidFillable && ((FluidFillable)block).canFillWithFluid(worldIn,posIn,blockstate,fluid)) {
+             ((FluidFillable)block).tryFillWithFluid(worldIn, posIn, blockstate, ((FlowableFluid)this.fluid).getStill(false));
+             this.playEmptyingSound(player, worldIn, posIn);
              return true;
-@@ -137,7 +154,24 @@
+@@ -136,7 +153,24 @@
     }
  
-    protected void func_203791_b(@Nullable PlayerEntity p_203791_1_, IWorld p_203791_2_, BlockPos p_203791_3_) {
--      SoundEvent soundevent = this.field_77876_a.func_207185_a(FluidTags.field_206960_b) ? SoundEvents.field_187627_L : SoundEvents.field_187624_K;
-+      SoundEvent soundevent = this.field_77876_a.getAttributes().getEmptySound();
-+      if(soundevent == null) soundevent = this.field_77876_a.func_207185_a(FluidTags.field_206960_b) ? SoundEvents.field_187627_L : SoundEvents.field_187624_K;
-       p_203791_2_.func_184133_a(p_203791_1_, p_203791_3_, soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
+    protected void playEmptyingSound(@Nullable PlayerEntity player, WorldAccess worldIn, BlockPos pos) {
+-      SoundEvent soundevent = this.fluid.isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_EMPTY_LAVA : SoundEvents.ITEM_BUCKET_EMPTY;
++      SoundEvent soundevent = this.fluid.getAttributes().getEmptySound();
++      if(soundevent == null) soundevent = this.fluid.isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_EMPTY_LAVA : SoundEvents.ITEM_BUCKET_EMPTY;
+       worldIn.playSound(player, pos, soundevent, SoundCategory.BLOCKS, 1.0F, 1.0F);
     }
 +
 +   @Override
-+   public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, @Nullable net.minecraft.nbt.CompoundNBT nbt) {
++   public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, @Nullable net.minecraft.nbt.CompoundTag nbt) {
 +      if (this.getClass() == BucketItem.class)
 +         return new net.minecraftforge.fluids.capability.wrappers.FluidBucketWrapper(stack);
 +      else
@@ -82,6 +82,6 @@
 +
 +   private boolean canBlockContainFluid(World worldIn, BlockPos posIn, BlockState blockstate)
 +   {
-+      return blockstate.func_177230_c() instanceof ILiquidContainer && ((ILiquidContainer)blockstate.func_177230_c()).func_204510_a(worldIn, posIn, blockstate, this.field_77876_a);
++      return blockstate.getBlock() instanceof FluidFillable && ((FluidFillable)blockstate.getBlock()).canFillWithFluid(worldIn, posIn, blockstate, this.fluid);
 +   }
  }

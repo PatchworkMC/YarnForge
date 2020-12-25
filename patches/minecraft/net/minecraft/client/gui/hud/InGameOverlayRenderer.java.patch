@@ -1,0 +1,48 @@
+--- a/net/minecraft/client/gui/hud/InGameOverlayRenderer.java
++++ b/net/minecraft/client/gui/hud/InGameOverlayRenderer.java
+@@ -32,18 +32,21 @@
+       RenderSystem.disableAlphaTest();
+       PlayerEntity playerentity = minecraftIn.player;
+       if (!playerentity.noClip) {
+-         BlockState blockstate = getInWallBlockState(playerentity);
+-         if (blockstate != null) {
+-            renderInWallOverlay(minecraftIn, minecraftIn.getBlockRenderManager().getModels().getSprite(blockstate), matrixStackIn);
++         org.apache.commons.lang3.tuple.Pair<BlockState, BlockPos> overlay = getOverlayBlock(playerentity);
++         if (overlay != null) {
++            if (!net.minecraftforge.event.ForgeEventFactory.renderBlockOverlay(playerentity, matrixStackIn, net.minecraftforge.client.event.RenderBlockOverlayEvent.OverlayType.BLOCK, overlay.getLeft(), overlay.getRight()))
++            renderInWallOverlay(minecraftIn, minecraftIn.getBlockRenderManager().getModels().getTexture(overlay.getLeft(), minecraftIn.world, overlay.getRight()), matrixStackIn);
+          }
+       }
+ 
+       if (!minecraftIn.player.isSpectator()) {
+          if (minecraftIn.player.isSubmergedIn(FluidTags.WATER)) {
++            if (!net.minecraftforge.event.ForgeEventFactory.renderWaterOverlay(playerentity, matrixStackIn))
+             renderUnderwaterOverlay(minecraftIn, matrixStackIn);
+          }
+ 
+          if (minecraftIn.player.isOnFire()) {
++            if (!net.minecraftforge.event.ForgeEventFactory.renderFireOverlay(playerentity, matrixStackIn))
+             renderFireOverlay(minecraftIn, matrixStackIn);
+          }
+       }
+@@ -53,6 +56,11 @@
+ 
+    @Nullable
+    private static BlockState getInWallBlockState(PlayerEntity playerIn) {
++      return getOverlayBlock(playerIn).getLeft();
++   }
++
++   @Nullable
++   private static org.apache.commons.lang3.tuple.Pair<BlockState, BlockPos> getOverlayBlock(PlayerEntity playerIn) {
+       BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
+ 
+       for(int i = 0; i < 8; ++i) {
+@@ -62,7 +70,7 @@
+          blockpos$mutable.set(d0, d1, d2);
+          BlockState blockstate = playerIn.world.getBlockState(blockpos$mutable);
+          if (blockstate.getRenderType() != BlockRenderType.INVISIBLE && blockstate.shouldBlockVision(playerIn.world, blockpos$mutable)) {
+-            return blockstate;
++            return org.apache.commons.lang3.tuple.Pair.of(blockstate, blockpos$mutable.toImmutable());
+          }
+       }
+ 

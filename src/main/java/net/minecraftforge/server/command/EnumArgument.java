@@ -26,14 +26,13 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.ISuggestionProvider;
-import net.minecraft.command.arguments.IArgumentSerializer;
-import net.minecraft.network.PacketBuffer;
-
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.argument.serialize.ArgumentSerializer;
+import net.minecraft.network.PacketByteBuf;
 
 public class EnumArgument<T extends Enum<T>> implements ArgumentType<T> {
     private final Class<T> enumClass;
@@ -52,7 +51,7 @@ public class EnumArgument<T extends Enum<T>> implements ArgumentType<T> {
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context, final SuggestionsBuilder builder) {
-        return ISuggestionProvider.suggest(Stream.of(enumClass.getEnumConstants()).map(Object::toString), builder);
+        return CommandSource.suggestMatching(Stream.of(enumClass.getEnumConstants()).map(Object::toString), builder);
     }
 
     @Override
@@ -60,17 +59,17 @@ public class EnumArgument<T extends Enum<T>> implements ArgumentType<T> {
         return Stream.of(enumClass.getEnumConstants()).map(Object::toString).collect(Collectors.toList());
     }
 
-    public static class Serializer implements IArgumentSerializer<EnumArgument<?>>
+    public static class Serializer implements ArgumentSerializer<EnumArgument<?>>
     {
         @Override
-        public void write(EnumArgument<?> argument, PacketBuffer buffer)
+        public void write(EnumArgument<?> argument, PacketByteBuf buffer)
         {
             buffer.writeString(argument.enumClass.getName());
         }
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
-        public EnumArgument<?> read(PacketBuffer buffer)
+        public EnumArgument<?> fromPacket(PacketByteBuf buffer)
         {
             try
             {

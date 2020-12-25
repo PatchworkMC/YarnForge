@@ -1,0 +1,10 @@
+--- a/net/minecraft/block/BlockEntityProvider.java
++++ b/net/minecraft/block/BlockEntityProvider.java
+@@ -4,6 +4,7 @@
+ import net.minecraft.block.entity.BlockEntity;
+ import net.minecraft.world.BlockView;
+ 
++@Deprecated //Forge: Do not use, use BlockState.hasTileEntity/Block.createTileEntity
+ public interface BlockEntityProvider {
+    @Nullable
+    BlockEntity createBlockEntity(BlockView worldIn);

@@ -1,0 +1,20 @@
+--- a/net/minecraft/entity/mob/SilverfishEntity.java
++++ b/net/minecraft/entity/mob/SilverfishEntity.java
+@@ -134,7 +134,7 @@
+             return false;
+          } else {
+             Random random = this.mob.getRandom();
+-            if (this.mob.world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING) && random.nextInt(10) == 0) {
++            if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(this.mob.world, this.mob) && random.nextInt(10) == 0) {
+                this.direction = Direction.random(random);
+                BlockPos blockpos = (new BlockPos(this.mob.getX(), this.mob.getY() + 0.5D, this.mob.getZ())).offset(this.direction);
+                BlockState blockstate = this.mob.world.getBlockState(blockpos);
+@@ -203,7 +203,7 @@
+                      BlockState blockstate = world.getBlockState(blockpos1);
+                      Block block = blockstate.getBlock();
+                      if (block instanceof InfestedBlock) {
+-                        if (world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
++                        if (net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(world, this.silverfish)) {
+                            world.breakBlock(blockpos1, true, this.silverfish);
+                         } else {
+                            world.setBlockState(blockpos1, ((InfestedBlock)block).getRegularBlock().getDefaultState(), 3);

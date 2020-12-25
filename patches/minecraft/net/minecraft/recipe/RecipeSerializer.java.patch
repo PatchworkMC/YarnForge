@@ -1,0 +1,19 @@
+--- a/net/minecraft/recipe/RecipeSerializer.java
++++ b/net/minecraft/recipe/RecipeSerializer.java
+@@ -5,7 +5,7 @@
+ import net.minecraft.util.Identifier;
+ import net.minecraft.util.registry.Registry;
+ 
+-public interface RecipeSerializer<T extends Recipe<?>> {
++public interface RecipeSerializer<T extends Recipe<?>> extends net.minecraftforge.registries.IForgeRegistryEntry<RecipeSerializer<?>> {
+    RecipeSerializer<ShapedRecipe> SHAPED = register("crafting_shaped", new ShapedRecipe.Serializer());
+    RecipeSerializer<ShapelessRecipe> SHAPELESS = register("crafting_shapeless", new ShapelessRecipe.Serializer());
+    SpecialRecipeSerializer<ArmorDyeRecipe> ARMOR_DYE = register("crafting_special_armordye", new SpecialRecipeSerializer<>(ArmorDyeRecipe::new));
+@@ -30,6 +30,7 @@
+ 
+    T read(Identifier recipeId, JsonObject json);
+ 
++   @javax.annotation.Nullable
+    T read(Identifier recipeId, PacketByteBuf buffer);
+ 
+    void write(PacketByteBuf buffer, T recipe);

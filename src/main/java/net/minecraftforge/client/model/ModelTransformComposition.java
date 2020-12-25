@@ -20,24 +20,24 @@
 package net.minecraftforge.client.model;
 
 import com.google.common.base.Objects;
-import net.minecraft.util.math.vector.TransformationMatrix;
-import net.minecraft.client.renderer.model.IModelTransform;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.util.math.AffineTransformation;
 
 /**
  * An {@link IModelTransform} that combines the transforms from two child {@link IModelTransform}.
  */
-public class ModelTransformComposition implements IModelTransform
+public class ModelTransformComposition implements ModelBakeSettings
 {
-    private final IModelTransform first;
-    private final IModelTransform second;
+    private final ModelBakeSettings first;
+    private final ModelBakeSettings second;
     private final boolean uvLock;
 
-    public ModelTransformComposition(IModelTransform first, IModelTransform second)
+    public ModelTransformComposition(ModelBakeSettings first, ModelBakeSettings second)
     {
         this(first, second, false);
     }
 
-    public ModelTransformComposition(IModelTransform first, IModelTransform second, boolean uvLock)
+    public ModelTransformComposition(ModelBakeSettings first, ModelBakeSettings second, boolean uvLock)
     {
         this.first = first;
         this.second = second;
@@ -45,19 +45,19 @@ public class ModelTransformComposition implements IModelTransform
     }
 
     @Override
-    public boolean isUvLock()
+    public boolean isShaded()
     {
         return uvLock;
     }
 
     @Override
-    public TransformationMatrix getRotation()
+    public AffineTransformation getRotation()
     {
         return first.getRotation().compose(second.getRotation());
     }
 
     @Override
-    public TransformationMatrix getPartTransformation(Object part)
+    public AffineTransformation getPartTransformation(Object part)
     {
         return first.getPartTransformation(part).compose(second.getPartTransformation(part));
     }

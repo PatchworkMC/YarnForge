@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/placer/BlockPlacerType.java
++++ b/net/minecraft/world/gen/placer/BlockPlacerType.java
+@@ -3,7 +3,7 @@
+ import com.mojang.serialization.Codec;
+ import net.minecraft.util.registry.Registry;
+ 
+-public class BlockPlacerType<P extends BlockPlacer> {
++public class BlockPlacerType<P extends BlockPlacer> extends net.minecraftforge.registries.ForgeRegistryEntry<BlockPlacerType<?>> {
+    public static final BlockPlacerType<SimpleBlockPlacer> SIMPLE_BLOCK_PLACER = register("simple_block_placer", SimpleBlockPlacer.CODEC);
+    public static final BlockPlacerType<DoublePlantPlacer> DOUBLE_PLANT_PLACER = register("double_plant_placer", DoublePlantPlacer.CODEC);
+    public static final BlockPlacerType<ColumnPlacer> COLUMN_PLACER = register("column_placer", ColumnPlacer.CODEC);

@@ -1,0 +1,11 @@
+--- a/net/minecraft/util/registry/DynamicRegistryManager.java
++++ b/net/minecraft/util/registry/DynamicRegistryManager.java
+@@ -90,6 +90,8 @@
+       RegistryKey<? extends Registry<E>> registrykey = codecHolder.getRegistry();
+       boolean flag = !registrykey.equals(Registry.NOISE_SETTINGS_WORLDGEN) && !registrykey.equals(Registry.DIMENSION_TYPE_KEY);
+       Registry<E> registry = BUILTIN.get(registrykey);
++      if (!registrykey.equals(Registry.DIMENSION_TYPE_KEY))
++         registry = ((Registry<Registry<E>>)BuiltinRegistries.REGISTRIES).get((RegistryKey<Registry<E>>)registrykey);
+       MutableRegistry<E> mutableregistry = dynamicRegistries.get(registrykey);
+ 
+       for(Entry<RegistryKey<E>, E> entry : registry.getEntries()) {

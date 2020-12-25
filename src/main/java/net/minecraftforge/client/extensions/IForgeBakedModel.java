@@ -25,28 +25,26 @@ import java.util.Random;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
-
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.BlockRenderView;
 import net.minecraftforge.client.model.data.IModelData;
 
 public interface IForgeBakedModel
 {
-    default IBakedModel getBakedModel()
+    default BakedModel getBakedModel()
     {
-        return (IBakedModel) this;
+        return (BakedModel) this;
     }
 
     @Nonnull
@@ -55,7 +53,7 @@ public interface IForgeBakedModel
         return getBakedModel().getQuads(state, side, rand);
     }
 
-    default boolean isAmbientOcclusion(BlockState state) { return getBakedModel().isAmbientOcclusion(); }
+    default boolean isAmbientOcclusion(BlockState state) { return getBakedModel().useAmbientOcclusion(); }
 
     /**
      * Override to tell the new model loader that it shouldn't wrap this model
@@ -66,19 +64,19 @@ public interface IForgeBakedModel
      * Returns the pair of the model for the given perspective, and the matrix that
      * should be applied to the GL state before rendering it (matrix may be null).
      */
-    default IBakedModel handlePerspective(ItemCameraTransforms.TransformType cameraTransformType, MatrixStack mat)
+    default BakedModel handlePerspective(ModelTransformation.Mode cameraTransformType, MatrixStack mat)
     {
         return net.minecraftforge.client.ForgeHooksClient.handlePerspective(getBakedModel(), cameraTransformType, mat);
     }
 
-    default @Nonnull IModelData getModelData(@Nonnull IBlockDisplayReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData)
+    default @Nonnull IModelData getModelData(@Nonnull BlockRenderView world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData tileData)
     {
         return tileData;
     }
 
-    default TextureAtlasSprite getParticleTexture(@Nonnull IModelData data)
+    default Sprite getParticleTexture(@Nonnull IModelData data)
     {
-        return getBakedModel().getParticleTexture();
+        return getBakedModel().getSprite();
     }
 
     /**
@@ -92,8 +90,8 @@ public interface IForgeBakedModel
     /**
      * If {@see isLayered()} returns true, this is called to get the list of layers to draw.
      */
-    default List<Pair<IBakedModel, RenderType>> getLayerModels(ItemStack itemStack, boolean fabulous)
+    default List<Pair<BakedModel, RenderLayer>> getLayerModels(ItemStack itemStack, boolean fabulous)
     {
-        return Collections.singletonList(Pair.of(getBakedModel(), RenderTypeLookup.func_239219_a_(itemStack, fabulous)));
+        return Collections.singletonList(Pair.of(getBakedModel(), RenderLayers.getItemLayer(itemStack, fabulous)));
     }
 }

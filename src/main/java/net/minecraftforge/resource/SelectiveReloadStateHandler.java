@@ -21,8 +21,7 @@ package net.minecraftforge.resource;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
-
-import net.minecraft.resources.IResourceManagerReloadListener;
+import net.minecraft.resource.SynchronousResourceReloadListener;
 import net.minecraftforge.common.ForgeConfig;
 
 /**
@@ -77,7 +76,7 @@ public enum SelectiveReloadStateHandler
 
     //Helpder function for testing if vanilla listeners should reload.
     @SuppressWarnings("deprecation")
-    public boolean test(IResourceManagerReloadListener listener)
+    public boolean test(SynchronousResourceReloadListener listener)
     {
         IResourceType type = listener.getResourceType();
         return type == null || get() == null || get().test(type);

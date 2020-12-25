@@ -1,0 +1,34 @@
+--- a/net/minecraft/tag/TagManagerLoader.java
++++ b/net/minecraft/tag/TagManagerLoader.java
+@@ -20,6 +20,7 @@
+    protected TagGroupLoader<Item> items = new TagGroupLoader<>(Registry.ITEM::getOrEmpty, "tags/items", "item");
+    protected TagGroupLoader<Fluid> fluids = new TagGroupLoader<>(Registry.FLUID::getOrEmpty, "tags/fluids", "fluid");
+    protected TagGroupLoader<EntityType<?>> entityTypes = new TagGroupLoader<>(Registry.ENTITY_TYPE::getOrEmpty, "tags/entity_types", "entity_type");
++   protected Map<Identifier, TagGroupLoader<?>> customTagTypeReaders = net.minecraftforge.common.ForgeTagHandler.createCustomTagTypeReaders();
+    private TagManager tagManager = TagManager.EMPTY;
+ 
+    public TagManager getTagManager() {
+@@ -31,11 +32,13 @@
+       CompletableFuture<Map<Identifier, Tag.Builder>> completablefuture1 = this.items.prepareReload(resourceManager, backgroundExecutor);
+       CompletableFuture<Map<Identifier, Tag.Builder>> completablefuture2 = this.fluids.prepareReload(resourceManager, backgroundExecutor);
+       CompletableFuture<Map<Identifier, Tag.Builder>> completablefuture3 = this.entityTypes.prepareReload(resourceManager, backgroundExecutor);
+-      return CompletableFuture.allOf(completablefuture, completablefuture1, completablefuture2, completablefuture3).thenCompose(stage::whenPrepared).thenAcceptAsync((p_232979_5_) -> {
++      CompletableFuture<java.util.List<net.minecraftforge.common.ForgeTagHandler.TagCollectionReaderInfo>> customTagTypeResults = net.minecraftforge.common.ForgeTagHandler.getCustomTagTypeReloadResults(resourceManager, backgroundExecutor, customTagTypeReaders);
++      return CompletableFuture.allOf(completablefuture, completablefuture1, completablefuture2, completablefuture3, customTagTypeResults).thenCompose(stage::whenPrepared).thenAcceptAsync((p_232979_5_) -> {
+          TagGroup<Block> itagcollection = this.blocks.applyReload(completablefuture.join());
+          TagGroup<Item> itagcollection1 = this.items.applyReload(completablefuture1.join());
+          TagGroup<Fluid> itagcollection2 = this.fluids.applyReload(completablefuture2.join());
+          TagGroup<EntityType<?>> itagcollection3 = this.entityTypes.applyReload(completablefuture3.join());
++         net.minecraftforge.common.ForgeTagHandler.updateCustomTagTypes(customTagTypeResults.join());
+          TagManager itagcollectionsupplier = TagManager.create(itagcollection, itagcollection1, itagcollection2, itagcollection3);
+          Multimap<Identifier, Identifier> multimap = RequiredTagListRegistry.getMissingTags(itagcollectionsupplier);
+          if (!multimap.isEmpty()) {
+@@ -43,6 +46,8 @@
+                return p_232978_0_.getKey() + ":" + p_232978_0_.getValue();
+             }).sorted().collect(Collectors.joining(",")));
+          } else {
++            itagcollectionsupplier = TagManager.reinjectOptionalTags(itagcollectionsupplier);
++            net.minecraftforge.common.ForgeTagHandler.reinjectOptionalTagsCustomTypes();
+             ServerTagManagerHolder.setTagManager(itagcollectionsupplier);
+             this.tagManager = itagcollectionsupplier;
+          }

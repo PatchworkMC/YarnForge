@@ -1,0 +1,18 @@
+--- a/net/minecraft/loot/context/LootContextTypes.java
++++ b/net/minecraft/loot/context/LootContextTypes.java
+@@ -12,6 +12,7 @@
+    });
+    public static final LootContextType CHEST = register("chest", (p_216259_0_) -> {
+       p_216259_0_.require(LootContextParameters.ORIGIN).allow(LootContextParameters.THIS_ENTITY);
++      p_216259_0_.allow(LootContextParameters.KILLER_ENTITY); //Forge: Chest Minecarts can have killers.
+    });
+    public static final LootContextType COMMAND = register("command", (p_216250_0_) -> {
+       p_216250_0_.require(LootContextParameters.ORIGIN).allow(LootContextParameters.THIS_ENTITY);
+@@ -21,6 +22,7 @@
+    });
+    public static final LootContextType FISHING = register("fishing", (p_216258_0_) -> {
+       p_216258_0_.require(LootContextParameters.ORIGIN).require(LootContextParameters.TOOL).allow(LootContextParameters.THIS_ENTITY);
++      p_216258_0_.allow(LootContextParameters.KILLER_ENTITY).allow(LootContextParameters.THIS_ENTITY); //Forge: Allow fisher, and bobber
+    });
+    public static final LootContextType ENTITY = register("entity", (p_216251_0_) -> {
+       p_216251_0_.require(LootContextParameters.THIS_ENTITY).require(LootContextParameters.ORIGIN).require(LootContextParameters.DAMAGE_SOURCE).allow(LootContextParameters.KILLER_ENTITY).allow(LootContextParameters.DIRECT_KILLER_ENTITY).allow(LootContextParameters.LAST_DAMAGE_PLAYER);

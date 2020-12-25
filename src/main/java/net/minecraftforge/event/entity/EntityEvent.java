@@ -20,10 +20,9 @@
 package net.minecraftforge.event.entity;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntitySize;
-import net.minecraft.entity.Pose;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityPose;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
@@ -151,13 +150,13 @@ public class EntityEvent extends Event
      **/
     public static class Size extends EntityEvent
     {
-        private final Pose pose;
-        private final EntitySize oldSize;
-        private EntitySize newSize;
+        private final EntityPose pose;
+        private final EntityDimensions oldSize;
+        private EntityDimensions newSize;
         private final float oldEyeHeight;
         private float newEyeHeight;
 
-        public Size(Entity entity, Pose pose, EntitySize size, float defaultEyeHeight)
+        public Size(Entity entity, EntityPose pose, EntityDimensions size, float defaultEyeHeight)
         {
             super(entity);
             this.pose = pose;
@@ -168,10 +167,10 @@ public class EntityEvent extends Event
         }
 
 
-        public Pose getPose() { return pose; }
-        public EntitySize getOldSize() { return oldSize; }
-        public EntitySize getNewSize() { return newSize; }
-        public void setNewSize(EntitySize size) { this.newSize = size; }
+        public EntityPose getPose() { return pose; }
+        public EntityDimensions getOldSize() { return oldSize; }
+        public EntityDimensions getNewSize() { return newSize; }
+        public void setNewSize(EntityDimensions size) { this.newSize = size; }
         public float getOldEyeHeight() { return oldEyeHeight; }
         public float getNewEyeHeight() { return newEyeHeight; }
         public void setNewEyeHeight(float newHeight) { this.newEyeHeight = newHeight; }

@@ -20,14 +20,13 @@
 package net.minecraftforge.fml.network;
 
 import io.netty.buffer.Unpooled;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.fml.network.event.EventNetworkChannel;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
 
 /**
  * Wrapper for custom login packets. Transforms unnamed login channel messages into channels dispatched the same
@@ -35,7 +34,7 @@ import net.minecraft.util.ResourceLocation;
  */
 public class FMLLoginWrapper {
 	private static final Logger LOGGER = LogManager.getLogger();
-	static final ResourceLocation WRAPPER = new ResourceLocation("fml:loginwrapper");
+	static final Identifier WRAPPER = new Identifier("fml:loginwrapper");
 	private final EventNetworkChannel wrapperChannel;
 
 	FMLLoginWrapper() {
@@ -53,13 +52,13 @@ public class FMLLoginWrapper {
 			return;
 		}
 		final NetworkEvent.Context wrappedContext = packet.getSource().get();
-		final PacketBuffer payload = packet.getPayload();
-		ResourceLocation targetNetworkReceiver = FMLNetworkConstants.FML_HANDSHAKE_RESOURCE;
-		PacketBuffer data = null;
+		final PacketByteBuf payload = packet.getPayload();
+		Identifier targetNetworkReceiver = FMLNetworkConstants.FML_HANDSHAKE_RESOURCE;
+		PacketByteBuf data = null;
 		if (payload != null) {
-			targetNetworkReceiver = payload.readResourceLocation();
+			targetNetworkReceiver = payload.readIdentifier();
 			final int payloadLength = payload.readVarInt();
-			data = new PacketBuffer(payload.readBytes(payloadLength));
+			data = new PacketByteBuf(payload.readBytes(payloadLength));
 		}
 		final int loginSequence = packet.getLoginIndex();
 		LOGGER.debug(FMLHandshakeHandler.FMLHSMARKER, "Recieved login wrapper packet event for channel {} with index {}", targetNetworkReceiver, loginSequence);
@@ -74,16 +73,16 @@ public class FMLLoginWrapper {
 		});
 	}
 
-	private PacketBuffer wrapPacket(final ResourceLocation rl, final PacketBuffer buf) {
-		PacketBuffer pb = new PacketBuffer(Unpooled.buffer(buf.capacity()));
-		pb.writeResourceLocation(rl);
+	private PacketByteBuf wrapPacket(final Identifier rl, final PacketByteBuf buf) {
+		PacketByteBuf pb = new PacketByteBuf(Unpooled.buffer(buf.capacity()));
+		pb.writeIdentifier(rl);
 		pb.writeVarInt(buf.readableBytes());
 		pb.writeBytes(buf);
 		return pb;
 	}
 
-	void sendServerToClientLoginPacket(final ResourceLocation resourceLocation, final PacketBuffer buffer, final int index, final NetworkManager manager) {
-		PacketBuffer pb = wrapPacket(resourceLocation, buffer);
-		manager.sendPacket(NetworkDirection.LOGIN_TO_CLIENT.buildPacket(Pair.of(pb, index), WRAPPER).getThis());
+	void sendServerToClientLoginPacket(final Identifier resourceLocation, final PacketByteBuf buffer, final int index, final ClientConnection manager) {
+		PacketByteBuf pb = wrapPacket(resourceLocation, buffer);
+		manager.send(NetworkDirection.LOGIN_TO_CLIENT.buildPacket(Pair.of(pb, index), WRAPPER).getThis());
 	}
 }

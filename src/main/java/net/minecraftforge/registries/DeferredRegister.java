@@ -19,7 +19,7 @@
 
 package net.minecraftforge.registries;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -111,7 +111,7 @@ public class DeferredRegister<T extends IForgeRegistryEntry<T>>
             throw new IllegalStateException("Cannot register new entries to DeferredRegister after RegistryEvent.Register has been fired.");
         Objects.requireNonNull(name);
         Objects.requireNonNull(sup);
-        final ResourceLocation key = new ResourceLocation(modid, name);
+        final Identifier key = new Identifier(modid, name);
 
         RegistryObject<I> ret;
         if (this.type != null)
@@ -143,7 +143,7 @@ public class DeferredRegister<T extends IForgeRegistryEntry<T>>
         if (this.type != null || this.registryFactory != null)
             throw new IllegalStateException("Cannot create a registry for a type that already exists");
 
-        this.registryFactory = () -> sup.get().setName(new ResourceLocation(modid, name)).setType(this.superType);
+        this.registryFactory = () -> sup.get().setName(new Identifier(modid, name)).setType(this.superType);
         return () -> this.type;
     }
 

@@ -1,0 +1,14 @@
+--- a/net/minecraft/entity/Shearable.java
++++ b/net/minecraft/entity/Shearable.java
+@@ -2,8 +2,11 @@
+ 
+ import net.minecraft.sound.SoundCategory;
+ 
++@Deprecated // Forge: Use IForgeShearable
+ public interface Shearable {
++   @Deprecated // Forge: Use IForgeShearable
+    void sheared(SoundCategory category);
+ 
++   @Deprecated // Forge: Use IForgeShearable
+    boolean isShearable();
+ }

@@ -1,0 +1,72 @@
+--- a/net/minecraft/client/gui/screen/advancement/AdvancementsScreen.java
++++ b/net/minecraft/client/gui/screen/advancement/AdvancementsScreen.java
+@@ -31,6 +31,7 @@
+    private final Map<Advancement, AdvancementTab> tabs = Maps.newLinkedHashMap();
+    private AdvancementTab selectedTab;
+    private boolean movingTab;
++   private static int tabPage, maxPages;
+ 
+    public AdvancementsScreen(ClientAdvancementManager clientAdvancementManager) {
+       super(NarratorManager.EMPTY);
+@@ -46,7 +47,13 @@
+       } else {
+          this.advancementHandler.selectTab(this.selectedTab == null ? null : this.selectedTab.getRoot(), true);
+       }
+-
++      if (this.tabs.size() > AdvancementTabType.MAX_TABS) {
++          int guiLeft = (this.width - 252) / 2;
++          int guiTop = (this.height - 140) / 2;
++          addButton(new net.minecraft.client.gui.widget.ButtonWidget(guiLeft,            guiTop - 50, 20, 20, new net.minecraft.text.LiteralText("<"), b -> tabPage = Math.max(tabPage - 1, 0       )));
++          addButton(new net.minecraft.client.gui.widget.ButtonWidget(guiLeft + 252 - 20, guiTop - 50, 20, 20, new net.minecraft.text.LiteralText(">"), b -> tabPage = Math.min(tabPage + 1, maxPages)));
++          maxPages = this.tabs.size() / AdvancementTabType.MAX_TABS;
++      }
+    }
+ 
+    public void removed() {
+@@ -64,7 +71,7 @@
+          int j = (this.height - 140) / 2;
+ 
+          for(AdvancementTab advancementtabgui : this.tabs.values()) {
+-            if (advancementtabgui.isClickOnTab(i, j, mouseX, mouseY)) {
++            if (advancementtabgui.getPage() == tabPage && advancementtabgui.isClickOnTab(i, j, mouseX, mouseY)) {
+                this.advancementHandler.selectTab(advancementtabgui.getRoot(), true);
+                break;
+             }
+@@ -88,6 +95,12 @@
+       int i = (this.width - 252) / 2;
+       int j = (this.height - 140) / 2;
+       this.renderBackground(matrixStack);
++      if (maxPages != 0) {
++          net.minecraft.text.Text page = new net.minecraft.text.LiteralText(String.format("%d / %d", tabPage + 1, maxPages + 1));
++         int width = this.textRenderer.getWidth(page);
++         RenderSystem.disableLighting();
++         this.textRenderer.drawWithShadow(matrixStack, page.asOrderedText(), i + (252 / 2) - (width / 2), j - 44, -1);
++      }
+       this.drawAdvancementTree(matrixStack, mouseX, mouseY, i, j);
+       this.drawWidgets(matrixStack, i, j);
+       this.drawWidgetTooltip(matrixStack, mouseX, mouseY, i, j);
+@@ -134,6 +147,7 @@
+          this.client.getTextureManager().bindTexture(TABS_TEXTURE);
+ 
+          for(AdvancementTab advancementtabgui : this.tabs.values()) {
++            if (advancementtabgui.getPage() == tabPage)
+             advancementtabgui.drawBackground(matrixStack, offsetX, offsetY, advancementtabgui == this.selectedTab);
+          }
+ 
+@@ -141,6 +155,7 @@
+          RenderSystem.defaultBlendFunc();
+ 
+          for(AdvancementTab advancementtabgui1 : this.tabs.values()) {
++            if (advancementtabgui1.getPage() == tabPage)
+             advancementtabgui1.drawIcon(offsetX, offsetY, this.itemRenderer);
+          }
+ 
+@@ -163,7 +178,7 @@
+ 
+       if (this.tabs.size() > 1) {
+          for(AdvancementTab advancementtabgui : this.tabs.values()) {
+-            if (advancementtabgui.isClickOnTab(offsetX, offsetY, (double)mouseX, (double)mouseY)) {
++            if (advancementtabgui.getPage() == tabPage && advancementtabgui.isClickOnTab(offsetX, offsetY, (double)mouseX, (double)mouseY)) {
+                this.renderTooltip(matrixStack, advancementtabgui.getTitle(), mouseX, mouseY);
+             }
+          }

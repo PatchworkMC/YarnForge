@@ -1,0 +1,50 @@
+--- a/net/minecraft/client/sound/SoundSystem.java
++++ b/net/minecraft/client/sound/SoundSystem.java
+@@ -58,6 +58,7 @@
+       this.loader = sndHandlerIn;
+       this.settings = optionsIn;
+       this.soundLoader = new SoundLoader(resourceManagerIn);
++      net.minecraftforge.fml.ModLoader.get().postEvent(new net.minecraftforge.client.event.sound.SoundLoadEvent(this));
+    }
+ 
+    public void reloadSounds() {
+@@ -73,6 +74,7 @@
+ 
+       this.stop();
+       this.start();
++      net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.sound.SoundLoadEvent(this));
+    }
+ 
+    private synchronized void start() {
+@@ -268,7 +270,8 @@
+ 
+    public void play(SoundInstance p_sound) {
+       if (this.started) {
+-         if (p_sound.canPlay()) {
++         p_sound = net.minecraftforge.client.ForgeHooksClient.playSound(this, p_sound);
++         if (p_sound != null && p_sound.canPlay()) {
+             WeightedSoundSet soundeventaccessor = p_sound.getSoundSet(this.loader);
+             Identifier resourcelocation = p_sound.getId();
+             if (soundeventaccessor == null) {
+@@ -333,11 +336,13 @@
+                               p_239543_8_.setPosition(vector3d);
+                               p_239543_8_.setRelative(flag);
+                            });
++                           final SoundInstance isound = p_sound;
+                            if (!flag3) {
+                               this.soundLoader.loadStatic(sound.getLocation()).thenAccept((p_217934_1_) -> {
+                                  channelmanager$entry.run((p_217925_1_) -> {
+                                     p_217925_1_.setBuffer(p_217934_1_);
+                                     p_217925_1_.play();
++                                    net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.sound.PlaySoundSourceEvent(this, isound, p_217925_1_));
+                                  });
+                               });
+                            } else {
+@@ -345,6 +350,7 @@
+                                  channelmanager$entry.run((p_217935_1_) -> {
+                                     p_217935_1_.setStream(p_217928_1_);
+                                     p_217935_1_.play();
++                                    net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.sound.PlayStreamingSourceEvent(this, isound, p_217935_1_));
+                                  });
+                               });
+                            }

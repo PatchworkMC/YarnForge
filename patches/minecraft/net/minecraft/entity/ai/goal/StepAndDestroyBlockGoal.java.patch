@@ -1,0 +1,11 @@
+--- a/net/minecraft/entity/ai/goal/StepAndDestroyBlockGoal.java
++++ b/net/minecraft/entity/ai/goal/StepAndDestroyBlockGoal.java
+@@ -32,7 +32,7 @@
+    }
+ 
+    public boolean canStart() {
+-      if (!this.stepAndDestroyMob.world.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
++      if (!net.minecraftforge.common.ForgeHooks.canEntityDestroy(this.stepAndDestroyMob.world, this.targetPos, this.stepAndDestroyMob)) {
+          return false;
+       } else if (this.cooldown > 0) {
+          --this.cooldown;

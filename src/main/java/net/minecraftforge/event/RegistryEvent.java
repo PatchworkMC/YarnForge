@@ -26,8 +26,8 @@ import net.minecraftforge.fml.event.lifecycle.IModBusEvent;
 import org.apache.commons.lang3.Validate;
 
 import com.google.common.collect.ImmutableList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.ModContainer;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.eventbus.api.GenericEvent;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
@@ -67,9 +67,9 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
     public static class Register<T extends IForgeRegistryEntry<T>> extends RegistryEvent<T>
     {
         private final IForgeRegistry<T> registry;
-        private final ResourceLocation name;
+        private final Identifier name;
 
-        public Register(ResourceLocation name, IForgeRegistry<T> registry)
+        public Register(Identifier name, IForgeRegistry<T> registry)
         {
             super(registry.getRegistrySuperType());
             this.name = name;
@@ -81,7 +81,7 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
             return registry;
         }
 
-        public ResourceLocation getName()
+        public Identifier getName()
         {
             return name;
         }
@@ -95,11 +95,11 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
     public static class MissingMappings<T extends IForgeRegistryEntry<T>> extends RegistryEvent<T>
     {
         private final IForgeRegistry<T> registry;
-        private final ResourceLocation name;
+        private final Identifier name;
         private final ImmutableList<Mapping<T>> mappings;
         private ModContainer activeMod;
 
-        public MissingMappings(ResourceLocation name, IForgeRegistry<T> registry, Collection<Mapping<T>> missed)
+        public MissingMappings(Identifier name, IForgeRegistry<T> registry, Collection<Mapping<T>> missed)
         {
             super(registry.getRegistrySuperType());
             this.registry = registry;
@@ -112,7 +112,7 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
             this.activeMod = mod;
         }
 
-        public ResourceLocation getName()
+        public Identifier getName()
         {
             return this.name;
         }
@@ -168,12 +168,12 @@ public class RegistryEvent<T extends IForgeRegistryEntry<T>> extends GenericEven
         {
             public final IForgeRegistry<T> registry;
             private final IForgeRegistry<T> pool;
-            public final ResourceLocation key;
+            public final Identifier key;
             public final int id;
             private Action action = Action.DEFAULT;
             private T target;
 
-            public Mapping(IForgeRegistry<T> registry, IForgeRegistry<T> pool, ResourceLocation key, int id)
+            public Mapping(IForgeRegistry<T> registry, IForgeRegistry<T> pool, Identifier key, int id)
             {
                 this.registry = registry;
                 this.pool = pool;

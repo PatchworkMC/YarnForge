@@ -20,14 +20,13 @@
 package net.minecraftforge.common.crafting.conditions;
 
 import com.google.gson.JsonObject;
-
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 import net.minecraftforge.fml.ModList;
 
 public class ModLoadedCondition implements ICondition
 {
-    private static final ResourceLocation NAME = new ResourceLocation("forge", "mod_loaded");
+    private static final Identifier NAME = new Identifier("forge", "mod_loaded");
     private final String modid;
 
     public ModLoadedCondition(String modid)
@@ -36,7 +35,7 @@ public class ModLoadedCondition implements ICondition
     }
 
     @Override
-    public ResourceLocation getID()
+    public Identifier getID()
     {
         return NAME;
     }
@@ -66,11 +65,11 @@ public class ModLoadedCondition implements ICondition
         @Override
         public ModLoadedCondition read(JsonObject json)
         {
-            return new ModLoadedCondition(JSONUtils.getString(json, "modid"));
+            return new ModLoadedCondition(JsonHelper.getString(json, "modid"));
         }
 
         @Override
-        public ResourceLocation getID()
+        public Identifier getID()
         {
             return ModLoadedCondition.NAME;
         }

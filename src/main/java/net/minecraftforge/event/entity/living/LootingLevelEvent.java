@@ -20,7 +20,7 @@
 package net.minecraftforge.event.entity.living;
 
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.DamageSource;
+import net.minecraft.entity.damage.DamageSource;
 
 public class LootingLevelEvent extends LivingEvent {
 

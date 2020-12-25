@@ -1,0 +1,21 @@
+--- a/net/minecraft/server/command/LocateCommand.java
++++ b/net/minecraft/server/command/LocateCommand.java
+@@ -23,11 +23,18 @@
+          return p_198533_0_.hasPermissionLevel(2);
+       });
+ 
++      if (false)
+       for(Entry<String, StructureFeature<?>> entry : StructureFeature.STRUCTURES.entrySet()) {
+          literalargumentbuilder = literalargumentbuilder.then(CommandManager.literal(entry.getKey()).executes((p_241056_1_) -> {
+             return execute(p_241056_1_.getSource(), entry.getValue());
+          }));
+       }
++      else {
++      for (StructureFeature<?> structureFeature : net.minecraftforge.registries.ForgeRegistries.STRUCTURE_FEATURES) {
++         String name = structureFeature.getRegistryName().toString().replace("minecraft:", "");
++         literalargumentbuilder = literalargumentbuilder.then(CommandManager.literal(name)
++               .executes(ctx -> execute(ctx.getSource(), structureFeature)));
++      }}
+ 
+       dispatcher.register(literalargumentbuilder);
+    }

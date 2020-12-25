@@ -1,0 +1,12 @@
+--- a/net/minecraft/world/chunk/light/ChunkSkyLightProvider.java
++++ b/net/minecraft/world/chunk/light/ChunkSkyLightProvider.java
+@@ -230,4 +230,9 @@
+    public String displaySectionLevel(long sectionPosIn) {
+       return super.displaySectionLevel(sectionPosIn) + (this.lightStorage.isAtOrAboveTopmostSection(sectionPosIn) ? "*" : "");
+    }
++
++   @Override
++   public int queuedUpdateSize() {
++      return 0;
++   }
+ }

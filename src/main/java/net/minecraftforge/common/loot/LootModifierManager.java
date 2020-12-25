@@ -29,11 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-
-import net.minecraft.loot.conditions.ILootCondition;
-import net.minecraft.loot.conditions.LootConditionManager;
-import net.minecraft.loot.functions.ILootFunction;
-import net.minecraft.loot.functions.LootFunctionManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,20 +40,23 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import net.minecraft.client.resources.JsonReloadListener;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.loot.condition.LootCondition;
+import net.minecraft.loot.condition.LootConditionTypes;
+import net.minecraft.loot.function.LootFunction;
+import net.minecraft.loot.function.LootFunctionTypes;
+import net.minecraft.resource.JsonDataLoader;
+import net.minecraft.resource.Resource;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
+import net.minecraft.util.profiler.Profiler;
 import net.minecraftforge.registries.ForgeRegistries;
 
-public class LootModifierManager extends JsonReloadListener {
+public class LootModifierManager extends JsonDataLoader {
     public static final Logger LOGGER = LogManager.getLogger();
-    private static final Gson GSON_INSTANCE = (new GsonBuilder()).registerTypeHierarchyAdapter(ILootFunction.class, LootFunctionManager.func_237450_a_()).registerTypeHierarchyAdapter(ILootCondition.class, LootConditionManager.func_237474_a_()).create();
+    private static final Gson GSON_INSTANCE = (new GsonBuilder()).registerTypeHierarchyAdapter(LootFunction.class, LootFunctionTypes.createGsonSerializer()).registerTypeHierarchyAdapter(LootCondition.class, LootConditionTypes.createGsonSerializer()).create();
 
-    private Map<ResourceLocation, IGlobalLootModifier> registeredLootModifiers = ImmutableMap.of();
+    private Map<Identifier, IGlobalLootModifier> registeredLootModifiers = ImmutableMap.of();
     private static final String folder = "loot_modifiers";
     
     public LootModifierManager() {
@@ -66,8 +64,8 @@ public class LootModifierManager extends JsonReloadListener {
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> resourceList, IResourceManager resourceManagerIn, IProfiler profilerIn) {
-        Builder<ResourceLocation, IGlobalLootModifier> builder = ImmutableMap.builder();
+    protected void apply(Map<Identifier, JsonElement> resourceList, ResourceManager resourceManagerIn, Profiler profilerIn) {
+        Builder<Identifier, IGlobalLootModifier> builder = ImmutableMap.builder();
         //old way (for reference)
         /*Map<IGlobalLootModifier, ResourceLocation> toLocation = new HashMap<IGlobalLootModifier, ResourceLocation>();
         resourceList.forEach((location, object) -> {
@@ -83,28 +81,28 @@ public class LootModifierManager extends JsonReloadListener {
             return toLocation.get(x).compareTo(toLocation.get(y));
         });*/
         //new way
-        ArrayList<ResourceLocation> finalLocations = new ArrayList<ResourceLocation>();
-        ResourceLocation resourcelocation = new ResourceLocation("forge","loot_modifiers/global_loot_modifiers.json");
+        ArrayList<Identifier> finalLocations = new ArrayList<Identifier>();
+        Identifier resourcelocation = new Identifier("forge","loot_modifiers/global_loot_modifiers.json");
         try {
             //read in all data files from forge:loot_modifiers/global_loot_modifiers in order to do layering
-            for(IResource iresource : resourceManagerIn.getAllResources(resourcelocation)) {
+            for(Resource iresource : resourceManagerIn.getAllResources(resourcelocation)) {
                 try (   InputStream inputstream = iresource.getInputStream();
                         Reader reader = new BufferedReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8));
                         ) {
-                    JsonObject jsonobject = JSONUtils.fromJson(GSON_INSTANCE, reader, JsonObject.class);
+                    JsonObject jsonobject = JsonHelper.deserialize(GSON_INSTANCE, reader, JsonObject.class);
                     boolean replace = jsonobject.get("replace").getAsBoolean();
                     if(replace) finalLocations.clear();
                     JsonArray entryList = jsonobject.get("entries").getAsJsonArray();
                     for(JsonElement entry : entryList) {
                         String loc = entry.getAsString();
-                        ResourceLocation res = new ResourceLocation(loc);
+                        Identifier res = new Identifier(loc);
                         if(finalLocations.contains(res)) finalLocations.remove(res);
                         finalLocations.add(res);
                     }
                 }
 
                 catch (RuntimeException | IOException ioexception) {
-                    LOGGER.error("Couldn't read global loot modifier list {} in data pack {}", resourcelocation, iresource.getPackName(), ioexception);
+                    LOGGER.error("Couldn't read global loot modifier list {} in data pack {}", resourcelocation, iresource.getResourcePackName(), ioexception);
                 } finally {
                     IOUtils.closeQuietly((Closeable)iresource);
                 }
@@ -122,27 +120,27 @@ public class LootModifierManager extends JsonReloadListener {
                 LOGGER.error("Couldn't parse loot modifier {}", location, exception);
             }
         });
-        ImmutableMap<ResourceLocation, IGlobalLootModifier> immutablemap = builder.build();
+        ImmutableMap<Identifier, IGlobalLootModifier> immutablemap = builder.build();
         this.registeredLootModifiers = immutablemap;
     }
 
-    private IGlobalLootModifier deserializeModifier(ResourceLocation location, JsonElement element) {
+    private IGlobalLootModifier deserializeModifier(Identifier location, JsonElement element) {
         if (!element.isJsonObject()) return null;
         JsonObject object = element.getAsJsonObject();
-        ILootCondition[] lootConditions = GSON_INSTANCE.fromJson(object.get("conditions"), ILootCondition[].class);
+        LootCondition[] lootConditions = GSON_INSTANCE.fromJson(object.get("conditions"), LootCondition[].class);
 
         // For backward compatibility with the initial implementation, fall back to using the location as the type.
         // TODO: Remove fallback in 1.16
-        ResourceLocation serializer = location;
+        Identifier serializer = location;
         if (object.has("type"))
         {
-            serializer = new ResourceLocation(JSONUtils.getString(object, "type"));
+            serializer = new Identifier(JsonHelper.getString(object, "type"));
         }
 
         return ForgeRegistries.LOOT_MODIFIER_SERIALIZERS.getValue(serializer).read(location, object, lootConditions);
     }
 
-    public static GlobalLootModifierSerializer<?> getSerializerForName(ResourceLocation resourcelocation) {
+    public static GlobalLootModifierSerializer<?> getSerializerForName(Identifier resourcelocation) {
         return ForgeRegistries.LOOT_MODIFIER_SERIALIZERS.getValue(resourcelocation);
     }
 

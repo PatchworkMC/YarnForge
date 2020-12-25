@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/gen/decorator/Decorator.java
++++ b/net/minecraft/world/gen/decorator/Decorator.java
+@@ -7,7 +7,7 @@
+ import net.minecraft.util.registry.Registry;
+ import net.minecraft.world.gen.CountConfig;
+ 
+-public abstract class Decorator<DC extends DecoratorConfig> {
++public abstract class Decorator<DC extends DecoratorConfig> extends net.minecraftforge.registries.ForgeRegistryEntry<Decorator<?>> {
+    public static final Decorator<NopeDecoratorConfig> NOPE = register("nope", new NopeDecorator(NopeDecoratorConfig.CODEC));
+    public static final Decorator<ChanceDecoratorConfig> CHANCE = register("chance", new ChanceDecorator(ChanceDecoratorConfig.CODEC));
+    public static final Decorator<CountConfig> COUNT = register("count", new CountDecorator(CountConfig.CODEC));

@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/CobwebBlock.java
++++ b/net/minecraft/block/CobwebBlock.java
+@@ -5,7 +5,7 @@
+ import net.minecraft.util.math.Vec3d;
+ import net.minecraft.world.World;
+ 
+-public class CobwebBlock extends Block {
++public class CobwebBlock extends Block implements net.minecraftforge.common.IForgeShearable {
+    public CobwebBlock(AbstractBlock.Settings properties) {
+       super(properties);
+    }

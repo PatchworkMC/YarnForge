@@ -20,7 +20,6 @@
 package net.minecraftforge.event;
 
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.RepairContainer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;

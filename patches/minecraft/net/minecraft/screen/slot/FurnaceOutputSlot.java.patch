@@ -1,0 +1,9 @@
+--- a/net/minecraft/screen/slot/FurnaceOutputSlot.java
++++ b/net/minecraft/screen/slot/FurnaceOutputSlot.java
+@@ -44,5 +44,6 @@
+       }
+ 
+       this.amount = 0;
++      net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerSmeltedEvent(this.player, stack);
+    }
+ }

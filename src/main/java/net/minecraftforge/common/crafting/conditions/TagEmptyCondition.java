@@ -22,33 +22,33 @@ package net.minecraftforge.common.crafting.conditions;
 import com.google.gson.JsonObject;
 
 import net.minecraft.item.Item;
-import net.minecraft.tags.ITag;
-import net.minecraft.tags.TagCollectionManager;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.tag.ServerTagManagerHolder;
+import net.minecraft.tag.Tag;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
 
 public class TagEmptyCondition implements ICondition
 {
-    private static final ResourceLocation NAME = new ResourceLocation("forge", "tag_empty");
-    private final ResourceLocation tag_name;
+    private static final Identifier NAME = new Identifier("forge", "tag_empty");
+    private final Identifier tag_name;
 
     public TagEmptyCondition(String location)
     {
-        this(new ResourceLocation(location));
+        this(new Identifier(location));
     }
 
     public TagEmptyCondition(String namespace, String path)
     {
-        this(new ResourceLocation(namespace, path));
+        this(new Identifier(namespace, path));
     }
 
-    public TagEmptyCondition(ResourceLocation tag)
+    public TagEmptyCondition(Identifier tag)
     {
         this.tag_name = tag;
     }
 
     @Override
-    public ResourceLocation getID()
+    public Identifier getID()
     {
         return NAME;
     }
@@ -56,8 +56,8 @@ public class TagEmptyCondition implements ICondition
     @Override
     public boolean test()
     {
-        ITag<Item> tag = TagCollectionManager.getManager().getItemTags().get(tag_name);
-        return tag == null || tag.getAllElements().isEmpty();
+        Tag<Item> tag = ServerTagManagerHolder.getTagManager().getItems().getTag(tag_name);
+        return tag == null || tag.values().isEmpty();
     }
 
     @Override
@@ -79,11 +79,11 @@ public class TagEmptyCondition implements ICondition
         @Override
         public TagEmptyCondition read(JsonObject json)
         {
-            return new TagEmptyCondition(new ResourceLocation(JSONUtils.getString(json, "tag")));
+            return new TagEmptyCondition(new Identifier(JsonHelper.getString(json, "tag")));
         }
 
         @Override
-        public ResourceLocation getID()
+        public Identifier getID()
         {
             return TagEmptyCondition.NAME;
         }

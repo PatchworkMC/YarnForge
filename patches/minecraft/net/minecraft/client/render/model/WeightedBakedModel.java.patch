@@ -1,0 +1,53 @@
+--- a/net/minecraft/client/render/model/WeightedBakedModel.java
++++ b/net/minecraft/client/render/model/WeightedBakedModel.java
+@@ -16,7 +16,7 @@
+ import net.minecraftforge.api.distmarker.OnlyIn;
+ 
+ @Environment(EnvType.CLIENT)
+-public class WeightedBakedModel implements BakedModel {
++public class WeightedBakedModel implements net.minecraftforge.client.model.data.IDynamicBakedModel {
+    private final int totalWeight;
+    private final List<WeightedBakedModel.Entry> models;
+    private final BakedModel defaultModel;
+@@ -27,14 +27,20 @@
+       this.defaultModel = (modelsIn.get(0)).model;
+    }
+ 
+-   public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand) {
+-      return (WeightedPicker.getAt(this.models, Math.abs((int)rand.nextLong()) % this.totalWeight)).model.getQuads(state, side, rand);
++   // FORGE: Implement our overloads (here and below) so child models can have custom logic 
++   public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, net.minecraftforge.client.model.data.IModelData modelData) {
++      return (WeightedPicker.getAt(this.models, Math.abs((int)rand.nextLong()) % this.totalWeight)).model.getQuads(state, side, rand, modelData);
+    }
+ 
+    public boolean useAmbientOcclusion() {
+       return this.defaultModel.useAmbientOcclusion();
+    }
+ 
++   @Override
++   public boolean isAmbientOcclusion(BlockState state) {
++      return this.defaultModel.isAmbientOcclusion(state);
++   }
++
+    public boolean hasDepth() {
+       return this.defaultModel.hasDepth();
+    }
+@@ -51,10 +57,18 @@
+       return this.defaultModel.getSprite();
+    }
+ 
++   public Sprite getParticleTexture(net.minecraftforge.client.model.data.IModelData modelData) {
++      return this.defaultModel.getParticleTexture(modelData);
++   }
++
+    public ModelTransformation getTransformation() {
+       return this.defaultModel.getTransformation();
+    }
+ 
++   public BakedModel handlePerspective(net.minecraft.client.render.model.json.ModelTransformation.Mode transformType, net.minecraft.client.util.math.MatrixStack matrixStack) {
++      return this.defaultModel.handlePerspective(transformType, matrixStack);
++   }
++
+    public ModelOverrideList getOverrides() {
+       return this.defaultModel.getOverrides();
+    }

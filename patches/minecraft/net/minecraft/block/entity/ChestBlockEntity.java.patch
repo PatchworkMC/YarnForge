@@ -1,0 +1,59 @@
+--- a/net/minecraft/block/entity/ChestBlockEntity.java
++++ b/net/minecraft/block/entity/ChestBlockEntity.java
+@@ -41,6 +41,7 @@
+    protected float lastAnimationAngle;
+    protected int viewerCount;
+    private int ticksOpen;
++   private net.minecraftforge.common.util.LazyOptional<net.minecraftforge.items.IItemHandlerModifiable> chestHandler;
+ 
+    protected ChestBlockEntity(BlockEntityType<?> typeIn) {
+       super(typeIn);
+@@ -205,7 +206,7 @@
+ 
+    public static int getPlayersLookingInChestCount(BlockView reader, BlockPos posIn) {
+       BlockState blockstate = reader.getBlockState(posIn);
+-      if (blockstate.getBlock().hasBlockEntity()) {
++      if (blockstate.hasTileEntity()) {
+          BlockEntity tileentity = reader.getBlockEntity(posIn);
+          if (tileentity instanceof ChestBlockEntity) {
+             return ((ChestBlockEntity)tileentity).viewerCount;
+@@ -224,4 +225,39 @@
+    protected ScreenHandler createScreenHandler(int id, PlayerInventory player) {
+       return GenericContainerScreenHandler.createGeneric9x3(id, player, this);
+    }
++
++   @Override
++   public void resetBlock() {
++      super.resetBlock();
++      if (this.chestHandler != null) {
++         this.chestHandler.invalidate();
++         this.chestHandler = null;
++      }
++   }
++
++   @Override
++   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> cap, Direction side) {
++       if (!this.removed && cap == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
++          if (this.chestHandler == null)
++             this.chestHandler = net.minecraftforge.common.util.LazyOptional.of(this::createHandler);
++          return this.chestHandler.cast();
++       }
++       return super.getCapability(cap, side);
++   }
++
++   private net.minecraftforge.items.IItemHandlerModifiable createHandler() {
++      BlockState state = this.getCachedState();
++      if (!(state.getBlock() instanceof ChestBlock)) {
++         return new net.minecraftforge.items.wrapper.InvWrapper(this);
++      }
++      Inventory inv = ChestBlock.getInventory((ChestBlock) state.getBlock(), state, getWorld(), getPos(), true);
++      return new net.minecraftforge.items.wrapper.InvWrapper(inv == null ? this : inv);
++   }
++
++   @Override
++   protected void invalidateCaps() {
++      super.invalidateCaps();
++      if (chestHandler != null)
++        chestHandler.invalidate();
++   }
+ }

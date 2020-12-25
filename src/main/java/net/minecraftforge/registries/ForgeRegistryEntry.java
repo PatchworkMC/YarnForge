@@ -20,9 +20,8 @@
 package net.minecraftforge.registries;
 
 import com.google.common.reflect.TypeToken;
-
-import net.minecraft.util.ResourceLocation;
 import javax.annotation.Nullable;
+import net.minecraft.util.Identifier;
 
 /**
  * Default implementation of IForgeRegistryEntry, this is necessary to reduce redundant code.
@@ -35,7 +34,7 @@ public abstract class ForgeRegistryEntry<V extends IForgeRegistryEntry<V>> imple
     @SuppressWarnings("serial")
     private final TypeToken<V> token = new TypeToken<V>(getClass()){};
     public final IRegistryDelegate<V> delegate = new RegistryDelegate<>((V)this, (Class<V>)token.getRawType());
-    private ResourceLocation registryName = null;
+    private Identifier registryName = null;
 
     public final V setRegistryName(String name)
     {
@@ -47,12 +46,12 @@ public abstract class ForgeRegistryEntry<V extends IForgeRegistryEntry<V>> imple
     }
 
     //Helper functions
-    public final V setRegistryName(ResourceLocation name){ return setRegistryName(name.toString()); }
+    public final V setRegistryName(Identifier name){ return setRegistryName(name.toString()); }
 
     public final V setRegistryName(String modID, String name){ return setRegistryName(modID + ":" + name); }
 
     @Nullable
-    public final ResourceLocation getRegistryName()
+    public final Identifier getRegistryName()
     {
         if (delegate.name() != null) return delegate.name();
         return registryName != null ? registryName : null;
@@ -66,7 +65,7 @@ public abstract class ForgeRegistryEntry<V extends IForgeRegistryEntry<V>> imple
      * @param name The registry name
      * @return A verified "correct" registry name
      */
-    ResourceLocation checkRegistryName(String name)
+    Identifier checkRegistryName(String name)
     {
         return GameData.checkPrefix(name, true);
     }
@@ -78,9 +77,9 @@ public abstract class ForgeRegistryEntry<V extends IForgeRegistryEntry<V>> imple
     public abstract static class UncheckedRegistryEntry<V extends IForgeRegistryEntry<V>> extends ForgeRegistryEntry<V>
     {
         @Override
-        ResourceLocation checkRegistryName(String name)
+        Identifier checkRegistryName(String name)
         {
-            return new ResourceLocation(name);
+            return new Identifier(name);
         }
     }
 }

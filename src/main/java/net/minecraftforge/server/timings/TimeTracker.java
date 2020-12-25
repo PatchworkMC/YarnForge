@@ -26,9 +26,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MapMaker;
-
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.tileentity.TileEntity;
 
 /**
  * A class to assist in the collection of data to measure the update times of ticking objects {currently Tile Entities and Entities}
@@ -41,7 +40,7 @@ public class TimeTracker<T>
     /**
      * A tracker for timing tile entity update
      */
-    public static final TimeTracker<TileEntity> TILE_ENTITY_UPDATE = new TimeTracker<>();
+    public static final TimeTracker<BlockEntity> TILE_ENTITY_UPDATE = new TimeTracker<>();
     /**
      * A tracker for timing entity updates
      */

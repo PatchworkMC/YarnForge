@@ -1,0 +1,29 @@
+--- a/net/minecraft/enchantment/EnchantmentTarget.java
++++ b/net/minecraft/enchantment/EnchantmentTarget.java
+@@ -13,7 +13,7 @@
+ import net.minecraft.item.Vanishable;
+ import net.minecraft.item.Wearable;
+ 
+-public enum EnchantmentTarget {
++public enum EnchantmentTarget implements net.minecraftforge.common.IExtensibleEnum {
+    ARMOR {
+       public boolean isAcceptableItem(Item itemIn) {
+          return itemIn instanceof ArmorItem;
+@@ -88,5 +88,16 @@
+    private EnchantmentTarget() {
+    }
+ 
+-   public abstract boolean isAcceptableItem(Item itemIn);
++   private java.util.function.Predicate<Item> delegate;
++   private EnchantmentTarget(java.util.function.Predicate<Item> delegate) {
++      this.delegate = delegate;
++   }
++
++   public static EnchantmentTarget create(String name, java.util.function.Predicate<Item> delegate) {
++      throw new IllegalStateException("Enum not extended");
++   }
++
++   public boolean isAcceptableItem(Item itemIn) {
++      return this.delegate == null ? false : this.delegate.test(itemIn);
++   }
+ }

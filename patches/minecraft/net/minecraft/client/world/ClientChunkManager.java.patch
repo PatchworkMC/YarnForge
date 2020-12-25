@@ -1,0 +1,18 @@
+--- a/net/minecraft/client/world/ClientChunkManager.java
++++ b/net/minecraft/client/world/ClientChunkManager.java
+@@ -61,6 +61,7 @@
+          int i = this.chunks.getIndex(x, z);
+          WorldChunk chunk = this.chunks.getChunk(i);
+          if (positionEquals(chunk, x, z)) {
++            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Unload(chunk));
+             this.chunks.compareAndSet(i, chunk, (WorldChunk)null);
+          }
+ 
+@@ -114,6 +115,7 @@
+          }
+ 
+          this.world.resetChunkColor(chunkX, chunkZ);
++         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Load(chunk));
+          return chunk;
+       }
+    }

@@ -1,0 +1,44 @@
+--- a/net/minecraft/client/util/math/AffineTransformation.java
++++ b/net/minecraft/client/util/math/AffineTransformation.java
+@@ -14,7 +14,7 @@
+ import org.apache.commons.lang3.tuple.Triple;
+ 
+ @Environment(EnvType.CLIENT)
+-public final class AffineTransformation {
++public final class AffineTransformation implements net.minecraftforge.client.extensions.IForgeTransformationMatrix {
+    private final Matrix4f matrix;
+    private boolean initialized;
+    @Nullable
+@@ -138,4 +138,32 @@
+    public int hashCode() {
+       return Objects.hash(this.matrix);
+    }
++
++    // FORGE START
++    public Vector3f getTranslation() {
++        init();
++        return translation.copy();
++    }
++    public Vector3f getScale() {
++        init();
++        return scale.copy();
++    }
++
++    public Quaternion getRightRot() {
++        init();
++        return rotation1.copy();
++    }
++
++    private Matrix3f normalTransform = null;
++    public Matrix3f getNormalMatrix() {
++        checkNormalTransform();
++        return normalTransform;
++    }
++    private void checkNormalTransform() {
++        if (normalTransform == null) {
++            normalTransform = new Matrix3f(matrix);
++            normalTransform.invert();
++            normalTransform.transpose();
++        }
++    }
+ }

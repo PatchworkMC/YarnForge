@@ -1,0 +1,12 @@
+--- a/net/minecraft/world/chunk/light/ChunkBlockLightProvider.java
++++ b/net/minecraft/world/chunk/light/ChunkBlockLightProvider.java
+@@ -117,4 +117,9 @@
+       this.lightStorage.updateAll();
+       this.updateLevel(Long.MAX_VALUE, p_215623_1_.asLong(), 15 - p_215623_2_, true);
+    }
++
++   @Override
++   public int queuedUpdateSize() {
++      return lightStorage.queuedUpdateSize();
++   }
+ }

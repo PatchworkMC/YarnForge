@@ -19,9 +19,9 @@
 
 package net.minecraftforge.debug.item;
 
-import net.minecraft.entity.monster.EndermanEntity;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.mob.EndermanEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.*;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.RegistryObject;
@@ -37,7 +37,7 @@ public class EnderMaskTest
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
 
     public static RegistryObject<Item> ender_mask = ITEMS.register("ender_mask", () ->
-            new ArmorItem(ArmorMaterial.LEATHER, EquipmentSlotType.HEAD, (new Item.Properties().group(ItemGroup.MISC)))
+            new ArmorItem(ArmorMaterials.LEATHER, EquipmentSlot.HEAD, (new Item.Settings().group(ItemGroup.MISC)))
             {
                 @Override
                 public boolean isEnderMask(ItemStack stack, PlayerEntity player, EndermanEntity endermanEntity)

@@ -1,0 +1,27 @@
+--- a/net/minecraft/server/command/CommandManager.java
++++ b/net/minecraft/server/command/CommandManager.java
+@@ -131,6 +131,7 @@
+       if (envType.integrated) {
+          PublishCommand.register(this.dispatcher);
+       }
++      net.minecraftforge.event.ForgeEventFactory.onCommandRegister(this.dispatcher, envType);
+ 
+       this.dispatcher.findAmbiguities((p_201302_1_, p_201302_2_, p_201302_3_, p_201302_4_) -> {
+          LOGGER.warn("Ambiguity between arguments {} and {} with inputs: {}", this.dispatcher.getPath(p_201302_2_), this.dispatcher.getPath(p_201302_3_), p_201302_4_);
+@@ -150,7 +151,15 @@
+ 
+       try {
+          try {
+-            return this.dispatcher.execute(stringreader, source);
++            ParseResults<ServerCommandSource> parse = this.dispatcher.parse(stringreader, source);
++            net.minecraftforge.event.CommandEvent event = new net.minecraftforge.event.CommandEvent(parse);
++            if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) {
++               if (event.getException() != null) {
++                  com.google.common.base.Throwables.throwIfUnchecked(event.getException());
++               }
++               return 1;
++            }
++            return this.dispatcher.execute(event.getParseResults());
+          } catch (CommandException commandexception) {
+             source.sendError(commandexception.getTextMessage());
+             return 0;

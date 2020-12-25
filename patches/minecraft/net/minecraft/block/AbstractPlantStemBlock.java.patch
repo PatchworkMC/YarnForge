@@ -1,0 +1,15 @@
+--- a/net/minecraft/block/AbstractPlantStemBlock.java
++++ b/net/minecraft/block/AbstractPlantStemBlock.java
+@@ -32,10 +32,11 @@
+    }
+ 
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random) {
+-      if (state.get(AGE) < 25 && random.nextDouble() < this.growthChance) {
++      if (state.get(AGE) < 25 && net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos.offset(this.growthDirection), worldIn.getBlockState(pos.offset(this.growthDirection)),random.nextDouble() < this.growthChance)) {
+          BlockPos blockpos = pos.offset(this.growthDirection);
+          if (this.chooseStemState(worldIn.getBlockState(blockpos))) {
+             worldIn.setBlockState(blockpos, state.cycle(AGE));
++            net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, blockpos, worldIn.getBlockState(blockpos));
+          }
+       }
+ 

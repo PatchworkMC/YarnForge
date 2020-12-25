@@ -1,0 +1,12 @@
+--- a/net/minecraft/entity/ai/pathing/SpiderNavigation.java
++++ b/net/minecraft/entity/ai/pathing/SpiderNavigation.java
+@@ -38,7 +38,8 @@
+          super.tick();
+       } else {
+          if (this.targetPos != null) {
+-            if (!this.targetPos.isWithinDistance(this.entity.getPos(), (double)this.entity.getWidth()) && (!(this.entity.getY() > (double)this.targetPos.getY()) || !(new BlockPos((double)this.targetPos.getX(), this.entity.getY(), (double)this.targetPos.getZ())).isWithinDistance(this.entity.getPos(), (double)this.entity.getWidth()))) {
++            // FORGE: Fix MC-94054
++            if (!this.targetPos.isWithinDistance(this.entity.getPos(), Math.max((double)this.entity.getWidth(), 1.0D)) && (!(this.entity.getY() > (double)this.targetPos.getY()) || !(new BlockPos((double)this.targetPos.getX(), this.entity.getY(), (double)this.targetPos.getZ())).isWithinDistance(this.entity.getPos(), Math.max((double)this.entity.getWidth(), 1.0D)))) {
+                this.entity.getMoveControl().moveTo((double)this.targetPos.getX(), (double)this.targetPos.getY(), (double)this.targetPos.getZ(), this.speed);
+             } else {
+                this.targetPos = null;

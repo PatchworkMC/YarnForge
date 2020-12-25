@@ -1,0 +1,91 @@
+--- a/net/minecraft/block/piston/PistonHandler.java
++++ b/net/minecraft/block/piston/PistonHandler.java
+@@ -2,9 +2,7 @@
+ 
+ import com.google.common.collect.Lists;
+ import java.util.List;
+-import net.minecraft.block.Block;
+ import net.minecraft.block.BlockState;
+-import net.minecraft.block.Blocks;
+ import net.minecraft.block.PistonBlock;
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.util.math.Direction;
+@@ -51,7 +49,7 @@
+       } else {
+          for(int i = 0; i < this.movedBlocks.size(); ++i) {
+             BlockPos blockpos = this.movedBlocks.get(i);
+-            if (isBlockSticky(this.world.getBlockState(blockpos).getBlock()) && !this.canMoveAdjacentBlock(blockpos)) {
++            if (this.world.getBlockState(blockpos).isStickyBlock() && !this.canMoveAdjacentBlock(blockpos)) {
+                return false;
+             }
+          }
+@@ -60,24 +58,9 @@
+       }
+    }
+ 
+-   private static boolean isBlockSticky(Block p_227029_0_) {
+-      return p_227029_0_ == Blocks.SLIME_BLOCK || p_227029_0_ == Blocks.HONEY_BLOCK;
+-   }
+-
+-   private static boolean isAdjacentBlockStuck(Block p_227030_0_, Block p_227030_1_) {
+-      if (p_227030_0_ == Blocks.HONEY_BLOCK && p_227030_1_ == Blocks.SLIME_BLOCK) {
+-         return false;
+-      } else if (p_227030_0_ == Blocks.SLIME_BLOCK && p_227030_1_ == Blocks.HONEY_BLOCK) {
+-         return false;
+-      } else {
+-         return isBlockSticky(p_227030_0_) || isBlockSticky(p_227030_1_);
+-      }
+-   }
+-
+    private boolean tryMove(BlockPos origin, Direction facingIn) {
+       BlockState blockstate = this.world.getBlockState(origin);
+-      Block block = blockstate.getBlock();
+-      if (blockstate.isAir()) {
++      if (world.isAir(origin)) {
+          return true;
+       } else if (!PistonBlock.isMovable(blockstate, this.world, origin, this.motionDirection, false, facingIn)) {
+          return true;
+@@ -90,12 +73,12 @@
+          if (i + this.movedBlocks.size() > 12) {
+             return false;
+          } else {
+-            while(isBlockSticky(block)) {
++            BlockState oldState;
++            while(blockstate.isStickyBlock()) {
+                BlockPos blockpos = origin.offset(this.motionDirection.getOpposite(), i);
+-               Block block1 = block;
++               oldState = blockstate;
+                blockstate = this.world.getBlockState(blockpos);
+-               block = blockstate.getBlock();
+-               if (blockstate.isAir() || !isAdjacentBlockStuck(block1, block) || !PistonBlock.isMovable(blockstate, this.world, blockpos, this.motionDirection, false, this.motionDirection.getOpposite()) || blockpos.equals(this.posFrom)) {
++               if (blockstate.isAir(this.world, blockpos) || !oldState.canStickTo(blockstate) || !PistonBlock.isMovable(blockstate, this.world, blockpos, this.motionDirection, false, this.motionDirection.getOpposite()) || blockpos.equals(this.posFrom)) {
+                   break;
+                }
+ 
+@@ -122,7 +105,7 @@
+ 
+                   for(int k = 0; k <= j + l; ++k) {
+                      BlockPos blockpos2 = this.movedBlocks.get(k);
+-                     if (isBlockSticky(this.world.getBlockState(blockpos2).getBlock()) && !this.canMoveAdjacentBlock(blockpos2)) {
++                     if (this.world.getBlockState(blockpos2).isStickyBlock() && !this.canMoveAdjacentBlock(blockpos2)) {
+                         return false;
+                      }
+                   }
+@@ -131,7 +114,7 @@
+                }
+ 
+                blockstate = this.world.getBlockState(blockpos1);
+-               if (blockstate.isAir()) {
++               if (blockstate.isAir(world, blockpos1)) {
+                   return true;
+                }
+ 
+@@ -176,7 +159,7 @@
+          if (direction.getAxis() != this.motionDirection.getAxis()) {
+             BlockPos blockpos = fromPos.offset(direction);
+             BlockState blockstate1 = this.world.getBlockState(blockpos);
+-            if (isAdjacentBlockStuck(blockstate1.getBlock(), blockstate.getBlock()) && !this.tryMove(blockpos, direction)) {
++            if (blockstate1.canStickTo(blockstate) && !this.tryMove(blockpos, direction)) {
+                return false;
+             }
+          }

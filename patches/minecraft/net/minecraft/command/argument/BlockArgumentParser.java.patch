@@ -1,0 +1,20 @@
+--- a/net/minecraft/command/argument/BlockArgumentParser.java
++++ b/net/minecraft/command/argument/BlockArgumentParser.java
+@@ -169,7 +169,7 @@
+ 
+    private boolean hasBlockEntity(TagGroup<Block> p_212598_1_) {
+       if (this.blockState != null) {
+-         return this.blockState.getBlock().hasBlockEntity();
++         return this.blockState.hasTileEntity();
+       } else {
+          if (this.tagId != null) {
+             Tag<Block> itag = p_212598_1_.getTag(this.tagId);
+@@ -283,7 +283,7 @@
+             builder.suggest(String.valueOf('['));
+          }
+ 
+-         if (this.blockState.getBlock().hasBlockEntity()) {
++         if (this.blockState.hasTileEntity()) {
+             builder.suggest(String.valueOf('{'));
+          }
+       }

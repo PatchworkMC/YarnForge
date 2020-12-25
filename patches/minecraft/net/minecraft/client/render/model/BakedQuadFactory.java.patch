@@ -1,0 +1,21 @@
+--- a/net/minecraft/client/render/model/BakedQuadFactory.java
++++ b/net/minecraft/client/render/model/BakedQuadFactory.java
+@@ -48,6 +48,7 @@
+          this.encodeDirection(aint, direction);
+       }
+ 
++      net.minecraftforge.client.ForgeHooksClient.fillNormal(aint, direction);
+       return new BakedQuad(aint, face.tintIndex, direction, sprite, shade);
+    }
+ 
+@@ -130,8 +131,8 @@
+       vertexData[i + 1] = Float.floatToRawIntBits(vector.getY());
+       vertexData[i + 2] = Float.floatToRawIntBits(vector.getZ());
+       vertexData[i + 3] = -1;
+-      vertexData[i + 4] = Float.floatToRawIntBits(sprite.getFrameU((double)blockFaceUV.getU(vertexIndex)));
+-      vertexData[i + 4 + 1] = Float.floatToRawIntBits(sprite.getFrameV((double)blockFaceUV.getV(vertexIndex)));
++      vertexData[i + 4] = Float.floatToRawIntBits(sprite.getFrameU((double)blockFaceUV.getU(vertexIndex) * .999 + blockFaceUV.getU((vertexIndex + 2) % 4) * .001));
++      vertexData[i + 4 + 1] = Float.floatToRawIntBits(sprite.getFrameV((double)blockFaceUV.getV(vertexIndex) * .999 + blockFaceUV.getV((vertexIndex + 2) % 4) * .001));
+    }
+ 
+    private void rotateVertex(Vector3f vec, @Nullable ModelRotation partRotation) {

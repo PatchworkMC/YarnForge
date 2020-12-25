@@ -1,0 +1,20 @@
+--- a/net/minecraft/client/util/math/Vector3f.java
++++ b/net/minecraft/client/util/math/Vector3f.java
+@@ -201,4 +201,17 @@
+    public String toString() {
+       return "[" + this.x + ", " + this.y + ", " + this.z + "]";
+    }
++
++    // Forge start
++    public Vector3f(float[] values) {
++        set(values);
++    }
++    public void set(float[] values) {
++        this.x = values[0];
++        this.y = values[1];
++        this.z = values[2];
++    }
++    public void setX(float x) { this.x = x; }
++    public void setY(float y) { this.y = y; }
++    public void setZ(float z) { this.z = z; }
+ }

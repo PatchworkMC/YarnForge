@@ -1,0 +1,40 @@
+--- a/net/minecraft/client/gui/widget/AbstractButtonWidget.java
++++ b/net/minecraft/client/gui/widget/AbstractButtonWidget.java
+@@ -113,7 +113,7 @@
+       this.drawTexture(matrixStack, this.x, this.y, 0, 46 + i * 20, this.width / 2, this.height);
+       this.drawTexture(matrixStack, this.x + this.width / 2, this.y, 200 - this.width / 2, 46 + i * 20, this.width / 2, this.height);
+       this.renderBg(matrixStack, minecraft, mouseX, mouseY);
+-      int j = this.active ? 16777215 : 10526880;
++      int j = getFGColor();
+       drawCenteredText(matrixStack, fontrenderer, this.getMessage(), this.x + this.width / 2, this.y + (this.height - 8) / 2, j | MathHelper.ceil(this.alpha * 255.0F) << 24);
+    }
+ 
+@@ -208,6 +208,10 @@
+       this.width = width;
+    }
+ 
++   public void setHeight(int value) {
++      this.height = value;
++   }
++
+    public void setAlpha(float alpha) {
+       this.alpha = alpha;
+    }
+@@ -235,4 +239,17 @@
+    protected void setFocused(boolean focused) {
+       this.focused = focused;
+    }
++
++   public static final int UNSET_FG_COLOR = -1;
++   protected int packedFGColor = UNSET_FG_COLOR;
++   public int getFGColor() {
++      if (packedFGColor != UNSET_FG_COLOR) return packedFGColor;
++      return this.active ? 16777215 : 10526880; // White : Light Grey
++   }
++   public void setFGColor(int color) {
++      this.packedFGColor = color;
++   }
++   public void clearFGColor() {
++      this.packedFGColor = UNSET_FG_COLOR;
++   }
+ }

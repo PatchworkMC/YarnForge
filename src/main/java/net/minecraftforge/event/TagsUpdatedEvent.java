@@ -19,7 +19,7 @@
 
 package net.minecraftforge.event;
 
-import net.minecraft.tags.ITagCollectionSupplier;
+import net.minecraft.tag.TagManager;
 import net.minecraftforge.eventbus.api.Event;
 
 /**
@@ -31,9 +31,9 @@ import net.minecraftforge.eventbus.api.Event;
  */
 public class TagsUpdatedEvent extends Event
 {
-    private final ITagCollectionSupplier manager;
+    private final TagManager manager;
 
-    public TagsUpdatedEvent(ITagCollectionSupplier manager)
+    public TagsUpdatedEvent(TagManager manager)
     {
         this.manager = manager;
     }
@@ -41,7 +41,7 @@ public class TagsUpdatedEvent extends Event
     /**
      * @return The network tag manager that has been updated with newly received tags.
      */
-    public ITagCollectionSupplier getTagManager()
+    public TagManager getTagManager()
     {
         return manager;
     }
@@ -51,7 +51,7 @@ public class TagsUpdatedEvent extends Event
      */
     public static class VanillaTagTypes extends TagsUpdatedEvent
     {
-        public VanillaTagTypes(ITagCollectionSupplier manager)
+        public VanillaTagTypes(TagManager manager)
         {
             super(manager);
         }
@@ -62,7 +62,7 @@ public class TagsUpdatedEvent extends Event
      */
     public static class CustomTagTypes extends TagsUpdatedEvent
     {
-        public CustomTagTypes(ITagCollectionSupplier manager)
+        public CustomTagTypes(TagManager manager)
         {
             super(manager);
         }

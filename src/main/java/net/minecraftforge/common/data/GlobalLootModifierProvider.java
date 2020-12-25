@@ -23,11 +23,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import cpw.mods.modlauncher.api.LamdbaExceptionUtils;
+import net.minecraft.data.DataCache;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DirectoryCache;
-import net.minecraft.data.IDataProvider;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Tuple;
+import net.minecraft.data.DataProvider;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import net.minecraftforge.common.loot.GlobalLootModifierSerializer;
 import net.minecraftforge.common.loot.IGlobalLootModifier;
 import net.minecraftforge.common.loot.LootModifier;
@@ -45,12 +45,12 @@ import java.util.stream.Collectors;
  *
  * This provider only requires implementing {@link #start()} and calling {@link #add} from it.
  */
-public abstract class GlobalLootModifierProvider implements IDataProvider
+public abstract class GlobalLootModifierProvider implements DataProvider
 {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final DataGenerator gen;
     private final String modid;
-    private final Map<String, Tuple<GlobalLootModifierSerializer<?>, JsonObject>> toSerialize = new HashMap<>();
+    private final Map<String, Pair<GlobalLootModifierSerializer<?>, JsonObject>> toSerialize = new HashMap<>();
     private boolean replace = false;
 
     public GlobalLootModifierProvider(DataGenerator gen, String modid)
@@ -73,30 +73,30 @@ public abstract class GlobalLootModifierProvider implements IDataProvider
     protected abstract void start();
 
     @Override
-    public void act(DirectoryCache cache) throws IOException
+    public void run(DataCache cache) throws IOException
     {
         start();
 
-        Path forgePath = gen.getOutputFolder().resolve("data/forge/loot_modifiers/global_loot_modifiers.json");
+        Path forgePath = gen.getOutput().resolve("data/forge/loot_modifiers/global_loot_modifiers.json");
         String modPath = "data/" + modid + "/loot_modifiers/";
-        List<ResourceLocation> entries = new ArrayList<>();
+        List<Identifier> entries = new ArrayList<>();
 
         toSerialize.forEach(LamdbaExceptionUtils.rethrowBiConsumer((name, pair) ->
         {
-            entries.add(new ResourceLocation(modid, name));
-            Path modifierPath = gen.getOutputFolder().resolve(modPath + name + ".json");
+            entries.add(new Identifier(modid, name));
+            Path modifierPath = gen.getOutput().resolve(modPath + name + ".json");
 
-            JsonObject json = pair.getB();
-            json.addProperty("type", pair.getA().getRegistryName().toString());
+            JsonObject json = pair.getRight();
+            json.addProperty("type", pair.getLeft().getRegistryName().toString());
 
-            IDataProvider.save(GSON, cache, json, modifierPath);
+            DataProvider.writeToPath(GSON, cache, json, modifierPath);
         }));
 
         JsonObject forgeJson = new JsonObject();
         forgeJson.addProperty("replace", this.replace);
-        forgeJson.add("entries", GSON.toJsonTree(entries.stream().map(ResourceLocation::toString).collect(Collectors.toList())));
+        forgeJson.add("entries", GSON.toJsonTree(entries.stream().map(Identifier::toString).collect(Collectors.toList())));
 
-        IDataProvider.save(GSON, cache, forgeJson, forgePath);
+        DataProvider.writeToPath(GSON, cache, forgeJson, forgePath);
     }
 
     /**
@@ -108,7 +108,7 @@ public abstract class GlobalLootModifierProvider implements IDataProvider
      */
     public <T extends IGlobalLootModifier> void add(String modifier, GlobalLootModifierSerializer<T> serializer, T instance)
     {
-        this.toSerialize.put(modifier, new Tuple<>(serializer, serializer.write(instance)));
+        this.toSerialize.put(modifier, new Pair<>(serializer, serializer.write(instance)));
     }
 
     @Override

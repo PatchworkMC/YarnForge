@@ -1,0 +1,22 @@
+--- a/net/minecraft/util/registry/BuiltinRegistries.java
++++ b/net/minecraft/util/registry/BuiltinRegistries.java
+@@ -44,7 +44,7 @@
+       return StructureProcessorLists.ZOMBIE_PLAINS;
+    });
+    public static final Registry<StructurePool> STRUCTURE_POOL = addRegistry(Registry.TEMPLATE_POOL_WORLDGEN, StructurePools::initDefaultPools);
+-   public static final Registry<Biome> BIOME = addRegistry(Registry.BIOME_KEY, () -> {
++   @Deprecated public static final Registry<Biome> BIOME = forge(Registry.BIOME_KEY, () -> {
+       return BuiltinBiomes.PLAINS;
+    });
+    public static final Registry<ChunkGeneratorSettings> CHUNK_GENERATOR_SETTINGS = addRegistry(Registry.NOISE_SETTINGS_WORLDGEN, ChunkGeneratorSettings::getInstance);
+@@ -53,6 +53,10 @@
+       return addRegistry(registryKey, Lifecycle.stable(), defaultSupplier);
+    }
+ 
++   private static <T extends net.minecraftforge.registries.IForgeRegistryEntry<T>> Registry<T> forge(RegistryKey<? extends Registry<T>> key, Supplier<T> def) {
++      return addRegistry(key, net.minecraftforge.registries.GameData.getWrapper(key, Lifecycle.stable()), def, Lifecycle.stable());
++   }
++
+    private static <T> Registry<T> addRegistry(RegistryKey<? extends Registry<T>> registryKey, Lifecycle lifecycle, Supplier<T> defaultSupplier) {
+       return addRegistry(registryKey, new SimpleRegistry<>(registryKey, lifecycle), defaultSupplier, lifecycle);
+    }

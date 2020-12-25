@@ -1,0 +1,23 @@
+--- a/net/minecraft/tag/FluidTags.java
++++ b/net/minecraft/tag/FluidTags.java
+@@ -13,7 +13,20 @@
+       return REQUIRED_TAGS.add(id);
+    }
+ 
++   public static net.minecraftforge.common.Tags.IOptionalNamedTag<Fluid> createOptional(Identifier name) {
++       return createOptional(name, null);
++   }
++
++   public static net.minecraftforge.common.Tags.IOptionalNamedTag<Fluid> createOptional(Identifier name, @javax.annotation.Nullable java.util.Set<java.util.function.Supplier<Fluid>> defaults) {
++      return REQUIRED_TAGS.createOptional(name, defaults);
++   }
++
+    public static List<? extends Tag.Identified<Fluid>> getRequiredTags() {
+       return REQUIRED_TAGS.getTags();
+    }
++
++   //Forge: Readd this stripped getter like the other tag classes
++   public static TagGroup<Fluid> a() {
++       return REQUIRED_TAGS.getGroup();
++   }
+ }

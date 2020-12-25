@@ -1,7 +1,7 @@
 --- a/net/minecraft/client/ClientBrandRetriever.java
 +++ b/net/minecraft/client/ClientBrandRetriever.java
-@@ -6,6 +6,6 @@
- @OnlyIn(Dist.CLIENT)
+@@ -8,6 +8,6 @@
+ @Environment(EnvType.CLIENT)
  public class ClientBrandRetriever {
     public static String getClientModName() {
 -      return "vanilla";

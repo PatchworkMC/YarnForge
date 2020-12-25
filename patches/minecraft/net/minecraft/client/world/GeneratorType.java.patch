@@ -1,0 +1,21 @@
+--- a/net/minecraft/client/world/GeneratorType.java
++++ b/net/minecraft/client/world/GeneratorType.java
+@@ -119,6 +119,9 @@
+    private GeneratorType(String p_i232324_1_) {
+       this.translationKey = new TranslatableText("generator." + p_i232324_1_);
+    }
++   public GeneratorType(Text displayName) {
++      this.translationKey = displayName;
++   }
+ 
+    private static GeneratorOptions createFixedBiomeOptions(DynamicRegistryManager p_243452_0_, GeneratorOptions p_243452_1_, GeneratorType p_243452_2_, Biome p_243452_3_) {
+       BiomeSource biomeprovider = new FixedBiomeSource(p_243452_3_);
+@@ -172,4 +175,8 @@
+    public interface ScreenProvider {
+       Screen createEditScreen(CreateWorldScreen p_createEditScreen_1_, GeneratorOptions p_createEditScreen_2_);
+    }
++
++   // Forge start
++   // For internal use only, automatically called for all ForgeWorldTypes. Register your ForgeWorldType in the forge registry!
++   public static void registerGenerator(GeneratorType gen) { VALUES.add(gen); }
+ }

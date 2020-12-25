@@ -21,9 +21,6 @@ package net.minecraftforge.common.animation;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
-
-import net.minecraft.util.IStringSerializable;
-
 import java.util.function.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -35,13 +32,14 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import javax.annotation.Nullable;
+import net.minecraft.util.StringIdentifiable;
 
 /**
  * Various implementations of ITimeValue.
  */
 public final class TimeValues
 {
-    public static enum IdentityValue implements ITimeValue, IStringSerializable
+    public static enum IdentityValue implements ITimeValue, StringIdentifiable
     {
         INSTANCE;
 
@@ -52,7 +50,7 @@ public final class TimeValues
         }
 
         @Override
-        public String getString()
+        public String asString()
         {
             return "identity";
         }
@@ -231,7 +229,7 @@ public final class TimeValues
         }
     }
 
-    public static final class ParameterValue implements ITimeValue, IStringSerializable
+    public static final class ParameterValue implements ITimeValue, StringIdentifiable
     {
         private final String parameterName;
         private final Function<String, ITimeValue> valueResolver;
@@ -244,7 +242,7 @@ public final class TimeValues
         }
 
         @Override
-        public String getString()
+        public String asString()
         {
             return parameterName;
         }
@@ -344,9 +342,9 @@ public final class TimeValues
                         write(out, p.f);
                         out.endArray();
                     }
-                    else if(parameter instanceof IStringSerializable)
+                    else if(parameter instanceof StringIdentifiable)
                     {
-                        out.value("#" + ((IStringSerializable)parameter).getString());
+                        out.value("#" + ((StringIdentifiable)parameter).asString());
                     }
                 }
 

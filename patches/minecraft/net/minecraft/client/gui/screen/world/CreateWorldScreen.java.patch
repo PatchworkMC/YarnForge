@@ -1,0 +1,19 @@
+--- a/net/minecraft/client/gui/screen/world/CreateWorldScreen.java
++++ b/net/minecraft/client/gui/screen/world/CreateWorldScreen.java
+@@ -117,7 +117,7 @@
+ 
+    public static CreateWorldScreen method_31130(@Nullable Screen p_243425_0_) {
+       DynamicRegistryManager.Impl dynamicregistries$impl = DynamicRegistryManager.create();
+-      return new CreateWorldScreen(p_243425_0_, DataPackSettings.SAFE_MODE, new MoreOptionsDialog(dynamicregistries$impl, GeneratorOptions.getDefaultOptions(dynamicregistries$impl.get(Registry.DIMENSION_TYPE_KEY), dynamicregistries$impl.get(Registry.BIOME_KEY), dynamicregistries$impl.get(Registry.NOISE_SETTINGS_WORLDGEN)), Optional.of(GeneratorType.DEFAULT), OptionalLong.empty()));
++      return new CreateWorldScreen(p_243425_0_, DataPackSettings.SAFE_MODE, new MoreOptionsDialog(dynamicregistries$impl, net.minecraftforge.client.ForgeHooksClient.getDefaultWorldType().map(type -> type.createDefaultOptions(dynamicregistries$impl, new java.util.Random().nextLong(), true, false)).orElseGet(() -> GeneratorOptions.getDefaultOptions(dynamicregistries$impl.get(Registry.DIMENSION_TYPE_KEY), dynamicregistries$impl.get(Registry.BIOME_KEY), dynamicregistries$impl.get(Registry.NOISE_SETTINGS_WORLDGEN))), net.minecraftforge.client.ForgeHooksClient.getDefaultWorldType(), OptionalLong.empty()));
+    }
+ 
+    private CreateWorldScreen(@Nullable Screen p_i242063_1_, DataPackSettings p_i242063_2_, MoreOptionsDialog p_i242063_3_) {
+@@ -549,6 +549,7 @@
+          File file1 = path.toFile();
+          if (this.field_25792 == null) {
+             this.field_25792 = new ResourcePackManager(new VanillaDataPackProvider(), new FileResourcePackProvider(file1, ResourcePackSource.field_25347));
++            net.minecraftforge.fml.packs.ResourcePackLoader.loadResourcePacks(this.field_25792, net.minecraftforge.fml.server.ServerLifecycleHooks::buildPackFinder);
+             this.field_25792.scanPacks();
+          }
+ 

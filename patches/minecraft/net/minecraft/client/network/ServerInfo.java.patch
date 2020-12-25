@@ -1,0 +1,10 @@
+--- a/net/minecraft/client/network/ServerInfo.java
++++ b/net/minecraft/client/network/ServerInfo.java
+@@ -28,6 +28,7 @@
+    @Nullable
+    private String icon;
+    private boolean local;
++   public net.minecraftforge.fml.client.ExtendedServerListData forgeData = null;
+ 
+    public ServerInfo(String name, String ip, boolean isLan) {
+       this.name = name;

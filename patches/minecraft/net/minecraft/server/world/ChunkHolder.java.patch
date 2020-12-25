@@ -1,0 +1,11 @@
+--- a/net/minecraft/server/world/ChunkHolder.java
++++ b/net/minecraft/server/world/ChunkHolder.java
+@@ -206,7 +206,7 @@
+    }
+ 
+    private void tryUpdateBlockEntityAt(World p_244385_1_, BlockPos p_244385_2_, BlockState p_244385_3_) {
+-      if (p_244385_3_.getBlock().hasBlockEntity()) {
++      if (p_244385_3_.hasTileEntity()) {
+          this.sendBlockEntityUpdatePacket(p_244385_1_, p_244385_2_);
+       }
+ 

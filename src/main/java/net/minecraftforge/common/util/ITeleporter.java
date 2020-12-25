@@ -22,14 +22,12 @@ package net.minecraftforge.common.util;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
-
-import net.minecraft.block.PortalInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.Teleporter;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.PortalForcer;
+import net.minecraft.world.TeleportTarget;
 
 /**
  * Interface for handling the placement of entities during dimension change.
@@ -79,9 +77,9 @@ public interface ITeleporter
      * @return The location, rotation, and motion of the entity in the destWorld after the teleport
      */
     @Nullable
-    default PortalInfo getPortalInfo(Entity entity, ServerWorld destWorld, Function<ServerWorld, PortalInfo> defaultPortalInfo)
+    default TeleportTarget getPortalInfo(Entity entity, ServerWorld destWorld, Function<ServerWorld, TeleportTarget> defaultPortalInfo)
     {
-        return this.isVanilla() ? defaultPortalInfo.apply(destWorld) : new PortalInfo(entity.getPositionVec(), Vector3d.ZERO, entity.rotationYaw, entity.rotationPitch);
+        return this.isVanilla() ? defaultPortalInfo.apply(destWorld) : new TeleportTarget(entity.getPos(), Vec3d.ZERO, entity.yaw, entity.pitch);
     }
     
     /**
@@ -89,6 +87,6 @@ public interface ITeleporter
      */
     default boolean isVanilla()
     {
-        return this.getClass() == Teleporter.class;
+        return this.getClass() == PortalForcer.class;
     }
 }

@@ -1,0 +1,28 @@
+--- a/net/minecraft/client/gui/screen/ingame/EnchantmentScreen.java
++++ b/net/minecraft/client/gui/screen/ingame/EnchantmentScreen.java
+@@ -149,7 +149,7 @@
+             int i2 = 86 - this.textRenderer.getWidth(s);
+             StringVisitable itextproperties = EnchantingPhrases.getInstance().generatePhrase(this.textRenderer, i2);
+             int j2 = 6839882;
+-            if ((l < i1 + 1 || this.client.player.experienceLevel < l1) && !this.client.player.abilities.creativeMode) {
++            if (((l < i1 + 1 || this.client.player.experienceLevel < l1) && !this.client.player.abilities.creativeMode) || this.handler.enchantmentId[i1] == -1) { // Forge: render buttons as disabled when enchantable but enchantability not met on lower levels
+                this.drawTexture(matrixStack, j1, j + 14 + 19 * i1, 0, 185, 108, 19);
+                this.drawTexture(matrixStack, j1 + 1, j + 15 + 19 * i1, 16 * i1, 239, 16, 16);
+                this.textRenderer.drawTrimmed(itextproperties, k1, j + 16 + 19 * i1, i2, (j2 & 16711422) >> 1);
+@@ -188,10 +188,13 @@
+          Enchantment enchantment = Enchantment.byRawId((this.handler).enchantmentId[j]);
+          int l = (this.handler).enchantmentLevel[j];
+          int i1 = j + 1;
+-         if (this.isPointWithinBounds(60, 14 + 19 * j, 108, 17, (double)mouseX, (double)mouseY) && k > 0 && l >= 0 && enchantment != null) {
++         if (this.isPointWithinBounds(60, 14 + 19 * j, 108, 17, (double)mouseX, (double)mouseY) && k > 0) {
+             List<Text> list = Lists.newArrayList();
+-            list.add((new TranslatableText("container.enchant.clue", enchantment.getName(l))).formatted(Formatting.WHITE));
+-            if (!flag) {
++            list.add((new TranslatableText("container.enchant.clue", enchantment == null ? "" : enchantment.getName(l))).formatted(Formatting.WHITE));
++            if(enchantment == null) {
++               list.add(new LiteralText(""));
++               list.add(new TranslatableText("forge.container.enchant.limitedEnchantability").formatted(Formatting.RED));
++            } else if (!flag) {
+                list.add(LiteralText.EMPTY);
+                if (this.client.player.experienceLevel < k) {
+                   list.add((new TranslatableText("container.enchant.level.requirement", (this.handler).enchantmentPower[j])).formatted(Formatting.RED));

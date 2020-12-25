@@ -1,0 +1,22 @@
+--- a/net/minecraft/client/render/entity/EntityRenderDispatcher.java
++++ b/net/minecraft/client/render/entity/EntityRenderDispatcher.java
+@@ -190,7 +190,10 @@
+       this.playerRenderer = new PlayerEntityRenderer(this);
+       this.modelRenderers.put("default", this.playerRenderer);
+       this.modelRenderers.put("slim", new PlayerEntityRenderer(this, true));
++   }
+ 
++   //FORGE: Validate the existence of a renderer for each entity type after modded entity renderers have been added
++   public void validateRendererExistence() {
+       for(EntityType<?> entitytype : Registry.ENTITY_TYPE) {
+          if (entitytype != EntityType.PLAYER && !this.renderers.containsKey(entitytype)) {
+             throw new IllegalStateException("No renderer registered for " + Registry.ENTITY_TYPE.getId(entitytype));
+@@ -452,4 +455,8 @@
+    public TextRenderer getTextRenderer() {
+       return this.textRenderer;
+    }
++
++   public Map<String, PlayerEntityRenderer> getSkinMap() {
++      return (Map<String, PlayerEntityRenderer>) java.util.Collections.unmodifiableMap(modelRenderers);
++   }
+ }

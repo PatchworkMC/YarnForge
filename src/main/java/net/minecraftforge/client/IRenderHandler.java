@@ -20,7 +20,9 @@
 package net.minecraftforge.client;
 
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraft.client.Minecraft;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -33,6 +35,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @FunctionalInterface
 public interface IRenderHandler
 {
-    @OnlyIn(Dist.CLIENT)
-    void render(int ticks, float partialTicks, ClientWorld world, Minecraft mc);
+    @Environment(EnvType.CLIENT)
+    void render(int ticks, float partialTicks, ClientWorld world, MinecraftClient mc);
 }

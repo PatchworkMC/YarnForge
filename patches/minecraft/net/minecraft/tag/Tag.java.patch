@@ -1,0 +1,59 @@
+--- a/net/minecraft/tag/Tag.java
++++ b/net/minecraft/tag/Tag.java
+@@ -46,6 +46,7 @@
+ 
+    public static class Builder {
+       private final List<Tag.TrackedEntry> entries = Lists.newArrayList();
++      private boolean replace = false;
+ 
+       public static Tag.Builder create() {
+          return new Tag.Builder();
+@@ -68,6 +69,15 @@
+          return this.add(new Tag.TagEntry(tag), identifier);
+       }
+ 
++      public Tag.Builder replace(boolean value) {
++         this.replace = value;
++         return this;
++      }
++
++      public Tag.Builder replace() {
++         return replace(true);
++      }
++
+       public <T> Optional<Tag<T>> build(Function<Identifier, Tag<T>> resourceTagFunction, Function<Identifier, T> resourceElementFunction) {
+          ImmutableSet.Builder<T> builder = ImmutableSet.builder();
+ 
+@@ -103,6 +113,7 @@
+             this.entries.clear();
+          }
+ 
++         net.minecraftforge.common.ForgeHooks.deserializeTagAdditions(list, json, entries);
+          list.forEach((p_232958_2_) -> {
+             this.entries.add(new Tag.TrackedEntry(p_232958_2_, identifier));
+          });
+@@ -138,7 +149,7 @@
+             itag$proxy.getEntry().addToJson(jsonarray);
+          }
+ 
+-         jsonobject.addProperty("replace", false);
++         jsonobject.addProperty("replace", replace);
+          jsonobject.add("values", jsonarray);
+          return jsonobject;
+       }
+@@ -178,6 +189,7 @@
+       public String toString() {
+          return this.id.toString();
+       }
++      @Override public boolean equals(Object o) { return o == this || (o instanceof Tag.ObjectEntry && java.util.Objects.equals(this.id, ((Tag.ObjectEntry) o).id)); }
+    }
+ 
+    public static class OptionalObjectEntry implements Tag.Entry {
+@@ -278,5 +290,7 @@
+       public String toString() {
+          return "#" + this.id;
+       }
++      @Override public boolean equals(Object o) { return o == this || (o instanceof Tag.TagEntry && java.util.Objects.equals(this.id, ((Tag.TagEntry) o).id)); }
++      public Identifier getId() { return id; }
+    }
+ }

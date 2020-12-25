@@ -19,15 +19,16 @@
 
 package net.minecraftforge.client.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.screen.MainMenuScreen;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.screen.TitleScreen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLConfig;
 import net.minecraftforge.versions.forge.ForgeVersion;
@@ -35,19 +36,19 @@ import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.client.ClientModLoader;
 import net.minecraftforge.api.distmarker.Dist;
 
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class NotificationModUpdateScreen extends Screen
 {
 
-    private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
+    private static final Identifier VERSION_CHECK_ICONS = new Identifier(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
 
-    private final Button modButton;
+    private final ButtonWidget modButton;
     private VersionChecker.Status showNotification = null;
     private boolean hasCheckedForUpdates = false;
 
-    public NotificationModUpdateScreen(Button modButton)
+    public NotificationModUpdateScreen(ButtonWidget modButton)
     {
-        super(new TranslationTextComponent("forge.menu.updatescreen.title"));
+        super(new TranslatableText("forge.menu.updatescreen.title"));
         this.modButton = modButton;
     }
 
@@ -73,18 +74,18 @@ public class NotificationModUpdateScreen extends Screen
             return;
         }
 
-        Minecraft.getInstance().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
+        MinecraftClient.getInstance().getTextureManager().bindTexture(VERSION_CHECK_ICONS);
         RenderSystem.color4f(1, 1, 1, 1);
 
         int x = modButton.x;
         int y = modButton.y;
         int w = modButton.getWidth();
-        int h = modButton.getHeightRealms();
+        int h = modButton.getHeight();
 
-        blit(mStack, x + w - (h / 2 + 4), y + (h / 2 - 4), showNotification.getSheetOffset() * 8, (showNotification.isAnimated() && ((System.currentTimeMillis() / 800 & 1) == 1)) ? 8 : 0, 8, 8, 64, 16);
+        drawTexture(mStack, x + w - (h / 2 + 4), y + (h / 2 - 4), showNotification.getSheetOffset() * 8, (showNotification.isAnimated() && ((System.currentTimeMillis() / 800 & 1) == 1)) ? 8 : 0, 8, 8, 64, 16);
     }
 
-    public static NotificationModUpdateScreen init(MainMenuScreen guiMainMenu, Button modButton)
+    public static NotificationModUpdateScreen init(TitleScreen guiMainMenu, ButtonWidget modButton)
     {
         NotificationModUpdateScreen notificationModUpdateScreen = new NotificationModUpdateScreen(modButton);
         notificationModUpdateScreen.resize(guiMainMenu.getMinecraft(), guiMainMenu.width, guiMainMenu.height);

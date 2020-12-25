@@ -20,10 +20,10 @@
 package net.minecraftforge.event;
 
 import com.google.common.collect.ImmutableList;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.DataPackRegistries;
-import net.minecraft.resources.IFutureReloadListener;
-import net.minecraft.resources.IResourceManager;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceReloadListener;
+import net.minecraft.resource.ServerResourceManager;
+import net.minecraft.util.profiler.Profiler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.ModLoader;
@@ -41,10 +41,10 @@ import java.util.concurrent.Executor;
  */
 public class AddReloadListenerEvent extends Event
 {
-    private final List<IFutureReloadListener> listeners = new ArrayList<>();
-    private final DataPackRegistries dataPackRegistries;
+    private final List<ResourceReloadListener> listeners = new ArrayList<>();
+    private final ServerResourceManager dataPackRegistries;
     
-    public AddReloadListenerEvent(DataPackRegistries dataPackRegistries)
+    public AddReloadListenerEvent(ServerResourceManager dataPackRegistries)
     {
         this.dataPackRegistries = dataPackRegistries;
     }
@@ -52,29 +52,29 @@ public class AddReloadListenerEvent extends Event
    /**
     * @param listener the listener to add to the ResourceManager on reload
     */
-   public void addListener(IFutureReloadListener listener)
+   public void addListener(ResourceReloadListener listener)
    {
       listeners.add(new WrappedStateAwareListener(listener));
    }
 
-   public List<IFutureReloadListener> getListeners()
+   public List<ResourceReloadListener> getListeners()
    {
       return ImmutableList.copyOf(listeners);
    }
     
-    public DataPackRegistries getDataPackRegistries()
+    public ServerResourceManager getDataPackRegistries()
     {
         return dataPackRegistries;
     }
-    private static class WrappedStateAwareListener implements IFutureReloadListener {
-        private final IFutureReloadListener wrapped;
+    private static class WrappedStateAwareListener implements ResourceReloadListener {
+        private final ResourceReloadListener wrapped;
 
-        private WrappedStateAwareListener(final IFutureReloadListener wrapped) {
+        private WrappedStateAwareListener(final ResourceReloadListener wrapped) {
             this.wrapped = wrapped;
         }
 
         @Override
-        public CompletableFuture<Void> reload(final IStage stage, final IResourceManager resourceManager, final IProfiler preparationsProfiler, final IProfiler reloadProfiler, final Executor backgroundExecutor, final Executor gameExecutor) {
+        public CompletableFuture<Void> reload(final Synchronizer stage, final ResourceManager resourceManager, final Profiler preparationsProfiler, final Profiler reloadProfiler, final Executor backgroundExecutor, final Executor gameExecutor) {
             if (ModLoader.isLoadingStateValid())
                 return wrapped.reload(stage, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor);
             else

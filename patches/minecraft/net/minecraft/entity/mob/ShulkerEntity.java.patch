@@ -1,0 +1,40 @@
+--- a/net/minecraft/entity/mob/ShulkerEntity.java
++++ b/net/minecraft/entity/mob/ShulkerEntity.java
+@@ -166,7 +166,7 @@
+          this.teleportLerpTimer = 0;
+       } else if (!this.world.isClient) {
+          BlockState blockstate = this.world.getBlockState(blockpos);
+-         if (!blockstate.isAir()) {
++         if (!blockstate.isAir(this.world, blockpos)) {
+             if (blockstate.isOf(Blocks.MOVING_PISTON)) {
+                Direction direction = blockstate.get(PistonBlock.FACING);
+                if (this.world.isAir(blockpos.offset(direction))) {
+@@ -219,6 +219,7 @@
+          this.resetPosition((double)blockpos.getX() + 0.5D, (double)blockpos.getY(), (double)blockpos.getZ() + 0.5D);
+          double d2 = 0.5D - (double)MathHelper.sin((0.5F + this.openProgress) * (float)Math.PI) * 0.5D;
+          double d0 = 0.5D - (double)MathHelper.sin((0.5F + this.prevOpenProgress) * (float)Math.PI) * 0.5D;
++         if (this.isAddedToWorld() && this.world instanceof net.minecraft.server.world.ServerWorld) ((net.minecraft.server.world.ServerWorld)this.world).checkEntityChunkPos(this); // Forge - Process chunk registration after moving.
+          Direction direction2 = this.getAttachedFace().getOpposite();
+          this.setBoundingBox((new Box(this.getX() - 0.5D, this.getY(), this.getZ() - 0.5D, this.getX() + 0.5D, this.getY() + 1.0D, this.getZ() + 0.5D)).stretch((double)direction2.getOffsetX() * d2, (double)direction2.getOffsetY() * d2, (double)direction2.getOffsetZ() * d2));
+          double d1 = d2 - d0;
+@@ -249,6 +250,7 @@
+       super.updatePosition(x, y, z);
+       if (this.dataTracker != null && this.age != 0) {
+          Optional<BlockPos> optional = this.dataTracker.get(ATTACHED_BLOCK);
++         if (this.isAddedToWorld() && this.world instanceof net.minecraft.server.world.ServerWorld) ((net.minecraft.server.world.ServerWorld)this.world).checkEntityChunkPos(this); // Forge - Process chunk registration after moving.
+          Optional<BlockPos> optional1 = Optional.of(new BlockPos(x, y, z));
+          if (!optional1.equals(optional)) {
+             this.dataTracker.set(ATTACHED_BLOCK, optional1);
+@@ -283,6 +285,12 @@
+             if (blockpos1.getY() > 0 && this.world.isAir(blockpos1) && this.world.getWorldBorder().contains(blockpos1) && this.world.isSpaceEmpty(this, new Box(blockpos1))) {
+                Direction direction = this.findAttachSide(blockpos1);
+                if (direction != null) {
++                   net.minecraftforge.event.entity.living.EnderTeleportEvent event = new net.minecraftforge.event.entity.living.EnderTeleportEvent(this, blockpos1.getX(), blockpos1.getY(), blockpos1.getZ(), 0);
++                   if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) direction = null;
++                   blockpos1 = new BlockPos(event.getTargetX(), event.getTargetY(), event.getTargetZ());
++               }
++
++               if (direction != null) {
+                   this.dataTracker.set(ATTACHED_FACE, direction);
+                   this.playSound(SoundEvents.ENTITY_SHULKER_TELEPORT, 1.0F, 1.0F);
+                   this.dataTracker.set(ATTACHED_BLOCK, Optional.of(blockpos1));

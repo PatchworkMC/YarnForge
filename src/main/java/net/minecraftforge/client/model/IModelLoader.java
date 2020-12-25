@@ -21,7 +21,7 @@ package net.minecraftforge.client.model;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.IResourceManager;
+import net.minecraft.resource.ResourceManager;
 import net.minecraftforge.client.model.geometry.IModelGeometry;
 import net.minecraftforge.resource.IResourceType;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
@@ -38,14 +38,14 @@ public interface IModelLoader<T extends IModelGeometry<T>> extends ISelectiveRes
     }
 
     @Override
-    void onResourceManagerReload(IResourceManager resourceManager);
+    void apply(ResourceManager resourceManager);
 
     @Override
-    default void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate)
+    default void onResourceManagerReload(ResourceManager resourceManager, Predicate<IResourceType> resourcePredicate)
     {
         if (resourcePredicate.test(getResourceType()))
         {
-            onResourceManagerReload(resourceManager);
+            apply(resourceManager);
         }
     }
 

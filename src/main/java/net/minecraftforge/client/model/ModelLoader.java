@@ -22,16 +22,17 @@ package net.minecraftforge.client.model;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.UnbakedModel;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.texture.MissingTextureSprite;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.util.ModelIdentifier;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.profiler.Profiler;
 import net.minecraftforge.logging.ModelLoaderErrorMessage;
 
 import java.util.function.Function;
@@ -44,11 +45,11 @@ import javax.annotation.Nullable;
 
 import static net.minecraftforge.fml.Logging.MODELLOADING;
 
-public final class ModelLoader extends ModelBakery
+public final class ModelLoader extends net.minecraft.client.render.model.ModelLoader
 {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final Map<ResourceLocation, Exception> loadingExceptions = Maps.newHashMap();
-    private IUnbakedModel missingModel = null;
+    private final Map<Identifier, Exception> loadingExceptions = Maps.newHashMap();
+    private UnbakedModel missingModel = null;
 
     private boolean isLoading = false;
 
@@ -65,14 +66,14 @@ public final class ModelLoader extends ModelBakery
         return isLoading;
     }
 
-    public ModelLoader(IResourceManager manager, BlockColors colours, IProfiler profiler, int maxMipmapLevel)
+    public ModelLoader(ResourceManager manager, BlockColors colours, Profiler profiler, int maxMipmapLevel)
     {
         super(manager, colours, false);
         instance = this;
         processLoading(profiler, maxMipmapLevel);
     }
 
-    private static Set<ResourceLocation> specialModels = new HashSet<>();
+    private static Set<Identifier> specialModels = new HashSet<>();
 
     /**
      * Indicate to vanilla that it should load and bake the given model, even if no blocks or
@@ -81,39 +82,39 @@ public final class ModelLoader extends ModelBakery
      * @param rl The model, either {@link ModelResourceLocation} to point to a blockstate variant,
      *           or plain {@link ResourceLocation} to point directly to a json in the models folder.
      */
-    public static void addSpecialModel(ResourceLocation rl) {
+    public static void addSpecialModel(Identifier rl) {
         specialModels.add(rl);
     }
 
     @Override
-    public Set<ResourceLocation> getSpecialModels() {
+    public Set<Identifier> getSpecialModels() {
         return specialModels;
     }
 
     /**
      * Hooked from ModelBakery, allows using MRLs that don't end with "inventory" for items.
      */
-    public static ModelResourceLocation getInventoryVariant(String s)
+    public static ModelIdentifier getInventoryVariant(String s)
     {
         if(s.contains("#"))
         {
-            return new ModelResourceLocation(s);
+            return new ModelIdentifier(s);
         }
-        return new ModelResourceLocation(s, "inventory");
+        return new ModelIdentifier(s, "inventory");
     }
 
-    protected ResourceLocation getModelLocation(ResourceLocation model)
+    protected Identifier getModelLocation(Identifier model)
     {
-        return new ResourceLocation(model.getNamespace(), model.getPath() + ".json");
+        return new Identifier(model.getNamespace(), model.getPath() + ".json");
     }
 
-    protected IUnbakedModel getMissingModel()
+    protected UnbakedModel getMissingModel()
     {
         if (missingModel == null)
         {
             try
             {
-                missingModel = getUnbakedModel(MODEL_MISSING);
+                missingModel = getOrLoadModel(MISSING);
             }
             catch(Exception e)
             {
@@ -126,11 +127,11 @@ public final class ModelLoader extends ModelBakery
     /**
      * Use this if you don't care about the exception and want some model anyway.
      */
-    public IUnbakedModel getModelOrMissing(ResourceLocation location)
+    public UnbakedModel getModelOrMissing(Identifier location)
     {
         try
         {
-            return getUnbakedModel(location);
+            return getOrLoadModel(location);
         }
         catch(Exception e)
         {
@@ -141,11 +142,11 @@ public final class ModelLoader extends ModelBakery
     /**
      * Use this if you want the model, but need to log the error.
      */
-    public IUnbakedModel getModelOrLogError(ResourceLocation location, String error)
+    public UnbakedModel getModelOrLogError(Identifier location, String error)
     {
         try
         {
-            return getUnbakedModel(location);
+            return getOrLoadModel(location);
         }
         catch(Exception e)
         {
@@ -156,14 +157,14 @@ public final class ModelLoader extends ModelBakery
 
     // Temporary to compile things
     public static final class White {
-        public static final ResourceLocation LOCATION = new ResourceLocation("white");
-        private static TextureAtlasSprite instance = null;
+        public static final Identifier LOCATION = new Identifier("white");
+        private static Sprite instance = null;
         @SuppressWarnings("deprecation")
-        public static final TextureAtlasSprite instance()
+        public static final Sprite instance()
         {
             if (instance == null)
             {
-                instance = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, LOCATION).getSprite();
+                instance = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, LOCATION).getSprite();
             }
             return instance;
         }
@@ -228,17 +229,17 @@ public final class ModelLoader extends ModelBakery
     /**
      * Internal, do not use.
      */
-    public void onPostBakeEvent(Map<ResourceLocation, IBakedModel> modelRegistry)
+    public void onPostBakeEvent(Map<Identifier, BakedModel> modelRegistry)
     {
-        IBakedModel missingModel = modelRegistry.get(MODEL_MISSING);
-        for(Map.Entry<ResourceLocation, Exception> entry : loadingExceptions.entrySet())
+        BakedModel missingModel = modelRegistry.get(MISSING);
+        for(Map.Entry<Identifier, Exception> entry : loadingExceptions.entrySet())
         {
             // ignoring pure ResourceLocation arguments, all things we care about pass ModelResourceLocation
-            if(entry.getKey() instanceof ModelResourceLocation)
+            if(entry.getKey() instanceof ModelIdentifier)
             {
-                LOGGER.debug(MODELLOADING, ()-> new ModelLoaderErrorMessage((ModelResourceLocation)entry.getKey(), entry.getValue()));
-                final ModelResourceLocation location = (ModelResourceLocation)entry.getKey();
-                final IBakedModel model = modelRegistry.get(location);
+                LOGGER.debug(MODELLOADING, ()-> new ModelLoaderErrorMessage((ModelIdentifier)entry.getKey(), entry.getValue()));
+                final ModelIdentifier location = (ModelIdentifier)entry.getKey();
+                final BakedModel model = modelRegistry.get(location);
                 if(model == null)
                 {
                     modelRegistry.put(location, missingModel);
@@ -258,17 +259,17 @@ public final class ModelLoader extends ModelBakery
     }
 */
 
-    private static final Function<ResourceLocation, IUnbakedModel> DEFAULT_MODEL_GETTER = (rl) -> ModelLoader.instance().getModelOrMissing(rl);
+    private static final Function<Identifier, UnbakedModel> DEFAULT_MODEL_GETTER = (rl) -> ModelLoader.instance().getModelOrMissing(rl);
 
     /**
      * Get the default texture getter the models will be baked with.
      */
-    public static Function<RenderMaterial, TextureAtlasSprite> defaultTextureGetter()
+    public static Function<SpriteIdentifier, Sprite> defaultTextureGetter()
     {
-        return RenderMaterial::getSprite;
+        return SpriteIdentifier::getSprite;
     }
 
-    public static Function<ResourceLocation, IUnbakedModel> defaultModelGetter()
+    public static Function<Identifier, UnbakedModel> defaultModelGetter()
     {
         return DEFAULT_MODEL_GETTER;
     }

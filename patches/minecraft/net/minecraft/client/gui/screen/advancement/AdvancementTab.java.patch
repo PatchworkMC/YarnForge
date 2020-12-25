@@ -1,0 +1,37 @@
+--- a/net/minecraft/client/gui/screen/advancement/AdvancementTab.java
++++ b/net/minecraft/client/gui/screen/advancement/AdvancementTab.java
+@@ -40,6 +40,7 @@
+    private int maxPanY = Integer.MIN_VALUE;
+    private float alpha;
+    private boolean initialized;
++   private int page;
+ 
+    public AdvancementTab(MinecraftClient minecraft, AdvancementsScreen screen, AdvancementTabType type, int index, Advancement advancement, AdvancementDisplay displayInfo) {
+       this.client = minecraft;
+@@ -54,6 +55,15 @@
+       this.addWidget(this.rootWidget, advancement);
+    }
+ 
++   public AdvancementTab(MinecraftClient mc, AdvancementsScreen screen, AdvancementTabType type, int index, int page, Advancement adv, AdvancementDisplay info) {
++      this(mc, screen, type, index, adv, info);
++      this.page = page;
++   }
++
++   public int getPage() {
++      return page;
++   }
++
+    public Advancement getRoot() {
+       return this.root;
+    }
+@@ -154,8 +164,8 @@
+          return null;
+       } else {
+          for(AdvancementTabType advancementtabtype : AdvancementTabType.values()) {
+-            if (tabIndex < advancementtabtype.getTabCount()) {
+-               return new AdvancementTab(minecraft, screen, advancementtabtype, tabIndex, advancement, advancement.getDisplay());
++            if ((tabIndex % AdvancementTabType.MAX_TABS) < advancementtabtype.getTabCount()) {
++               return new AdvancementTab(minecraft, screen, advancementtabtype, tabIndex % AdvancementTabType.MAX_TABS, tabIndex / AdvancementTabType.MAX_TABS, advancement, advancement.getDisplay());
+             }
+ 
+             tabIndex -= advancementtabtype.getTabCount();

@@ -1,0 +1,11 @@
+--- a/net/minecraft/block/ShapeContext.java
++++ b/net/minecraft/block/ShapeContext.java
+@@ -7,7 +7,7 @@
+ import net.minecraft.util.math.BlockPos;
+ import net.minecraft.util.shape.VoxelShape;
+ 
+-public interface ShapeContext {
++public interface ShapeContext extends net.minecraftforge.common.extensions.IForgeSelectionContext {
+    static ShapeContext absent() {
+       return EntityShapeContext.ABSENT;
+    }

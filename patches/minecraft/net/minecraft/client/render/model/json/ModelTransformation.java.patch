@@ -1,0 +1,26 @@
+--- a/net/minecraft/client/render/model/json/ModelTransformation.java
++++ b/net/minecraft/client/render/model/json/ModelTransformation.java
+@@ -27,6 +27,7 @@
+       this(Transformation.IDENTITY, Transformation.IDENTITY, Transformation.IDENTITY, Transformation.IDENTITY, Transformation.IDENTITY, Transformation.IDENTITY, Transformation.IDENTITY, Transformation.IDENTITY);
+    }
+ 
++   @Deprecated
+    public ModelTransformation(ModelTransformation transforms) {
+       this.thirdPersonLeftHand = transforms.thirdPersonLeftHand;
+       this.thirdPersonRightHand = transforms.thirdPersonRightHand;
+@@ -38,6 +39,7 @@
+       this.fixed = transforms.fixed;
+    }
+ 
++   @Deprecated
+    public ModelTransformation(Transformation thirdperson_leftIn, Transformation thirdperson_rightIn, Transformation firstperson_leftIn, Transformation firstperson_rightIn, Transformation headIn, Transformation guiIn, Transformation groundIn, Transformation fixedIn) {
+       this.thirdPersonLeftHand = thirdperson_leftIn;
+       this.thirdPersonRightHand = thirdperson_rightIn;
+@@ -49,6 +51,7 @@
+       this.fixed = fixedIn;
+    }
+ 
++   @Deprecated
+    public Transformation getTransformation(ModelTransformation.Mode type) {
+       switch(type) {
+       case THIRD_PERSON_LEFT_HAND:

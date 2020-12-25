@@ -1,0 +1,11 @@
+--- a/net/minecraft/village/TradeOffer.java
++++ b/net/minecraft/village/TradeOffer.java
+@@ -179,7 +179,7 @@
+          return true;
+       } else {
+          ItemStack itemstack = left.copy();
+-         if (itemstack.getItem().isDamageable()) {
++         if (itemstack.getItem().isDamageable(itemstack)) {
+             itemstack.setDamage(itemstack.getDamage());
+          }
+ 

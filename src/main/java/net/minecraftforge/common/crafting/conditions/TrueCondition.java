@@ -20,18 +20,17 @@
 package net.minecraftforge.common.crafting.conditions;
 
 import com.google.gson.JsonObject;
-
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 
 public final class TrueCondition implements ICondition
 {
     public static final TrueCondition INSTANCE = new TrueCondition();
-    private static final ResourceLocation NAME = new ResourceLocation("forge", "true");
+    private static final Identifier NAME = new Identifier("forge", "true");
 
     private TrueCondition() {}
 
     @Override
-    public ResourceLocation getID()
+    public Identifier getID()
     {
         return NAME;
     }
@@ -62,7 +61,7 @@ public final class TrueCondition implements ICondition
         }
 
         @Override
-        public ResourceLocation getID()
+        public Identifier getID()
         {
             return TrueCondition.NAME;
         }

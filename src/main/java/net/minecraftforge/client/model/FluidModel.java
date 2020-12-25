@@ -29,20 +29,26 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-
-import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.BlockState;
-import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.ModelBakeSettings;
+import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.render.model.UnbakedModel;
+import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.minecraft.client.render.model.json.ModelTransformation.Mode;
 import net.minecraft.client.renderer.model.*;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.util.math.AffineTransformation;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
@@ -72,13 +78,13 @@ public final class FluidModel implements IModelGeometry<FluidModel>
     }
 
     @Override
-    public Collection<RenderMaterial> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String, String>> missingTextureErrors)
+    public Collection<SpriteIdentifier> getTextures(IModelConfiguration owner, Function<Identifier, UnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String, String>> missingTextureErrors)
     {
         return ForgeHooksClient.getFluidMaterials(fluid).collect(Collectors.toList());
     }
 
     @Override
-    public IBakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ItemOverrideList overrides, ResourceLocation modelLocation)
+    public BakedModel bake(IModelConfiguration owner, ModelLoader bakery, Function<SpriteIdentifier, Sprite> spriteGetter, ModelBakeSettings modelTransform, ModelOverrideList overrides, Identifier modelLocation)
     {
         FluidAttributes attrs = fluid.getAttributes();
         return new CachingBakedFluid(
@@ -121,7 +127,7 @@ public final class FluidModel implements IModelGeometry<FluidModel>
             }
         });
 
-        public CachingBakedFluid(TransformationMatrix transformation, ImmutableMap<TransformType, TransformationMatrix> transforms, ResourceLocation modelLocation, int color, TextureAtlasSprite still, TextureAtlasSprite flowing, Optional<TextureAtlasSprite> overlay, boolean gas, Optional<IModelData> stateOption)
+        public CachingBakedFluid(AffineTransformation transformation, ImmutableMap<Mode, AffineTransformation> transforms, Identifier modelLocation, int color, Sprite still, Sprite flowing, Optional<Sprite> overlay, boolean gas, Optional<IModelData> stateOption)
         {
             super(transformation, transforms, modelLocation, color, still, flowing, overlay, gas, stateOption.isPresent(), getCorners(stateOption), getFlow(stateOption), getOverlay(stateOption));
         }
@@ -226,22 +232,22 @@ public final class FluidModel implements IModelGeometry<FluidModel>
         }
     }
 
-    private static class BakedFluid implements IBakedModel
+    private static class BakedFluid implements BakedModel
     {
         private static final int x[] = { 0, 0, 1, 1 };
         private static final int z[] = { 0, 1, 1, 0 };
         private static final float eps = 1e-3f;
 
-        protected final TransformationMatrix transformation;
-        protected final ImmutableMap<TransformType, TransformationMatrix> transforms;
-        protected final ResourceLocation modelLocation;
+        protected final AffineTransformation transformation;
+        protected final ImmutableMap<Mode, AffineTransformation> transforms;
+        protected final Identifier modelLocation;
         protected final int color;
-        protected final TextureAtlasSprite still, flowing;
-        protected final Optional<TextureAtlasSprite> overlay;
+        protected final Sprite still, flowing;
+        protected final Optional<Sprite> overlay;
         protected final boolean gas;
         protected final ImmutableMap<Direction, ImmutableList<BakedQuad>> faceQuads;
 
-        public BakedFluid(TransformationMatrix transformation, ImmutableMap<TransformType, TransformationMatrix> transforms, ResourceLocation modelLocation, int color, TextureAtlasSprite still, TextureAtlasSprite flowing, Optional<TextureAtlasSprite> overlay, boolean gas, boolean statePresent, int[] cornerRound, int flowRound, boolean[] sideOverlays)
+        public BakedFluid(AffineTransformation transformation, ImmutableMap<Mode, AffineTransformation> transforms, Identifier modelLocation, int color, Sprite still, Sprite flowing, Optional<Sprite> overlay, boolean gas, boolean statePresent, int[] cornerRound, int flowRound, boolean[] sideOverlays)
         {
             this.transformation = transformation;
             this.transforms = transforms;
@@ -278,7 +284,7 @@ public final class FluidModel implements IModelGeometry<FluidModel>
                 boolean isFlowing = flowRound > -1000;
 
                 float flow = isFlowing ? (float) Math.toRadians(flowRound) : 0f;
-                TextureAtlasSprite topSprite = isFlowing ? flowing : still;
+                Sprite topSprite = isFlowing ? flowing : still;
                 float scale = isFlowing ? 4f : 8f;
 
                 float c = MathHelper.cos(flow) * scale;
@@ -320,8 +326,8 @@ public final class FluidModel implements IModelGeometry<FluidModel>
                 // sides
                 for (int i = 0; i < 4; i++)
                 {
-                    Direction side = Direction.byHorizontalIndex((5 - i) % 4); // [W, S, E, N]
-                    boolean useOverlay = overlay.isPresent() && sideOverlays[side.getHorizontalIndex()];
+                    Direction side = Direction.fromHorizontal((5 - i) % 4); // [W, S, E, N]
+                    boolean useOverlay = overlay.isPresent() && sideOverlays[side.getHorizontal()];
                     int si = i; // local var for lambda capture
 
                     VertexParameter sideX = j -> x[(si + x[j]) % 4];
@@ -361,7 +367,7 @@ public final class FluidModel implements IModelGeometry<FluidModel>
             float get(int index);
         }
 
-        private BakedQuad buildQuad(Direction side, TextureAtlasSprite texture, boolean flip, boolean offset, VertexParameter x, VertexParameter y, VertexParameter z, VertexParameter u, VertexParameter v)
+        private BakedQuad buildQuad(Direction side, Sprite texture, boolean flip, boolean offset, VertexParameter x, VertexParameter y, VertexParameter z, VertexParameter u, VertexParameter v)
         {
             BakedQuadBuilder builder = new BakedQuadBuilder(texture);
 
@@ -377,8 +383,8 @@ public final class FluidModel implements IModelGeometry<FluidModel>
                 putVertex(
                     consumer, side, offset,
                     x.get(vertex), y.get(vertex), z.get(vertex),
-                    texture.getInterpolatedU(u.get(vertex)),
-                    texture.getInterpolatedV(v.get(vertex))
+                    texture.getFrameU(u.get(vertex)),
+                    texture.getFrameV(v.get(vertex))
                 );
             }
 
@@ -387,16 +393,16 @@ public final class FluidModel implements IModelGeometry<FluidModel>
 
         private void putVertex(IVertexConsumer consumer, Direction side, boolean offset, float x, float y, float z, float u, float v)
         {
-            VertexFormat format = DefaultVertexFormats.BLOCK;
+            VertexFormat format = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL;
             ImmutableList<VertexFormatElement> elements = format.getElements();
             for(int e = 0; e < elements.size(); e++)
             {
-                switch(elements.get(e).getUsage())
+                switch(elements.get(e).getType())
                 {
                 case POSITION:
-                    float dx = offset ? side.getDirectionVec().getX() * eps : 0f;
-                    float dy = offset ? side.getDirectionVec().getY() * eps : 0f;
-                    float dz = offset ? side.getDirectionVec().getZ() * eps : 0f;
+                    float dx = offset ? side.getVector().getX() * eps : 0f;
+                    float dy = offset ? side.getVector().getY() * eps : 0f;
+                    float dz = offset ? side.getVector().getZ() * eps : 0f;
                     consumer.put(e, x - dx, y - dy, z - dz, 1f);
                     break;
                 case COLOR:
@@ -407,9 +413,9 @@ public final class FluidModel implements IModelGeometry<FluidModel>
                     consumer.put(e, r, g, b, a);
                     break;
                 case NORMAL:
-                    float offX = (float) side.getXOffset();
-                    float offY = (float) side.getYOffset();
-                    float offZ = (float) side.getZOffset();
+                    float offX = (float) side.getOffsetX();
+                    float offY = (float) side.getOffsetY();
+                    float offZ = (float) side.getOffsetZ();
                     consumer.put(e, offX, offY, offZ, 0f);
                     break;
                 case UV:
@@ -427,13 +433,13 @@ public final class FluidModel implements IModelGeometry<FluidModel>
         }
 
         @Override
-        public boolean isAmbientOcclusion()
+        public boolean useAmbientOcclusion()
         {
             return true;
         }
 
         @Override
-        public boolean isGui3d()
+        public boolean hasDepth()
         {
             return false;
         }
@@ -445,13 +451,13 @@ public final class FluidModel implements IModelGeometry<FluidModel>
         }
 
         @Override
-        public boolean isBuiltInRenderer()
+        public boolean isBuiltin()
         {
             return false;
         }
 
         @Override
-        public TextureAtlasSprite getParticleTexture()
+        public Sprite getSprite()
         {
             return still;
         }
@@ -463,9 +469,9 @@ public final class FluidModel implements IModelGeometry<FluidModel>
         }
 
         @Override
-        public ItemOverrideList getOverrides()
+        public ModelOverrideList getOverrides()
         {
-            return ItemOverrideList.EMPTY;
+            return ModelOverrideList.EMPTY;
         }
 
         @Override
@@ -475,7 +481,7 @@ public final class FluidModel implements IModelGeometry<FluidModel>
         }
 
         @Override
-        public IBakedModel handlePerspective(TransformType type, MatrixStack mat)
+        public BakedModel handlePerspective(Mode type, MatrixStack mat)
         {
             return PerspectiveMapWrapper.handlePerspective(this, transforms, type, mat);
         }

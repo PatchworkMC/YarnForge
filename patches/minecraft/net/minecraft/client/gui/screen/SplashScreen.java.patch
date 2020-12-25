@@ -1,0 +1,26 @@
+--- a/net/minecraft/client/gui/screen/SplashScreen.java
++++ b/net/minecraft/client/gui/screen/SplashScreen.java
+@@ -99,6 +99,7 @@
+       int l1 = (int)((double)this.client.getWindow().getScaledHeight() * 0.8325D);
+       float f3 = this.reloadMonitor.getProgress();
+       this.progress = MathHelper.clamp(this.progress * 0.95F + f3 * 0.050000012F, 0.0F, 1.0F);
++      net.minecraftforge.fml.client.ClientModLoader.renderProgressText();
+       if (f < 1.0F) {
+          this.renderProgressBar(matrixStack, i / 2 - k1, l1 - 5, i / 2 + k1, l1 + 5, 1.0F - MathHelper.clamp(f, 0.0F, 1.0F));
+       }
+@@ -108,6 +109,7 @@
+       }
+ 
+       if (this.applyCompleteTime == -1L && this.reloadMonitor.isApplyStageComplete() && (!this.reloading || f1 >= 2.0F)) {
++         this.applyCompleteTime = Util.getMeasuringTimeMs(); // Moved up to guard against inf loops caused by callback
+          try {
+             this.reloadMonitor.throwExceptions();
+             this.exceptionHandler.accept(Optional.empty());
+@@ -115,7 +117,6 @@
+             this.exceptionHandler.accept(Optional.of(throwable));
+          }
+ 
+-         this.applyCompleteTime = Util.getMeasuringTimeMs();
+          if (this.client.currentScreen != null) {
+             this.client.currentScreen.init(this.client, this.client.getWindow().getScaledWidth(), this.client.getWindow().getScaledHeight());
+          }

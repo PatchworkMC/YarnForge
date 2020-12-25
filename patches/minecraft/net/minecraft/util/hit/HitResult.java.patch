@@ -1,0 +1,15 @@
+--- a/net/minecraft/util/hit/HitResult.java
++++ b/net/minecraft/util/hit/HitResult.java
+@@ -5,7 +5,12 @@
+ 
+ public abstract class HitResult {
+    protected final Vec3d pos;
++   /** Used to determine what sub-segment is hit */
++   public int subHit = -1;
+ 
++   /** Used to add extra hit info */
++   public Object hitInfo = null;
++
+    protected HitResult(Vec3d hitVec) {
+       this.pos = hitVec;
+    }

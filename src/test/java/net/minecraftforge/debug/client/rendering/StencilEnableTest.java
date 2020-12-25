@@ -19,7 +19,7 @@
 
 package net.minecraftforge.debug.client.rendering;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.DeferredWorkQueue;
 import net.minecraftforge.fml.common.Mod;
@@ -36,6 +36,6 @@ public class StencilEnableTest {
 
     private void clientSetup(FMLClientSetupEvent event) {
         if (ENABLED)
-            event.enqueueWork(() -> Minecraft.getInstance().getFramebuffer().enableStencil());
+            event.enqueueWork(() -> MinecraftClient.getInstance().getFramebuffer().enableStencil());
     }
 }

@@ -22,7 +22,7 @@ package net.minecraftforge.client.model.generators.loaders;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraftforge.client.model.generators.CustomLoaderBuilder;
 import net.minecraftforge.client.model.generators.ModelBuilder;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -34,7 +34,7 @@ public class DynamicBucketModelBuilder<T extends ModelBuilder<T>> extends Custom
         return new DynamicBucketModelBuilder<>(parent, existingFileHelper);
     }
 
-    private ResourceLocation fluid;
+    private Identifier fluid;
     private Boolean flipGas;
     private Boolean applyTint;
     private Boolean coverIsMask;
@@ -42,7 +42,7 @@ public class DynamicBucketModelBuilder<T extends ModelBuilder<T>> extends Custom
 
     protected DynamicBucketModelBuilder(T parent, ExistingFileHelper existingFileHelper)
     {
-        super(new ResourceLocation("forge:bucket"), parent, existingFileHelper);
+        super(new Identifier("forge:bucket"), parent, existingFileHelper);
     }
 
     public DynamicBucketModelBuilder<T> fluid(Fluid fluid)

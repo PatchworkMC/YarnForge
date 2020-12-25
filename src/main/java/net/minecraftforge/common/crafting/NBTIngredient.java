@@ -27,15 +27,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.recipe.Ingredient;
 
 public class NBTIngredient extends Ingredient
 {
     private final ItemStack stack;
     protected NBTIngredient(ItemStack stack)
     {
-        super(Stream.of(new Ingredient.SingleItemList(stack)));
+        super(Stream.of(new Ingredient.StackEntry(stack)));
         this.stack = stack;
     }
 
@@ -61,7 +61,7 @@ public class NBTIngredient extends Ingredient
     }
 
     @Override
-    public JsonElement serialize()
+    public JsonElement toJson()
     {
         JsonObject json = new JsonObject();
         json.addProperty("type", CraftingHelper.getID(Serializer.INSTANCE).toString());
@@ -77,7 +77,7 @@ public class NBTIngredient extends Ingredient
         public static final Serializer INSTANCE = new Serializer();
 
         @Override
-        public NBTIngredient parse(PacketBuffer buffer) {
+        public NBTIngredient parse(PacketByteBuf buffer) {
             return new NBTIngredient(buffer.readItemStack());
         }
 
@@ -87,7 +87,7 @@ public class NBTIngredient extends Ingredient
         }
 
         @Override
-        public void write(PacketBuffer buffer, NBTIngredient ingredient) {
+        public void write(PacketByteBuf buffer, NBTIngredient ingredient) {
             buffer.writeItemStack(ingredient.stack);
         }
     }

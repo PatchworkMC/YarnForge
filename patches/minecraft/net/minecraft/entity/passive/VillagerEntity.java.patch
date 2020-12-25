@@ -1,0 +1,21 @@
+--- a/net/minecraft/entity/passive/VillagerEntity.java
++++ b/net/minecraft/entity/passive/VillagerEntity.java
+@@ -245,7 +245,7 @@
+ 
+    public ActionResult interactMob(PlayerEntity p_230254_1_, Hand p_230254_2_) {
+       ItemStack itemstack = p_230254_1_.getStackInHand(p_230254_2_);
+-      if (itemstack.getItem() != Items.VILLAGER_SPAWN_EGG && this.isAlive() && !this.hasCustomer() && !this.isSleeping()) {
++      if (itemstack.getItem() != Items.VILLAGER_SPAWN_EGG && this.isAlive() && !this.hasCustomer() && !this.isSleeping() && !p_230254_1_.shouldCancelInteraction()) {
+          if (this.isBaby()) {
+             this.sayNo();
+             return ActionResult.success(this.world.isClient);
+@@ -638,7 +638,8 @@
+    }
+ 
+    protected Text getDefaultName() {
+-      return new TranslatableText(this.getType().getTranslationKey() + '.' + Registry.VILLAGER_PROFESSION.getId(this.getVillagerData().getProfession()).getPath());
++      net.minecraft.util.Identifier profName = this.getVillagerData().getProfession().getRegistryName();
++      return new TranslatableText(this.getType().getTranslationKey() + '.' + (!"minecraft".equals(profName.getNamespace()) ? profName.getNamespace() + '.' : "") + profName.getPath());
+    }
+ 
+    @Environment(EnvType.CLIENT)

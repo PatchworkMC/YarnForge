@@ -20,9 +20,9 @@
 package net.minecraftforge.common.command;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.arguments.EntitySelector;
-import net.minecraft.command.arguments.EntitySelectorParser;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.command.EntitySelector;
+import net.minecraft.command.EntitySelectorReader;
+import net.minecraft.text.Text;
 
 /**
  * Implementations of this interface can be registered using {@link EntitySelectorManager#register}
@@ -35,10 +35,10 @@ public interface IEntitySelectorType
      * Use {@link EntitySelectorParser#getReader} to read extra arguments and {@link EntitySelectorParser#addFilter} to add the corresponding filters. <br>
      * If the token being parsed does not match the syntax of this selector, this method should throw an appropriate {@link CommandSyntaxException}.
      */
-    EntitySelector build(EntitySelectorParser parser) throws CommandSyntaxException;
+    EntitySelector build(EntitySelectorReader parser) throws CommandSyntaxException;
 
     /**
      * Returns an {@link ITextComponent} containing a short description for this selector type.
      */
-    ITextComponent getSuggestionTooltip();
+    Text getSuggestionTooltip();
 }

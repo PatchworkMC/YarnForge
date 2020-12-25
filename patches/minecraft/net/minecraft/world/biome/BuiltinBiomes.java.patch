@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/biome/BuiltinBiomes.java
++++ b/net/minecraft/world/biome/BuiltinBiomes.java
+@@ -17,7 +17,7 @@
+    }
+ 
+    public static RegistryKey<Biome> fromRawId(int id) {
+-      return BY_RAW_ID.get(id);
++      return ((net.minecraftforge.registries.ForgeRegistry<Biome>)net.minecraftforge.registries.ForgeRegistries.BIOMES).getKey(id);
+    }
+ 
+    static {
